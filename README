@@ -1,0 +1,6 @@
+Experimental free VoIP sound waveform lossy compression codec with VERY LOW MIPS.
+
+Developed mainly for 32 kbit/s bitrate and 8000 Hz sample frequency, but may be
+easy extended to others bitrates and sample frequencies.
+
+Is based on simple min-max-differencies-quantization method.
