@@ -1,4 +1,12 @@
 # free-mmdq-codec
-Experimental free very low MIPS sound waveform lossy codec based on min-max-differencies-quantization method.
-This codec has been created as low CPU consumption alternative for G.726 codec with 32 kbit/sec but other
-bitrates and sample rates are possible.
+Experimental free very low MIPS (VLM) sound waveform lossy codec
+based on min-max-differencies-quantization (MMDQ) method.
+
+This codec has been created as low CPU consumption alternative
+of G.726 codec with 32 kbit/sec. MMDQ-codec may be extended to
+have other bitrates and/or sample rates.
+
+An important property of implemented codec is transparancy for
+fax/DTMF signals.
+
+MATLAB/Octave/FreeMat and C source codes are available.
