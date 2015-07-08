@@ -11,7 +11,7 @@ close all;
 disp('started...');
 
 SAMPLES = 1:5*8000; % Number of samples to process (if 0 - process all available samples
-%SAMPLES = 100+1950:100+2250; % Number of samples to process (if 0 - process all available samples
+%SAMPLES = 8144:8180; % Number of samples to process (if 0 - process all available samples
 %SAMPLES=0;
 SHOW_GRAPHICS = 1;
 
@@ -32,7 +32,7 @@ USE_AUTOSCALE = 1; % 0 - disable autoscale of input signals, 1 - enable
 
 %voice_filename = '../samples/cmu/sample1_8000.wav';         VOICE_AMP_DB = 0;
 %voice_filename = '../samples/cmu/sample2_8000.wav';         VOICE_AMP_DB = 0;
-%voice_filename  = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = 0;  %female
+voice_filename  = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = 0;  %female
 %voice_filename = '../samples/cmu/sample4_8000.wav';         VOICE_AMP_DB = 0;
 %voice_filename = '../samples/cmu/sample5_8000.wav';         VOICE_AMP_DB = -6;
 %voice_filename = '../samples/cmu/sample6_8000.wav';         VOICE_AMP_DB = 0;
@@ -41,7 +41,7 @@ USE_AUTOSCALE = 1; % 0 - disable autoscale of input signals, 1 - enable
 %voice_filename  = '../samples/modems/v90-rockwellconex.wav'; VOICE_AMP_DB = 0;
 %voice_filename  = '../samples/modems/v34-33600bps.wav';      VOICE_AMP_DB = 0;
 %voice_filename  = '../samples/modems/v32b-14400bps.wav';     VOICE_AMP_DB = 0;
-voice_filename  = '../samples/modems/v22b-2400bps.wav';      VOICE_AMP_DB = 0;
+%voice_filename  = '../samples/modems/v22b-2400bps.wav';      VOICE_AMP_DB = 0;
 %voice_filename  = '../samples/modems/v21-300bps.wav';        VOICE_AMP_DB = 0;
 %voice_filename  = '../samples/modems/v17-14400bpsfax.wav';   VOICE_AMP_DB = 0;
 %voice_filename  = '../samples/modems/ttytdd.wav';            VOICE_AMP_DB = 0;
@@ -104,11 +104,11 @@ wavwrite( (x/32768).',FS,bits_voice,INPUT_FILENAME);
 % Initialization
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-SAMPLES_PER_FRAME = 7; %40000 bit/s
-BITS_PER_SAMPLE   = 3;
-
-%SAMPLES_PER_FRAME = 8; %38000 bit/s
+%SAMPLES_PER_FRAME = 7; %40000 bit/s
 %BITS_PER_SAMPLE   = 3;
+
+SAMPLES_PER_FRAME = 8; %38000 bit/s
+BITS_PER_SAMPLE   = 3;
 
 %SAMPLES_PER_FRAME = 10; %35200 bit/s
 %BITS_PER_SAMPLE   = 3;

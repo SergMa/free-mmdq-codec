@@ -41,6 +41,9 @@ function [data,enc] = encoder(voice,enc,dec)
     diffdv = maxdv - mindv;
     ampdv = max( abs(mindv) , abs(maxdv) );
 
+    %fprintf(1,'minv=%8.3f, maxv=%8.3f, diffv=%8.3f, mindv=%8.3f, maxdv=%8.3f, diffdv=%8.3f, ampdv=%8.3f\n', ...
+    %        minv,maxv,diffdv,mindv,maxdv,diffdv,ampdv);
+
     % quantize dvoice
     data0 = zeros(1,N-1);
     data1 = zeros(1,N-1);
@@ -51,10 +54,31 @@ function [data,enc] = encoder(voice,enc,dec)
     err2 = 0;
     err3 = 0;
     if diffdv==0
-        for i=1:N-1
-            data(3+i) = 0;
+        if maxv==0
+            for i=1:N-1
+                data(3+i) = round( enc.factor/2 );
+            end
+        elseif maxv>0
+            for i=1:N-1
+                data(3+i) = round( enc.factor/2 ) + 1;
+            end
+        else
+            for i=1:N-1
+                data(3+i) = round( enc.factor/2 ) - 1;
+            end
         end
     else
+
+%         sss = maxdv/ampdv;
+%         ddd = enc.factor/2 * sss + enc.factor/2;
+%         if round(ddd)==enc.factor/2
+%             %all differencies are too small and will be rounded to zeros
+%             if 
+%             for i=1:N-1
+%                 dvoice(i) = 
+%             end
+%         end
+
         %no smoothing (smooth0=0,smooth1=0)
         data0(1) = minv;
         data0(2) = maxv;
@@ -122,5 +146,11 @@ function [data,enc] = encoder(voice,enc,dec)
     smooth1 = data(3);
 
     %fprintf('err0=%8.3f, err1=%8.3f, err2=%8.3f, err3=%8.3f, smooth=%d,%d\n', err0, err1, err2, err3, smooth0, smooth1);
+
+    %fprintf(1,'\nenc data: ');
+    %for i=1:length(data)
+    %    fprintf(' %6.3f', data(i));
+    %end
+    %fprintf(1,'\n\n');
 
 return

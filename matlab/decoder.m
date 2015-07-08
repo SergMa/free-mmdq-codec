@@ -34,11 +34,7 @@ function [voice,dec] = decoder(data,dec)
     maxdv = max(dvoice);
     diffdv = maxdv - mindv;
 
-    if diffdv == 0
-        for i=1:N
-            voice(i) = 0;
-        end
-    else
+    if 1
         if smooth0==0 && smooth1==0
             voice(1) = 0;
             for i=1:N-1
