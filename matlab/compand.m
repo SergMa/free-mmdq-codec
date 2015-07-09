@@ -44,6 +44,12 @@ function y = compand( x , ver )
     %convert x into [1,2,...,N] range
     N = length(table);
     p = round( (x+1.0)*(N-1)/2 + 1 );
+    if p<1
+        p = 1;
+    elseif p>N
+        p = N;
+    end
+
     y = table(p);
 
 return

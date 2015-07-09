@@ -11,6 +11,7 @@ close all;
 disp('started...');
 
 SAMPLES = 1:5*8000; % Number of samples to process (if 0 - process all available samples
+%SAMPLES = 6000:6500;
 %SAMPLES = 8144:8180; % Number of samples to process (if 0 - process all available samples
 %SAMPLES=0;
 SHOW_GRAPHICS = 1;
@@ -21,8 +22,8 @@ TS = 1/FS;  % Sample (discretization) period, sec
 INPUT_FILENAME  = './input.wav'; % Name of file for input (noised) signal
 OUTPUT_FILENAME = './out.wav';   % Name of file for output (clean) signal
 
-SPECTROGRAM_WIDTH = 512; % Parameters of spectrograms
-SPECTROGRAM_OVR   = 16;
+SPECTROGRAM_WIDTH = 16; % Parameters of spectrograms
+SPECTROGRAM_OVR   = 1;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load input (voice,noise) signals from wave-files, generate signal to process
@@ -134,8 +135,11 @@ fprintf(1,'compression      : %f\n', COMPRESSION);
 fprintf(1,'bitrate, bit/s   : %i\n', BITRATE);
 
 % Create decoder and encoder structures
-enc = encoder_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE );
-dec = decoder_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE );
+%enc = encoder_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE );
+enc = encoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE );
+
+%dec = decoder_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE );
+dec = decoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE );
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -159,19 +163,29 @@ smooth3_N = 0;
 
 for i=1:N
 
-    %vinp = fix( 127*x(i)/32768 );
-    vinp = fix( x(i) );
+%     if i>=round(8000*0.041)
+%         fprintf(1,'@\n');
+%     end
+
+    vinp = fix( 512*x(i)/32768 );
+    if vinp>512
+        vinp = 512;
+    elseif vinp<-512
+        vinp = -512;
+    end
+    %vinp = fix( x(i) );
     frame_vinp( frame_pos ) = vinp;
 
     vout = frame_vout( frame_pos );
-    %y(i) = fix( 32768*vout/127 );
-    y(i) = fix( vout );
+    y(i) = fix( 32768*vout/512 );
+    %y(i) = fix( vout );
 
     frame_pos = frame_pos + 1;
     if frame_pos > SAMPLES_PER_FRAME
         frame_pos = 1;
         % Накопили фрейм, кодируем-декодируем
-        [frame_data,enc] = encoder(frame_vinp,enc,dec);
+        %[frame_data,enc] = encoder(frame_vinp,enc,dec);
+        [frame_data,enc] = encoder2(frame_vinp,enc,dec);
 
         % count smooth-es
         if frame_data(1)<=frame_data(2)
@@ -199,7 +213,11 @@ for i=1:N
 %         end
 %         frame_data(3) = 0;
 
-        [frame_vout,dec] = decoder(frame_data,dec);
+        %[frame_vout,dec] = decoder(frame_data,dec);
+        [frame_vout,dec] = decoder2(frame_data,dec);
+%         figure(1);
+%         subplot(2,1,1);  plot(frame_vout);
+%         subplot(2,1,2);  plot(ttt_vout);
     end
 
     ttt_vinp(i) = vinp;
