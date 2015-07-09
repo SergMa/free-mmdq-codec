@@ -35,33 +35,49 @@ function [voice,dec] = decoder(data,dec)
     % Get absolute voice
     voice = zeros(1,N);
 
+    % TODO: correct formulaes to remove this check
+    for i=1:N-1
+        if dvoice(i) < 1
+            fprintf(1,'ALARM ZERO! %d\n', dvoice(i));
+            dvoice(i) = 1;
+        end
+        if dvoice(i) > dec.factor-1
+            fprintf(1,'ALARM BIG! %d\n', dvoice(i));
+            dvoice(i) = dec.factor-1;
+        end
+    end
+
     if 1
         if smooth0==0 && smooth1==0
             voice(1) = 0;
             for i=1:N-1
-                sss = 2*dvoice(i)/dec.factor - 1;
-                voice(i+1) = voice(i) + 1024 * sss/2;
+                %sss = 2*dvoice(i)/dec.factor - 1;
+                %voice(i+1) = voice(i) + 1024 * sss/2;
+                voice(i+1) = voice(i) + dec.table0( dvoice(i)+1 );
             end
         elseif smooth0==1 && smooth1==0
             %expand/compand smoothing
             voice(1) = 0;
             for i=1:N-1
-                sss = 2*dvoice(i)/dec.factor - 1;
-                voice(i+1) = voice(i) + 1024 * expand( sss/2 , 1 );
+                %sss = 2*dvoice(i)/dec.factor - 1;
+                %voice(i+1) = voice(i) + 1024 * expand( sss/2 , 1 );
+                voice(i+1) = voice(i) + dec.table1( dvoice(i)+1 );
             end
         elseif smooth0==0 && smooth1==1
             %expand/compand smoothing
             voice(1) = 0;
             for i=1:N-1
-                sss = 2*dvoice(i)/dec.factor - 1;
-                voice(i+1) = voice(i) + 1024 * expand( sss/2 , 2 );
+                %sss = 2*dvoice(i)/dec.factor - 1;
+                %voice(i+1) = voice(i) + 1024 * expand( sss/2 , 2 );
+                voice(i+1) = voice(i) + dec.table2( dvoice(i)+1 );
             end
         else
             %expand/compand smoothing
             voice(1) = 0;
             for i=1:N-1
-                sss = 2*dvoice(i)/dec.factor - 1;
-                voice(i+1) = voice(i) + 1024 * expand( sss/2 , 3 );
+                %sss = 2*dvoice(i)/dec.factor - 1;
+                %voice(i+1) = voice(i) + 1024 * expand( sss/2 , 3 );
+                voice(i+1) = voice(i) + dec.table3( dvoice(i)+1 );
             end
         end
     end
@@ -80,8 +96,8 @@ function [voice,dec] = decoder(data,dec)
     else
         div = dec.divtable( voicediff );
         for i=1:N
-            div = dec.divtable( voicediff + 1 ); % (1/voicediff)*1000000
-            voice(i) = diffv*(voice(i)-voicemin)*div/1000000 + minv;
+            div = dec.divtable( voicediff + 1 ); % (1/voicediff)*32768
+            voice(i) = diffv*(voice(i)-voicemin)*div/32768 + minv;
         end
 
         %for i=1:N

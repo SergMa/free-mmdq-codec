@@ -15,14 +15,39 @@ function [dec] = decoder2_init( samples_per_frame, bits_per_sample )
     dec.bits_per_sample   = bits_per_sample;
     dec.factor            = 2^dec.bits_per_sample;
 
-    % fill table for 1/div, where div=[0...1000000]
-    dec.divtable = zeros(1,1+1000000);
-    for div=0:1:+1000000
+    % fill table for 1/div, where div=[0...32768]
+    dec.divtable = zeros(1,1+32768);
+    for div=0:1:+32768
         if div>0
-            dec.divtable(div+1) = 1000000*1/div;  % 0.0=0 , 1.0=1000000
+            dec.divtable(div+1) = 32768*1/div;  % 0.0=0 , 1.0=32768
         else
             dec.divtable(div+1) = 0;
         end
+    end
+
+    % fill tables
+    dec.table0 = zeros(1,dec.factor);
+    for dv=1:dec.factor
+        sss = 2*(dv-1)*dec.factor/dec.factor - dec.factor;
+        dec.table0(dv) = sss;
+    end
+
+    dec.table1 = zeros(1,dec.factor);
+    for dv=1:dec.factor
+        sss = 2*(dv-1)*dec.factor/dec.factor - dec.factor;
+        dec.table1(dv) = dec.factor * expand( sss/(2*dec.factor) , 1 );
+    end
+
+    dec.table2 = zeros(1,dec.factor);
+    for dv=1:dec.factor
+        sss = 2*(dv-1)*dec.factor/dec.factor - dec.factor;
+        dec.table2(dv) = dec.factor * expand( sss/(2*dec.factor) , 1 );
+    end
+
+    dec.table3 = zeros(1,dec.factor);
+    for dv=1:dec.factor
+        sss = 2*(dv-1)*dec.factor/dec.factor - dec.factor;
+        dec.table3(dv) = dec.factor * expand( sss/(2*dec.factor) , 1 );
     end
 
 return
