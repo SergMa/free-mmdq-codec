@@ -54,11 +54,11 @@ function [data,enc] = encoder(voice,enc,dec)
     err2 = 0;
     err3 = 0;
     if diffdv==0
-        if maxv==0
+        if maxdv==0
             for i=1:N-1
                 data(3+i) = round( enc.factor/2 );
             end
-        elseif maxv>0
+        elseif maxdv>0
             for i=1:N-1
                 data(3+i) = round( enc.factor/2 ) + 1;
             end
