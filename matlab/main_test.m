@@ -22,8 +22,8 @@ TS = 1/FS;  % Sample (discretization) period, sec
 INPUT_FILENAME  = './input.wav'; % Name of file for input (noised) signal
 OUTPUT_FILENAME = './out.wav';   % Name of file for output (clean) signal
 
-SPECTROGRAM_WIDTH = 16; % Parameters of spectrograms
-SPECTROGRAM_OVR   = 1;
+SPECTROGRAM_WIDTH = 128; % Parameters of spectrograms
+SPECTROGRAM_OVR   = 16;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load input (voice,noise) signals from wave-files, generate signal to process
@@ -126,6 +126,7 @@ BITS_PER_SAMPLE   = 3;
 FACTOR = 2^BITS_PER_SAMPLE;
 COMPRESSION = (SAMPLES_PER_FRAME * 8) / (8 + 8 + 1 + (SAMPLES_PER_FRAME-1)*BITS_PER_SAMPLE);
 BITRATE = 64000 / COMPRESSION;
+MAXX = 1024;
 
 fprintf(1,'test of mycodec started...\n');
 fprintf(1,'samles per frame : %d\n', SAMPLES_PER_FRAME);
@@ -133,10 +134,12 @@ fprintf(1,'bits per sample  : %d\n', BITS_PER_SAMPLE);
 fprintf(1,'factor           : %d\n', FACTOR);
 fprintf(1,'compression      : %f\n', COMPRESSION);
 fprintf(1,'bitrate, bit/s   : %i\n', BITRATE);
+fprintf(1,'maxx             : %i\n', MAXX);
+
 
 % Create decoder and encoder structures
-%enc = encoder_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE );
-enc = encoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE );
+%enc = encoder_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
+enc = encoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
 
 %dec = decoder_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE );
 dec = decoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE );
@@ -167,17 +170,17 @@ for i=1:N
 %         fprintf(1,'@\n');
 %     end
 
-    vinp = fix( 512*x(i)/32768 );
-    if vinp>512
-        vinp = 512;
-    elseif vinp<-512
-        vinp = -512;
+    vinp = fix( MAXX*x(i)/32768 );
+    if vinp>MAXX
+        vinp = MAXX;
+    elseif vinp<-MAXX
+        vinp = -MAXX;
     end
     %vinp = fix( x(i) );
     frame_vinp( frame_pos ) = vinp;
 
     vout = frame_vout( frame_pos );
-    y(i) = fix( 32768*vout/512 );
+    y(i) = fix( 32768*vout/MAXX );
     %y(i) = fix( vout );
 
     frame_pos = frame_pos + 1;

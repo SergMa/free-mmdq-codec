@@ -27,27 +27,28 @@ function [dec] = decoder2_init( samples_per_frame, bits_per_sample )
 
     % fill tables
     dec.table0 = zeros(1,dec.factor);
-    for dv=1:dec.factor
-        sss = 2*(dv-1)*dec.factor/dec.factor - dec.factor;
-        dec.table0(dv) = sss;
+    for dv=0:dec.factor-1
+        %sss = dvoice(i)/dec.factor - 0.5;
+        sss = dv - (dec.factor/2);
+        dec.table0(dv+1) = sss;
     end
 
     dec.table1 = zeros(1,dec.factor);
-    for dv=1:dec.factor
-        sss = 2*(dv-1)*dec.factor/dec.factor - dec.factor;
-        dec.table1(dv) = dec.factor * expand( sss/(2*dec.factor) , 1 );
+    for dv=0:dec.factor-1
+        sss = dv - (dec.factor/2);
+        dec.table1(dv+1) = dec.factor * expand( sss/(2*dec.factor) , 1 );
     end
 
     dec.table2 = zeros(1,dec.factor);
-    for dv=1:dec.factor
-        sss = 2*(dv-1)*dec.factor/dec.factor - dec.factor;
-        dec.table2(dv) = dec.factor * expand( sss/(2*dec.factor) , 1 );
+    for dv=0:dec.factor-1
+        sss = dv - (dec.factor/2);
+        dec.table2(dv+1) = dec.factor * expand( sss/(2*dec.factor) , 1 );
     end
 
     dec.table3 = zeros(1,dec.factor);
-    for dv=1:dec.factor
-        sss = 2*(dv-1)*dec.factor/dec.factor - dec.factor;
-        dec.table3(dv) = dec.factor * expand( sss/(2*dec.factor) , 1 );
+    for dv=0:dec.factor-1
+        sss = dv - (dec.factor/2);
+        dec.table3(dv+1) = dec.factor * expand( sss/(2*dec.factor) , 1 );
     end
 
 return
