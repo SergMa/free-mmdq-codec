@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Mycodec decoder function (table version)
+% Mycodec decoder function (table version, integer division)
 % [data,dec] = decode(voice,dec)
 % INPUTS:
 %   data  = dim 1xM = data frame to decode
@@ -9,7 +9,7 @@
 %   dec   = decoder structure
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [voice,dec] = decoder2(data,dec)
+function [voice,dec] = decoder3(data,dec)
 
     N = dec.samples_per_frame;
 
@@ -78,25 +78,15 @@ function [voice,dec] = decoder2(data,dec)
     voicemax  = max(voice);
     voicemin  = min(voice);
     voicediff = voicemax - voicemin;
-
-    h = dec.maxx / dec.samples_per_frame;
-    voicediff_n = fix( voicediff * h / dec.maxx );
-    voicemax_n  = fix( voicemax  * h / dec.maxx );
-    voicemin_n  = fix( voicemin  * h / dec.maxx );
-
-    % voicemin_n  = [-maxx..+maxx]
-    % voicemax_n  = [-maxx..+maxx]
-    % voicediff_n = [0..2*maxx]
-
-    div = dec.divtable( voicediff_n + 1 ); %div=[0..2*maxx]
-
-    %fprintf(1,'h=%8.3f, voicediff_n=%8.3f, div=%8.3f\n', h, voicediff_n, div);
-
-    for i=1:N
-        tmp = voice(i);
-        voice_n = fix( voice(i) * h / dec.maxx );
-        voice(i) = minv + fix( diffv * (voice_n - voicemin_n)*div/(2*dec.maxx*2*dec.maxx) );
-        %fprintf(1,'i=%3d, minv=%8.3f, maxv=%8.3f, diffv=%8.3f, voice(i)=%8.3f --> voice(i)=%8.3f, voicemin=%8.3f\n', i, minv, maxv, diffv, tmp, voice(i), voicemin);
+    if voicediff == 0
+        for i=1:N
+            voice(i) = minv;
+        end
+    else
+        for i=1:N
+            d = voice(i) - voicemin;
+            voice(i) = fix(diffv * d / voicediff) + minv;
+        end
     end
 
     %for i=1:N

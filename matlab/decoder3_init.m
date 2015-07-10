@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Mycodec decoder function initialization (table version)
+% Mycodec decoder function initialization (table version, integer division)
 % [dec] = decoder_init( samples_per_frame, bits_per_sample )
 % INPUTS:
 %   samples_per_frame = number of voice samples per frame
@@ -9,22 +9,13 @@
 %   dec   = decoder structure
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [dec] = decoder2_init( samples_per_frame, bits_per_sample, maxx )
+function [dec] = decoder3_init( samples_per_frame, bits_per_sample, maxx )
 
     % set settings of decoder
     dec.samples_per_frame = samples_per_frame;
     dec.bits_per_sample   = bits_per_sample;
     dec.factor            = 2^dec.bits_per_sample;
     dec.maxx              = maxx;
-
-    % fill table for 1/div
-    % input values=[0..2*maxx]
-    % output values=[0..2*maxx]
-    dec.divtable = zeros(1,1+2*maxx);
-    dec.divtable(1) = 0;
-    for div=1:1:2*maxx
-        dec.divtable(div+1) = fix( 4 * maxx * maxx / div );
-    end
 
     % fill tables
     % inputs=[0..(dec.factor-1)]

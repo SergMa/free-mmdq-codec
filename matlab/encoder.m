@@ -86,6 +86,7 @@ function [data,enc] = encoder(voice,enc,dec)
         for i=1:N-1
             sss = dvoice(i)/ampdv;
             ddd = enc.factor/2 * sss + enc.factor/2;
+            ddd = min(ddd,7);
             data0(3+i) = round( ddd );
         end
         %expand/compand smoothing (smooth0=1,smooth1=0)
@@ -95,6 +96,7 @@ function [data,enc] = encoder(voice,enc,dec)
         for i=1:N-1
             sss   = compand( dvoice(i)/ampdv , 1 );
             ddd   = enc.factor/2 * sss + enc.factor/2;
+            ddd = min(ddd,7);
             data1(3+i) = round( ddd );
         end
         %expand/compand smoothing (smooth0=0,smooth1=1)
@@ -104,6 +106,7 @@ function [data,enc] = encoder(voice,enc,dec)
         for i=1:N-1
             sss   = compand( dvoice(i)/ampdv , 2 );
             ddd   = enc.factor/2 * sss + enc.factor/2;
+            ddd = min(ddd,7);
             data2(3+i) = round( ddd );
         end
         %expand/compand smoothing (smooth0=1,smooth1=1)
@@ -113,6 +116,7 @@ function [data,enc] = encoder(voice,enc,dec)
         for i=1:N-1
             sss   = compand( dvoice(i)/ampdv , 3 );
             ddd   = enc.factor/2 * sss + enc.factor/2;
+            ddd = min(ddd,7);
             data3(3+i) = round( ddd );
         end
 

@@ -10,34 +10,40 @@ clear all;
 close all;
 disp('started...');
 
-SAMPLES = 1:5*8000; % Number of samples to process (if 0 - process all available samples
-%SAMPLES = 6000:6500;
-%SAMPLES = 8144:8180; % Number of samples to process (if 0 - process all available samples
-%SAMPLES=0;
+SAMPLES = 1:3*8000; % Number of samples to process (if 0 - process all available samples
+%SAMPLES = 0;
 SHOW_GRAPHICS = 1;
 
-FS = 8000;  % Sample (discretization) frequency, Hz
-TS = 1/FS;  % Sample (discretization) period, sec
+FS = 8000;          % Sample (discretization) frequency, Hz
+TS = 1/FS;          % Sample (discretization) period, sec
+BITS = 16;          % Bits per sample in original input signal
+AMP = 2^(BITS-1)-1; % Max amplitude of original input signal (for BITS=16: AMP=32767)
 
-INPUT_FILENAME  = './input.wav'; % Name of file for input (noised) signal
-OUTPUT_FILENAME = './out.wav';   % Name of file for output (clean) signal
+INPUT_FILENAME    = './input.wav'; % Name of file for input (noised) signal
+OUTPUT_FILENAME_1 = './out1.wav';   % Name of file for output (clean) signal for codec version 1
+OUTPUT_FILENAME_2 = './out2.wav';   % Name of file for output (clean) signal for codec version 2
+OUTPUT_FILENAME_3 = './out3.wav';   % Name of file for output (clean) signal for codec version 3
 
-SPECTROGRAM_WIDTH = 128; % Parameters of spectrograms
-SPECTROGRAM_OVR   = 16;
+SPECTROGRAM_WIDTH = 256; % Parameters of spectrograms
+SPECTROGRAM_OVR   = 8;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load input (voice,noise) signals from wave-files, generate signal to process
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+CODEC_VERSION = 3;  % 1-matlab float point
+                    % 2-c-adapted, code tables, div tables
+                    % 3-c-adapted, code tables, integer division
+
 USE_AUTOSCALE = 1; % 0 - disable autoscale of input signals, 1 - enable
 
-%voice_filename = '../samples/cmu/sample1_8000.wav';         VOICE_AMP_DB = 0;
-%voice_filename = '../samples/cmu/sample2_8000.wav';         VOICE_AMP_DB = 0;
-voice_filename  = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = 0;  %female
-%voice_filename = '../samples/cmu/sample4_8000.wav';         VOICE_AMP_DB = 0;
-%voice_filename = '../samples/cmu/sample5_8000.wav';         VOICE_AMP_DB = -6;
-%voice_filename = '../samples/cmu/sample6_8000.wav';         VOICE_AMP_DB = 0;
-%voice_filename = '../samples/cmu/sample7_8000.wav';         VOICE_AMP_DB = 0;
+%voice_filename = '../samples/cmu/sample1_8000.wav';          VOICE_AMP_DB = 0;
+%voice_filename = '../samples/cmu/sample2_8000.wav';          VOICE_AMP_DB = 0;
+voice_filename  = '../samples/cmu/sample3_8000.wav';          VOICE_AMP_DB = 0;  %female
+%voice_filename = '../samples/cmu/sample4_8000.wav';          VOICE_AMP_DB = 0;
+%voice_filename = '../samples/cmu/sample5_8000.wav';          VOICE_AMP_DB = -6;
+%voice_filename = '../samples/cmu/sample6_8000.wav';          VOICE_AMP_DB = 0;
+%voice_filename = '../samples/cmu/sample7_8000.wav';          VOICE_AMP_DB = 0;
 %voice_filename  = '../samples/modems/v92-mohdenied.wav';     VOICE_AMP_DB = 0;
 %voice_filename  = '../samples/modems/v90-rockwellconex.wav'; VOICE_AMP_DB = 0;
 %voice_filename  = '../samples/modems/v34-33600bps.wav';      VOICE_AMP_DB = 0;
@@ -48,15 +54,15 @@ voice_filename  = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = 0;  
 %voice_filename  = '../samples/modems/ttytdd.wav';            VOICE_AMP_DB = 0;
 
 
-%noise_filename = '../samples/noise/noise_white.wav';        NOISE_AMP_DB = -12;
-%noise_filename = '../samples/noise/noise_pink.wav';         NOISE_AMP_DB = -12;
-%noise_filename = '../samples/noise/noise_brown.wav';        NOISE_AMP_DB = -12;
-noise_filename = '../samples/noise/noise_badbearing.wav';   NOISE_AMP_DB = -99;
-%noise_filename  = '../samples/noise/noise_diesel.wav';       NOISE_AMP_DB = -99;  %
-%noise_filename = '../samples/noise/noise_lacetti.wav';      NOISE_AMP_DB = -12;
-%noise_filename = '../samples/noise/noise_lacetti2.wav';     NOISE_AMP_DB = -12;
-%noise_filename = '../samples/noise/noise_tractor.wav';      NOISE_AMP_DB = -12;
-%noise_filename = '../samples/noise/noise_yamzdiesel.wav';   NOISE_AMP_DB = -12;
+%noise_filename = '../samples/noise/noise_white.wav';         NOISE_AMP_DB = -12;
+%noise_filename = '../samples/noise/noise_pink.wav';          NOISE_AMP_DB = -12;
+%noise_filename = '../samples/noise/noise_brown.wav';         NOISE_AMP_DB = -12;
+noise_filename  = '../samples/noise/noise_badbearing.wav';    NOISE_AMP_DB = -99;
+%noise_filename = '../samples/noise/noise_diesel.wav';        NOISE_AMP_DB = -99;  %
+%noise_filename = '../samples/noise/noise_lacetti.wav';       NOISE_AMP_DB = -12;
+%noise_filename = '../samples/noise/noise_lacetti2.wav';      NOISE_AMP_DB = -12;
+%noise_filename = '../samples/noise/noise_tractor.wav';       NOISE_AMP_DB = -12;
+%noise_filename = '../samples/noise/noise_yamzdiesel.wav';    NOISE_AMP_DB = -12;
 
 [x_voice,ffs_voice,bits_voice] = wavread(voice_filename);
 if ffs_voice~=FS
@@ -71,7 +77,7 @@ end
 % Make horizontal vectors. If wavefiles are stereo, use only the first channels
 % now x_voice, x_noise have range [-1..+1]
 x_voice = x_voice(:,1).';
-x_voice = fix(x_voice * 32767);
+x_voice = fix(x_voice * AMP);
 N_voice = size(x_voice,2);
 
 % Limit lenght of signal, if needed.
@@ -81,18 +87,17 @@ if size(SAMPLES,2) > 1
 end
 
 x_noise = x_noise(:,1).';
-x_noise = fix(x_noise * 32767);
+x_noise = fix(x_noise * AMP);
 N_noise = size(x_noise,2);
 
 % Normalize power of signals, if needed
 if USE_AUTOSCALE==1
-    x_voice = fix( autoscale(x_voice, 32767) );
-    x_noise = fix( autoscale(x_noise, 32767) );
+    x_voice = fix( autoscale(x_voice, AMP) );
+    x_noise = fix( autoscale(x_noise, AMP) );
 end
 
 % Add noise to voice
 x = fix( mixer( x_voice, VOICE_AMP_DB, x_noise, NOISE_AMP_DB ) );
-%x = [0 0 0 0  -1000 100 -3000 -3500   -1300 10000 11000 4000   0 0 0 0 ];
 N = length(x);
 
 % Convert sample numbers into time ticks (we will use this for plotting)
@@ -105,17 +110,20 @@ wavwrite( (x/32768).',FS,bits_voice,INPUT_FILENAME);
 % Initialization
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%SAMPLES_PER_FRAME = 13; %40000 bit/s
+%BITS_PER_SAMPLE   = 4;
+
 %SAMPLES_PER_FRAME = 7; %40000 bit/s
 %BITS_PER_SAMPLE   = 3;
 
-SAMPLES_PER_FRAME = 8; %38000 bit/s
-BITS_PER_SAMPLE   = 3;
+%SAMPLES_PER_FRAME = 8; %38000 bit/s
+%BITS_PER_SAMPLE   = 3;
 
 %SAMPLES_PER_FRAME = 10; %35200 bit/s
 %BITS_PER_SAMPLE   = 3;
 
-%SAMPLES_PER_FRAME = 14; %32000 bit/s
-%BITS_PER_SAMPLE   = 3;
+SAMPLES_PER_FRAME = 14; %32000 bit/s
+BITS_PER_SAMPLE   = 3;
 
 %SAMPLES_PER_FRAME = 15; %24000 bit/s
 %BITS_PER_SAMPLE   = 2;
@@ -126,24 +134,36 @@ BITS_PER_SAMPLE   = 3;
 FACTOR = 2^BITS_PER_SAMPLE;
 COMPRESSION = (SAMPLES_PER_FRAME * 8) / (8 + 8 + 1 + (SAMPLES_PER_FRAME-1)*BITS_PER_SAMPLE);
 BITRATE = 64000 / COMPRESSION;
-MAXX = 1024;
+MAXX = 32768;
 
 fprintf(1,'test of mycodec started...\n');
+fprintf(1,'-----------------------\n');
+fprintf(1,'codec version    : %d\n', CODEC_VERSION);
+fprintf(1,'bits             : %d\n', BITS);
+fprintf(1,'amp              : %d\n', AMP);
+fprintf(1,'maxx             : %d\n', MAXX);
+fprintf(1,'-----------------------\n');
 fprintf(1,'samles per frame : %d\n', SAMPLES_PER_FRAME);
 fprintf(1,'bits per sample  : %d\n', BITS_PER_SAMPLE);
 fprintf(1,'factor           : %d\n', FACTOR);
 fprintf(1,'compression      : %f\n', COMPRESSION);
 fprintf(1,'bitrate, bit/s   : %i\n', BITRATE);
 fprintf(1,'maxx             : %i\n', MAXX);
+fprintf(1,'-----------------------\n');
 
 
 % Create decoder and encoder structures
-%enc = encoder_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
-enc = encoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
-
-%dec = decoder_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE );
-dec = decoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE );
-
+switch CODEC_VERSION
+case 1
+    enc = encoder_init ( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
+    dec = decoder_init ( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
+case 2
+    enc = encoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
+    dec = decoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
+case 3
+    enc = encoder3_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
+    dec = decoder3_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Main processing loop
@@ -166,29 +186,33 @@ smooth3_N = 0;
 
 for i=1:N
 
-%     if i>=round(8000*0.041)
-%         fprintf(1,'@\n');
-%     end
-
-    vinp = fix( MAXX*x(i)/32768 );
+    % scale input, put input into frame-buffer
+    vinp = fix( MAXX*x(i)/AMP );
     if vinp>MAXX
         vinp = MAXX;
     elseif vinp<-MAXX
         vinp = -MAXX;
     end
-    %vinp = fix( x(i) );
     frame_vinp( frame_pos ) = vinp;
 
+    % get output from frame-buffer, scale it
     vout = frame_vout( frame_pos );
-    y(i) = fix( 32768*vout/MAXX );
-    %y(i) = fix( vout );
+    y(i) = fix( AMP*vout/MAXX );
 
+    % process samples
     frame_pos = frame_pos + 1;
     if frame_pos > SAMPLES_PER_FRAME
         frame_pos = 1;
-        % Накопили фрейм, кодируем-декодируем
-        %[frame_data,enc] = encoder(frame_vinp,enc,dec);
-        [frame_data,enc] = encoder2(frame_vinp,enc,dec);
+
+        % voice frame is ready, encode it to data
+        switch CODEC_VERSION
+        case 1
+            [frame_data,enc] = encoder(frame_vinp,enc,dec);
+        case 2
+            [frame_data,enc] = encoder2(frame_vinp,enc,dec);
+        case 3
+            [frame_data,enc] = encoder3(frame_vinp,enc,dec);
+        end
 
         % count smooth-es
         if frame_data(1)<=frame_data(2)
@@ -207,20 +231,17 @@ for i=1:N
         else
             smooth3_N = smooth3_N + 1;
         end
+    
+        % decode data frame to voice
+        switch CODEC_VERSION
+        case 1
+            [frame_vout,dec] = decoder(frame_data,dec);
+        case 2
+            [frame_vout,dec] = decoder2(frame_data,dec);
+        case 3
+            [frame_vout,dec] = decoder3(frame_data,dec);
+        end
 
-% uncomment this to disable smoothing on receiving
-%         if frame_data(1) > frame_data(2)
-%             tmp = frame_data(2);
-%             frame_data(2) = frame_data(1);
-%             frame_data(1) = tmp;
-%         end
-%         frame_data(3) = 0;
-
-        %[frame_vout,dec] = decoder(frame_data,dec);
-        [frame_vout,dec] = decoder2(frame_data,dec);
-%         figure(1);
-%         subplot(2,1,1);  plot(frame_vout);
-%         subplot(2,1,2);  plot(ttt_vout);
     end
 
     ttt_vinp(i) = vinp;
@@ -241,44 +262,68 @@ figure(1);
 subplot(2,1,1);
     plot(t,x);
     title('original signal');  xlabel('t,sec');  ylabel('x');
-    ylim([-32768, +32768]);
+    ylim([-AMP, +AMP]);
+    grid on;
 subplot(2,1,2);
     plot(t,y);
     title('encoded/decoded signal');  xlabel('t,sec');  ylabel('y');
-    ylim([-32768, +32768]);
+    ylim([-AMP, +AMP]);
+    grid on;
 
 % Build and plot spectrogramms of signals
 figure(2);
-subplot(2,1,1);
+subplot(3,1,1);
     s_signal = spectrogram( x, SPECTROGRAM_WIDTH, FS, SPECTROGRAM_OVR);
-    title('original signal');
-subplot(2,1,2);
+    title('original signal spectrogramm');
+subplot(3,1,2);
     s_clean = spectrogram( y, SPECTROGRAM_WIDTH, FS, SPECTROGRAM_OVR);
-    title('encoded/decoded signal');
+    title('encoded/decoded signal spectrogramm');
+subplot(3,1,3);
+    time = (0:N)/FS;
+    freq = 0:FS/2/SPECTROGRAM_WIDTH:FS/2;
+    imagesc(time,freq,abs(s_signal - s_clean) );
+    axis xy;
+    xlabel('time,sec');
+    ylabel('freq,Hz');
+    %colorbar;
+    title('difference of spectrogramms');
 
-% Compare input/output waveforms [-127..127] scale
+% Compare input/output waveforms [-MAXX..MAXX] scale
+ttt_vout_shifted = [ ttt_vout(SAMPLES_PER_FRAME+1:end) , zeros(1,SAMPLES_PER_FRAME) ]; %сдвигаем vout, чтобы компенсировать задержку энкодера
 figure(3);
-    ttt_vout_shifted = [ ttt_vout(SAMPLES_PER_FRAME+1:end) , zeros(1,SAMPLES_PER_FRAME) ]; %сдвигаем vout, чтобы компенсировать задержку энкодера
     plot( t, ttt_vinp,'r.-',  t, ttt_vout_shifted,'b.-' );  xlabel('t,sec');  ylabel('y');
+    ylim([-MAXX MAXX]);
+    title('-MAXX..+MAXX quantizied signal');
     legend('vinp','vout(shifted)');
 
 figure(4);
     plot( t, ttt_vinp - ttt_vout_shifted,'r.-' );  xlabel('t,sec');  ylabel('y');
+    title('-MAXX..+MAXX quantizied signal error');
     legend('error(vinp,vout(shifted))');
+    ylim([-MAXX MAXX]);
 
+% Show errors values
 err = ttt_vinp - ttt_vout_shifted;
 avg_err = mean( abs(err) );
+max_err = max( abs(err) );
+std_err = std( abs(err) );
 fprintf(1,'avg error=%6d\n',avg_err);
+fprintf(1,'max error=%6d\n',max_err);
+fprintf(1,'std error=%6d\n',std_err);
 
-% Compare input/output waveforms [-32767..32767] scale
+% Compare input/output waveforms [-AMP..AMP] scale
 figure(5);
     y_shifted = [ y(SAMPLES_PER_FRAME+1:end) , zeros(1,SAMPLES_PER_FRAME) ]; %сдвигаем vout, чтобы компенсировать задержку энкодера
     plot( t, x,'r.-',  t, y_shifted,'b.-' );  xlabel('t,sec');  ylabel('y');
+    title('-AMP..+AMP quantizied signal');
     legend('x','y(shifted)');
+    ylim([-AMP AMP]);
 
 figure(6);
     plot( t, x - y_shifted,'r.-' );  xlabel('t,sec');  ylabel('y');
+    title('-AMP..+AMP quantizied signal error');
     legend('error(x,y(shifted))');
+    ylim([-AMP AMP]);
 
 end
     
@@ -286,6 +331,13 @@ end
 % Save processed (clean) signal into output wavefile
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-wavwrite( (y/32768).', FS, bits_voice, OUTPUT_FILENAME);
+switch CODEC_VERSION
+case 1
+    wavwrite( (y/AMP).', FS, bits_voice, OUTPUT_FILENAME_1 );
+case 2
+    wavwrite( (y/AMP).', FS, bits_voice, OUTPUT_FILENAME_2 );
+case 3
+    wavwrite( (y/AMP).', FS, bits_voice, OUTPUT_FILENAME_3 );
+end
 
 fprintf(1,'test finished! %d samples processed!\n', N);

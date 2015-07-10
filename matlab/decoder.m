@@ -18,7 +18,7 @@ function [voice,dec] = decoder(data,dec)
         smooth0 = 0;
     else
         smooth0 = 1;
-        tmp = minv;
+        tmp  = minv; %swap minv,maxv
         minv = maxv;
         maxv = tmp;
     end

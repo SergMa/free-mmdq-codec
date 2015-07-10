@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Mycodec encoder function initialization (table version)
+% Mycodec encoder function initialization (table version, integer division)
 % [enc] = encoder_init( samples_per_frame, bits_per_sample )
 % INPUTS:
 %   samples_per_frame = number of voice samples per frame
@@ -9,21 +9,13 @@
 %   enc   = encoder structure
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [enc] = encoder2_init( samples_per_frame, bits_per_sample, maxx )
+function [enc] = encoder3_init( samples_per_frame, bits_per_sample, maxx )
 
     % set settings of encoder
     enc.samples_per_frame = samples_per_frame;
     enc.bits_per_sample   = bits_per_sample;
     enc.factor            = 2^bits_per_sample;
     enc.maxx              = maxx;
-
-    % fill table for 1/div, where div=[0...2*maxx*1024]
-    % values=[0..2*maxx]
-    enc.divtable = zeros(1,2*maxx+1);
-    enc.divtable(1) = 0;
-    for div=1:1:2*maxx
-        enc.divtable(div+1) = fix( 2*maxx*1024/div );  % 0.0=0 , 1.0=2*maxx*1024
-    end
 
     % encode tables
     % inputs=dvoice/ampdv = [-maxx..+maxx]
@@ -41,7 +33,7 @@ function [enc] = encoder2_init( samples_per_frame, bits_per_sample, maxx )
 
     enc.table1 = zeros(1,2*maxx+1);
     for a=-maxx:1:maxx
-        b = fix( maxx*compand(a/maxx,1) ) + maxx; %b=[0..2*maxx]
+        b = round( maxx*compand(a/maxx,1) ) + maxx; %b=[0..2*maxx]
         sss = round( enc.factor * b / (2*maxx) );
         if sss > (enc.factor-1)
             sss = enc.factor-1;
@@ -51,7 +43,7 @@ function [enc] = encoder2_init( samples_per_frame, bits_per_sample, maxx )
 
     enc.table2 = zeros(1,2*maxx+1);
     for a=-maxx:1:maxx
-        b = fix( maxx*compand(a/maxx,1) ) + maxx; %b=[0..2*maxx]
+        b = round( maxx*compand(a/maxx,1) ) + maxx; %b=[0..2*maxx]
         sss = round( enc.factor * b / (2*maxx) );
         if sss > (enc.factor-1)
             sss = enc.factor-1;
@@ -61,7 +53,7 @@ function [enc] = encoder2_init( samples_per_frame, bits_per_sample, maxx )
 
     enc.table3 = zeros(1,2*maxx+1);
     for a=-maxx:1:maxx
-        b = fix( maxx*compand(a/maxx,1) ) + maxx; %b=[0..2*maxx]
+        b = round( maxx*compand(a/maxx,1) ) + maxx; %b=[0..2*maxx]
         sss = round( enc.factor * b / (2*maxx) );
         if sss > (enc.factor-1)
             sss = enc.factor-1;
