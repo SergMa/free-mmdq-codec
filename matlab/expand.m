@@ -10,41 +10,53 @@ function y = expand( x , ver )
 
     case 2
         % VER2: power 1.5 table
-        %a = -1:0.01:1;
-        %table = sign(a) .* abs(a) .^ (1.4);
+        a = -1:0.01:1;
+        table = sign(a) .* abs(a) .^ (1.4);
 
-        a = 0.01:0.01:1;
-        N=length(a);
-        table1 = zeros(1,N);
-        for i=1:N
-            if a(i)<=0.1
-                table1(i) = (0.3/0.1)*a(i);
-            elseif a(i)<=0.9
-                table1(i) = (0.4/0.8)*(a(i)-0.1) + 0.3;
-            else
-                table1(i) = (0.3/0.1)*(a(i)-0.9) + 0.7;
-            end
-        end
-        table = [ -fliplr(table1) , 0 , table1 ];
+        %a = 0.01:0.01:1;
+        %N=length(a);
+        %table1 = zeros(1,N);
+        %for i=1:N
+        %    if a(i)<=0.1
+        %        table1(i) = (0.3/0.1)*a(i);
+        %    elseif a(i)<=0.9
+        %        table1(i) = (0.4/0.8)*(a(i)-0.1) + 0.3;
+        %    else
+        %        table1(i) = (0.3/0.1)*(a(i)-0.9) + 0.7;
+        %    end
+        %end
+        %table = [ -fliplr(table1) , 0 , table1 ];
+
+        %a = 0.01:0.01:1;
+        %N=length(a);
+        %table1 = zeros(1,N);
+        %for i=1:N
+        %    if a(i)<=0.1
+        %        table1(i) = (0.1/0.3)*a(i);
+        %    else
+        %        table1(i) = (0.9/0.7)*(a(i)-0.3) + 0.1;
+        %    end
+        %end
+        %table = [ -fliplr(table1) , 0 , table1 ];
 
     case 3
         % VER3: power 0.7 table
-        %a = -1:0.01:1;
-        %table = sign(a) .* abs(a) .^ (1.8);
+        a = -1:0.01:1;
+        table = sign(a) .* abs(a) .^ (1.8);
 
-        a = 0.01:0.01:1;
-        N=length(a);
-        table1 = zeros(1,N);
-        for i=1:N
-            if a(i)<=0.3
-                table1(i) = (0.1/0.3)*a(i);
-            elseif a(i)<=0.7
-                table1(i) = (0.8/0.4)*(a(i)-0.3) + 0.1;
-            else
-                table1(i) = (0.1/0.3)*(a(i)-0.7) + 0.9;
-            end
-        end
-        table = [ -fliplr(table1) , 0 , table1 ];
+        %a = 0.01:0.01:1;
+        %N=length(a);
+        %table1 = zeros(1,N);
+        %for i=1:N
+        %    if a(i)<=0.3
+        %        table1(i) = (0.1/0.3)*a(i);
+        %    elseif a(i)<=0.7
+        %        table1(i) = (0.8/0.4)*(a(i)-0.3) + 0.1;
+        %    else
+        %        table1(i) = (0.1/0.3)*(a(i)-0.7) + 0.9;
+        %    end
+        %end
+        %table = [ -fliplr(table1) , 0 , table1 ];
 
     case 4
         % VER4: power 2 table
