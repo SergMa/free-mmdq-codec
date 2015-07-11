@@ -1,0 +1,180 @@
+================================================================================
+Description of MMDQ (Min-Max-Differencies-Quantization) codec.
+
+(c) Sergei Mashkin, 2015
+================================================================================
+
+MMDQ-codec has been created as very low MIPS (CPU usage) alternative of
+G.726-32 (ADPCM codec  with 32 kbits/sec bitrate, 8000 Hz sample rate).
+
+Main properties of MMDQ-codec:
+1.Very low MIPS (CPU usage)
+2.Waveform lossy compression
+3.No restoration delay after corrupter/lost received frame (Note: G.726 has this).
+4.Transparancy for fax (up to ???? bod) or DTMF signals (for bitrates >= 32 kbits/sec)
+5.Easy adaptation to other bitrates or/and sample rates
+6.Algorithm simplicity
+
+MATLAB tests of MMDQ-codec shows, that it has next signal restoration errors
+(in compare with G.711, G.726-32):
+
+Average MSE (Mean Squared Error) of [-1.0...+1.0] normalized signals:
+G.711 A-law:       0.0000
+G.726 32kbit/sec:  0.0000
+MMDQ 32kbit/sec:   0.0000
+
+================================================================================
+Min-Max-Differencies-Quantization Frame Format
+================================================================================
+
+Note: MATLAB/Octave/FreeMat array index notation is used, so index of first
+array element is 1 (not 0)!
+
+Encoded data frame has next format:
+
+MINX/MAXX
+MAXX/MINX
+SMOOTH-BITS[2..S]
+DIFF[1..(N-1)]
+
+Where:
+MINX - minimal signal value in signal frame to be encoded (it may be encoded
+    by A-law/mu-law encoder or by other compander method)
+
+MINX - maximal signal value in signal frame to be encoded (it may be encoded
+    by A-law/mu-law encoder or by other compander method)
+
+    Note: if MINX is first and MAXX is next, decoder must set SMOOTH-BIT[0]=0,
+    if MAXX is first and MINX is next decoder must set SMOOTH-BIT[0]=1.
+
+S - total number of smooth bits.
+
+SMOOTH-BITS[1..S] - array of smooth bits. Smooth bits define code of decoder
+    function/table will be used to restore linear differencies from DIFF[]
+    array elements.
+
+N - number of signal samples in single frame to be encoded.
+
+DIFF[1..(N-1)] - array of companded relative differencies between signal samples.
+
+--------------------------------------------------------------------------------
+
+For 32 kbits/sec version of MMDQ-codec encoded data frame format is:
+
+MINX (8 bits) - A-law companded signal value
+
+MAXX (8 bits) - A-law companded signal value
+
+SMOOTH-BITS (1 bit) - smooth bit number 2 (number 1 is defined by MIN/MAX order).
+
+DIFF[1..13] (13*3=39 bits) - differencies (3 bits per difference, samples per
+    frame is 14).
+
+Total frame size (for 14 voice samples to be encoded)
+is 8+8+1+39=56 bits (7 bytes).
+
+================================================================================
+MMDQ Algorithm Description
+================================================================================
+
+Note: MATLAB/Octave/FreeMat array index notation is used, so index of first
+array element is 1 (not 0)!
+
+--------------------------------------------------------------------------------
+
+Encoding:
+
+1.Get sound samples X[i], i=1..N in linear format (these may be decoded A-law).
+
+2.Find MINX, MAXX over X[i], i=1..N
+
+3.Calculate DIFFX=MAXX-MINX
+
+4.Calculate DX[i]=X[i+1]-X[i], i=1..(N-1)
+
+5.Get AMPDX = max(abs(DX[i])), i=1..(N-1) - maximum amplitude of DX[i].
+
+6.For every difference companding function DV[s]=F[s](DX), s=1..SMOOTH_N calculate
+maximum reconstruction error ERR[s]:
+
+    6.1. Get DV[s][i]=F[s](DX[i]), i=1..(N-1)
+
+         Note: different companding functions F[s](DX) are used to minimize
+         encode/decode reconstruction error. Default F[s](DX) is linear function:
+         F[s](DX)=DX
+
+    6.2. Quantize DV[i] into DIFF[i] values. Here i=1..(N-1). If encoder use
+         BITS bits per difference, then DIFF[i] will be of range [0..(FACTOR-1)],
+         where FACTOR=2^BITS.
+         Approximate quantization function is:  DIFF[i]=FACTOR*DV[i]/AMPDX + FACTOR/2,
+         where i=1..(N-1).
+
+         Note special case: AMPDX==0
+
+    6.2. Prepare data_frame[s] for MINX, MAXX, SMOOTH==s, DIFF[s][i], i=1..(N-1)
+
+         Note: if SMOOTH(bit0)==0, put MINX first, MAXX second.
+         If SMOOTH(bit0)==1, put MAXX first, MINX second.
+
+    6.3. Decode data_frame[s] into sound waveform: Y[s][i], i=1..N
+
+    6.4. Calculate ERR[s]=max(abs(X[i]-Y[s][i])), i=1..N
+
+7.Find MINERR=min(ERR[s]), s=1..SMOOTH_N. Let's s0 - SMOOTH for
+data_frame with best (minimal) reconstruction error: ERR[s0]=MINERR.
+
+8.Ouput data_frame[s0].
+
+--------------------------------------------------------------------------------
+
+Decoding:
+
+1.Get encoded data: data_frame=B[k], k=1..M  (M-total size of data, bits).
+
+2.Get MINX, MAXX, SMOOTH_BIT[1..s], DIFF[1..(N-1)] from data_frame.
+For example, for 32 kbits/sec 8000 Hz format:
+
+M1=B[1..8]
+M2=B[9..16]
+if M1<=M2
+    SMOOTH_BIT[1]=0
+    MINX=M1
+    MAXX=M2
+else
+    SMOOTH_BIT[1]=1
+    MINX=M2
+    MAXX=M1
+end
+SMOOTH_BIT[2]=B[17]
+i=1
+k=18
+while(k<=M)
+    DIFF[i]=B[k..k+2]
+    i=i+1
+    k=k+3
+end
+
+3.Calculate used smooth: s0=SMOOTH_BIT[1..s]
+
+4.Calculate DIFFX=MAXX-MINXX
+
+5.Calculate first estimation of sound samples values:
+Y[1]=0
+for i=2:N
+    DY = R[s0]( 2*DIFF[i-1]/FACTOR - 1 )
+    Y[i] = Y[i-1] + DY
+end
+
+Where DY=R[s](DIFF) is difference decompanding function for defined smooth s0.
+This function is inverse for DIFF=F[s](DY).
+
+6.Find MINY, MAXY over Y[i], i=1..N.
+
+7.Calculate DIFFY=MAXY-MINY
+
+8.Scale and shift Y[i], i=1..N to the range [MINX..MAXX] by formula:
+for i=1:N
+    Y[i] = DIFFX * ( Y[i]-MINY ) / DIFFY + MINX
+end
+
+Note special case: DIFFY==0
