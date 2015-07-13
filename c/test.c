@@ -8,8 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <wave.h>
-#include <mmdq_encoder.h>
-#include <mmdq_decoder.h>
+#include <mmdq_codec.h>
 
 void usage(void)
 {
