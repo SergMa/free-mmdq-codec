@@ -40,17 +40,13 @@ void usage(void)
     return;
 }
 
-#define MAX_SAMPLES_PER_FRAME (1000)
-#define MAX_DATA_SIZE         (MAX_SAMPLES_PER_FRAME*2+2+1) /* one sample = 2 bytes - no compression */
-
 #define ACTION_ENCODE   0
 #define ACTION_DECODE   1
 #define ACTION_RESTORE  2
 
 int main( int argc, char **argv )
 {
-    struct mmdq_encoder_s enc;
-    struct mmdq_decoder_s dec;
+    struct mmdq_codec_s codec;
     int          spf;
     int          bps;
     int          smoothon;
@@ -63,10 +59,12 @@ int main( int argc, char **argv )
     FILE       * df = NULL;  /* input/output data file */
 
     int          err;
-    int16_t      x[MAX_SAMPLES_PER_FRAME];
-    int16_t      y[MAX_SAMPLES_PER_FRAME];
-    uint8_t      data[MAX_DATA_SIZE];
+    int16_t      x[SAMPLES_PER_FRAME_MAX];
+    //int16_t      y[SAMPLES_PER_FRAME_MAX];
+    uint8_t      data[DATA_SIZE_MAX];
     uint32_t     samples;
+    int          rdsamples;
+    int          bytes;
     uint32_t     processed;
 
     if(argc<=0) {
@@ -121,14 +119,9 @@ int main( int argc, char **argv )
     }
 
     /**** initialize variables ****/
-    err = mmdq_encoder_init( &enc, spf, bps, smoothon );
+    err = mmdq_codec_init( &codec, spf, bps, smoothon, 0 ); //decoder_only=0
     if(err<0) {
-        printf("error: mmdq_encoder_init() failed\n");
-        goto exit_fail;
-    }
-    err = mmdq_decoder_init( &dec, spf, bps, smoothon );
-    if(err<0) {
-        printf("error: mmdq_decoder_init() failed\n");
+        printf("error: mmdq_codec_init() failed\n");
         goto exit_fail;
     }
     iwf = wavefile_create();
@@ -173,7 +166,7 @@ int main( int argc, char **argv )
         printf("  samples  : %u\n", samples );
 
         /* create/open output datafile */
-        df = fopen(data_filename,'w');
+        df = fopen(data_filename,"w");
         if(!df) {
             printf("error: could not create/open output datafile \"%s\"", data_filename);
             goto exit_fail;
@@ -197,14 +190,14 @@ int main( int argc, char **argv )
             }
 
             /* encode samples */
-            err = mmdq_encode( &enc, &dec, x, data, &datasize );
+            err = mmdq_encode( &codec, x, spf, data, sizeof(data), &bytes );
             if(err) {
                 printf("error: mmdq_encode() failed!\n");
                 goto exit_fail;
             }
 
             /* write encode data into file */
-            err = fwrite( df, data, datasize );
+            err = fwrite( data, bytes, 1, df );
             if(err!=1) {
                 printf("error: fwrite(data) failed!\n");
                 goto exit_fail;
@@ -219,14 +212,14 @@ int main( int argc, char **argv )
     case ACTION_DECODE:
 
         /* open input datafile */
-        df = fopen(data_filename,'r');
+        df = fopen(data_filename,"r");
         if(!df) {
             printf("error: could not open input datafile \"%s\"", data_filename);
             goto exit_fail;
         }
 
         /* open output wavefile */
-        err = wavefile_write_open( owf, out_wave_filename );
+        err = wavefile_write_open( owf, out_wave_filename, WAVETYPE_MONO_8000HZ_PCM16 );
         if(err<0) {
             printf("error: could not create wavefile \"%s\"\n", out_wave_filename);
             goto exit_fail;
@@ -236,8 +229,9 @@ int main( int argc, char **argv )
         processed = 0;
         while(1) {
 
+            bytes = (8+8+1+(spf-1)*bps) / 8;  //TODO: zero add bits to full bytes
             /* read encode data from file */
-            err = fread( df, data, datasize );
+            err = fread( data, bytes, 1, df );
             if(err!=1) {
                 printf("error: fread(data) failed!\n");
                 goto exit_fail;
@@ -258,7 +252,7 @@ int main( int argc, char **argv )
             }
 
             /* encode samples */
-            err = mmdq_encode( &enc, &dec, x, data, &datasize );
+            err = mmdq_decode( &codec, data, bytes, x, sizeof(x), &rdsamples );
             if(err) {
                 printf("error: mmdq_encode() failed!\n");
                 goto exit_fail;
@@ -274,7 +268,7 @@ int main( int argc, char **argv )
 
     case ACTION_RESTORE:
 
-
+        //...
 
         break;
 
@@ -283,77 +277,16 @@ int main( int argc, char **argv )
         goto exit_fail;
     }
 
-
-
-
-
-
-    if(encode)
-    {
-    }
-    else
-    {
-        /**** open output wavefile ****/
-        err = wavefile_write_open ( wf, wave_filename, WAVETYPE_MONO_8000HZ_PCM16 );
-        if(err<0) {
-            printf("error: could not open wavefile \"%s\"\n", wave_filename);
-            goto exit_fail;
-        }
-    }
-
-    /**** encode sound/decode data ****/
-    printf("processing...\n");
-    processed = 0;
-    while(1) {
-        /* wavefile_read_voice() returns:
-         *  0 = ok
-         *  1 = end of file
-         * -1 = error
-         */
-        err = wavefile_read_voice ( iwf, &x, 1 );  /* samples=1 */
-        if(err<0) {
-            printf("error: could not read sample from input file\n");
-            break;
-        }
-        else if(err==1) {
-            break;
-        }
-
-        /* process audio */
-        x = ASHIFT16(x,-2);
-
-        y = noise_remover ( &nrm, x, 1 );  /* training=1 */
-
-        if( y>8192 ) // 8192 = ASHIFT16( 32768, -2 )
-            y = 32767;
-        else if( y<-8192 )
-            y = -32768;
-        else
-            y = ASHIFT16(y,+2);
-
-        /* write cleaned sound to output wavefile */
-        err = wavefile_write_voice ( owf, &y, 1 ); /* samples=1 */
-        if(err<0) {
-            printf("error: could not write sample to output file\n");
-            break;
-        }
-
-        processed++;
-    }
-    printf("%u samples has been successfully processed\n", processed);
-
-    /* Close wave-file */
-    (void) wavefile_close( wf );
-
-    /* free memory */
-    wavefile_destroy( wf );
-
     exit(EXIT_SUCCESS);
 
 exit_fail:
-    if(wf) {
-        (void) wavefile_close( wf );
-        wavefile_destroy( wf );
+    if(iwf) {
+        (void) wavefile_close( iwf );
+        wavefile_destroy( iwf );
+    }
+    if(owf) {
+        (void) wavefile_close( owf );
+        wavefile_destroy( owf );
     }
     exit(EXIT_FAILURE);
 }

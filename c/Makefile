@@ -30,7 +30,7 @@ CFLAGS += -I.\
           -Iwave/gsmlib \
           -include "wave/gsmlib/_config.h"
 
-LFLAGS =
+LFLAGS = -lm
 
 CC = $(CROSS_COMPILE)gcc $(CFLAGS) $(DEFS)
 LD = $(CROSS_COMPILE)gcc $(LFLAGS)
