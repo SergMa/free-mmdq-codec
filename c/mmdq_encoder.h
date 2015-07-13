@@ -14,6 +14,9 @@
 /******************************************************************************/
 
 #define MAXX 32768
+#define SAMPLES_PER_FRAME_MAX  1000
+#define BITS_PER_SAMPLE_MAX    8
+#define DATA_SIZE_MAX          (SAMPLES_PER_FRAME_MAX+3)
 
 struct mmdq_encoder_s {
     int       samples_per_frame;
@@ -22,11 +25,8 @@ struct mmdq_encoder_s {
     int       factor;
     int       bitrate;
 
-    int32_t * divtable  = NULL;
-    uint8_t * enctable0 = NULL;
-    uint8_t * enctable1 = NULL;
-    uint8_t * enctable2 = NULL;
-    uint8_t * enctable3 = NULL;
+    int32_t * divtable = NULL;
+    uint8_t * enctable[4];
 };
 
 /******************************************************************************/
