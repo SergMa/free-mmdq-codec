@@ -17,6 +17,7 @@
 #define SAMPLES_PER_FRAME_MAX  1000
 #define BITS_PER_SAMPLE_MAX    8
 #define DATA_SIZE_MAX          (SAMPLES_PER_FRAME_MAX+3)
+#define SMOOTH_N               4
 
 struct mmdq_encoder_s {
     int       samples_per_frame;
@@ -39,6 +40,7 @@ int  mmdq_encoder_init ( struct mmdq_encoder_s * enc,
                          int smooth_on );
 
 int  mmdq_encoder      ( struct mmdq_encoder_s * enc,
+                         struct mmdq_decoder_s * dec,
                          int16_t * voice, int samples,
                          uint8_t * data, int datasize, int * bytes );
 
