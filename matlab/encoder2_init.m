@@ -17,12 +17,12 @@ function [enc] = encoder2_init( samples_per_frame, bits_per_sample, maxx )
     enc.factor            = 2^bits_per_sample;
     enc.maxx              = maxx;
 
-    % fill table for 1/div, where div=[0...2*maxx*1024]
-    % values=[0..2*maxx]
+    % fill table for 2*maxx*maxx/div, where div=[0...2*maxx]
+    % values=[0..maxx]
     enc.divtable = zeros(1,2*maxx+1);
     enc.divtable(1) = 0;
     for div=1:1:2*maxx
-        enc.divtable(div+1) = fix( 2*maxx*1024/div );  % 0.0=0 , 1.0=2*maxx*1024
+        enc.divtable(div+1) = fix( 2*maxx*maxx/div );
     end
 
     % encode tables

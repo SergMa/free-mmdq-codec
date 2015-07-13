@@ -90,7 +90,8 @@ function [data,enc] = encoder2(voice,enc,dec)
             end
         end
     else
-        div = enc.maxx*2*enc.maxx/ampdv;  %ampdv=[0..2*maxx], div=[0..maxx]
+        %div = enc.maxx*2*enc.maxx/ampdv;  %ampdv=[0..2*maxx], div=[0..maxx]
+        div = enc.divtable( ampdv+1 );
 
         %no smoothing (smooth0=0,smooth1=0)
         data0(1) = minv;
