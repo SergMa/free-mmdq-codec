@@ -8,12 +8,14 @@
 #define MMDQ_CODEC_H
 
 #include  <my_fract.h>
+#include  <wave/types.h>
 
 /******************************************************************************/
 /* DEFINITIONS                                                                */
 /******************************************************************************/
 
-#define MAXX                   32768 /* must be power of 2 */
+#define MAXX                   32768        /* must be power of 2 */
+#define MAXXMAXX4              4294967295U  /* MAXX*MAXX*4 */
 #define SAMPLES_PER_FRAME_MIN  2
 #define SAMPLES_PER_FRAME_MAX  1000
 #define BITS_PER_SAMPLE_MIN    8
@@ -22,16 +24,17 @@
 #define SMOOTH_N               4
 
 struct mmdq_codec_s {
-    int       samples_per_frame;
-    int       bits_per_sample;
-    int       smooth_on;
-    int       factor;
-    int       bitrate;
-    int       decoder_only;
+    int        samples_per_frame;
+    int        bits_per_sample;
+    int        smooth_on;
+    int        factor;
+    int        bitrate;
+    int        decoder_only;
+    int32_t    h;
 
-    int32_t * divtable;
-    uint8_t * enctable[SMOOTH_N];
-    int16_t * dectable[SMOOTH_N];
+    uint32_t * divtable;
+    uint8_t  * enctable[SMOOTH_N];
+    int16_t  * dectable[SMOOTH_N];
 };
 
 /******************************************************************************/

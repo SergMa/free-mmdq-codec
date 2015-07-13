@@ -9,8 +9,7 @@ PROJ = free-mmdq-codec
 CROSS_COMPILE =
 OUT     = out
 
-HEADERS = mmdq_encoder.h \
-    mmdq_decoder.h \
+HEADERS = mmdq_codec.h \
     my_fract.h \
     wave.h \
     mylog.h \
@@ -63,8 +62,7 @@ WAVE_OBJS = $(GSMLIB_OBJS) \
 	$(OUT)/wave.o
 
 OBJS = $(WAVE_OBJS) \
-	$(OUT)/mmdq_encoder.o \
-	$(OUT)/mmdq_decoder.o \
+	$(OUT)/mmdq_codec.o \
 	$(OUT)/test.o
 
 VPATH := wave wave/gsmlib

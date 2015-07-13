@@ -7,10 +7,16 @@
 #include  "mmdq_codec.h"
 #include  <math.h>
 #include  <stdio.h>
+#include  <wave/mylog.h>
+#include  <wave/g711super.h>
 
 /*****************************************************************************/
 /* DEFINITIONS                                                               */
 /*****************************************************************************/
+
+int  mmdq_decode_nounpack ( struct mmdq_codec_s * dec,
+                            uint8_t * data, int bytes,
+                            int16_t * voice, int voicesize, int * samples );
 
 
 /******************************************************************************/
@@ -26,7 +32,9 @@
 //integer power of integer value
 int power_int( int x, int pow )
 {
+    int i;
     int res;
+    
     if(pow<0) {
         return 0; //error
     }
@@ -50,7 +58,7 @@ int32_t div_round( int32_t a, int32_t b )
     
     res = (a<<1)/b;
     if (res & 1)
-        res = res>>1 + 1;
+        res = (res>>1) + 1;
     else
         res = res>>1;
     return res;
@@ -67,25 +75,22 @@ int32_t compand( double x, int law )
         return x;
 
     case 1:
-        if x>=0
+        if (x>=0)
             return  pow(  x, 1/1.2 );
         else
             return -pow( -x, 1/1.2 );
-        return;
 
     case 2:
-        if x>=0
+        if (x>=0)
             return  pow(  x, 1/1.4 );
         else
             return -pow( -x, 1/1.4 );
-        return;
 
     case 3:
-        if x>=0
+        if (x>=0)
             return  pow(  x, 1/1.8 );
         else
             return -pow( -x, 1/1.8 );
-        return;
 
     default:
         MYLOG_ERROR("Unexpected value: law=%d", law);
@@ -104,25 +109,22 @@ int32_t expand( double x, int law )
         return x;
 
     case 1:
-        if x>=0
+        if (x>=0)
             return  pow(  x, 1.2 );
         else
             return -pow( -x, 1.2 );
-        return;
 
     case 2:
-        if x>=0
+        if (x>=0)
             return  pow(  x, 1.4 );
         else
             return -pow( -x, 1.4 );
-        return;
 
     case 3:
-        if x>=0
+        if (x>=0)
             return  pow(  x, 1.8 );
         else
             return -pow( -x, 1.8 );
-        return;
 
     default:
         MYLOG_ERROR("Unexpected value: law=%d", law);
@@ -145,7 +147,6 @@ int mmdq_codec_init ( struct mmdq_codec_s * codec,
     int s;
     int32_t b;
     int32_t sss;
-    int err;
 
     // Check input arguments
     if (codec==NULL) {
@@ -169,7 +170,7 @@ int mmdq_codec_init ( struct mmdq_codec_s * codec,
     codec->smooth_on         = smooth_on;
     codec->decoder_only      = decoder_only;
     codec->factor            = 1 << codec->bits_per_sample; //power_int( 2 , codec->bits_per_sample );
-    codec->h                 = div_round( MAXX, dec->samples_per_frame );
+    codec->h                 = div_round( MAXX, codec->samples_per_frame );
 
     // Clear tables
     codec->divtable = NULL;
@@ -187,7 +188,7 @@ int mmdq_codec_init ( struct mmdq_codec_s * codec,
     }
     codec->divtable[0] = 0;
     for(i=1; i<2*MAXX+1; i++) {
-        codec->divtable[i] = 4*MAXX*MAXX / i;
+        codec->divtable[i] = MAXXMAXX4 / i;
     }
 
     // fill encode tables
@@ -195,13 +196,13 @@ int mmdq_codec_init ( struct mmdq_codec_s * codec,
         // inputs=dvoice/ampdv=[-MAXX..+MAXX], values=[0..(codec->factor-1)]
         for(s=0; s<SMOOTH_N; s++) {
             codec->enctable[s] = calloc( 2*MAXX+1, sizeof(int32_t) );
-            if(codec->enctable[s] = NULL) {
+            if(codec->enctable[s] == NULL) {
                 MYLOG_ERROR("Could not allocate memory for codec->enctable[%d] (%d bytes)",
                             s, (2*MAXX+1)*sizeof(int32_t) );
                 goto exit_fail;
             }
             for(i=-MAXX; i<=MAXX; i++) {
-                b = MAXX * compand( double(i)/MAXX, s ) + MAXX; // b=[0..2*MAXX]
+                b = MAXX * compand( (double)(i)/MAXX, s ) + MAXX; // b=[0..2*MAXX]
                 //sss = round( double(codec->factor) * b / (2*MAXX) );
                 sss = div_round( codec->factor * b , 2*MAXX );
                 codec->enctable[s][i+MAXX] = sss;
@@ -212,15 +213,15 @@ int mmdq_codec_init ( struct mmdq_codec_s * codec,
     // fill decode tables
     // inputs=dvoice/ampdv=[0..(dec->factor-1)], values=[-MAXX..+MAXX]
     for(s=0; s<SMOOTH_N; s++) {
-        dec->dectable[s] = calloc( dec->factor, sizeof(int32_t) );
-        if(dec->dectable[s] = NULL) {
-            MYLOG_ERROR("Could not allocate memory for dec->dectable[%d] (%d bytes)",
-                        s, dec->factor * sizeof(int32_t) );
+        codec->dectable[s] = calloc( codec->factor, sizeof(int32_t) );
+        if(codec->dectable[s] == NULL) {
+            MYLOG_ERROR("Could not allocate memory for codec->dectable[%d] (%d bytes)",
+                        s, codec->factor * sizeof(int32_t) );
             goto exit_fail;
         }
-        for(i=0; i < dec->factor; i++) {
-            sss = 2*MAXX*i/dec->factor - MAXX;
-            dec->table[s][i] = MAXX*expand( double(sss)/MAXX, s );
+        for(i=0; i < codec->factor; i++) {
+            sss = 2*MAXX*i/codec->factor - MAXX;
+            codec->dectable[s][i] = MAXX*expand( (double)(sss)/MAXX, s );
         }
     }
     
@@ -252,18 +253,34 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
                    int16_t * voice, int samples,
                    uint8_t * data, int datasize, int * bytes )
 {
-    int     i;
-    int     s;
-    int16_t minx;
-    int16_t maxx;
-    int16_t diffx;
-    int16_t dv[SAMPLES_PER_FRAME_MAX-1];
-    uint8_t edata[SMOOTH_N][MMDQ_DATA_SIZE_MAX];
-    int16_t error[SMOOTH_N];
-    int     smooth1;
-    int     smooth0;
-    int     smin;
-    int16_t errmin;
+    int      i;
+    int      s;
+    int16_t  minx;
+    int16_t  maxx;
+    //int16_t  diffx;
+    int16_t  dv[SAMPLES_PER_FRAME_MAX-1];
+    int16_t  voice2[SMOOTH_N][SAMPLES_PER_FRAME_MAX];
+    int      samples2;
+    int16_t  mindv;
+    int16_t  maxdv;
+    int16_t  diffdv;
+    int16_t  ampdv;
+    int16_t  a;
+    int16_t  b;
+    uint8_t  edata[SMOOTH_N][DATA_SIZE_MAX];
+    int16_t  error[SMOOTH_N];
+    int16_t  sss;
+    //int    smooth0;
+    int      smooth1;
+    int      smin;
+    int16_t  errmin;
+    uint32_t div;
+    int      databytes;
+    int      err;
+    int16_t  verr;
+    int      pos;
+    int32_t  bitshift;
+    int      bitcntr;
 
     //Check input arguments
     if(codec==NULL) {
@@ -298,21 +315,21 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     //Calculate minx,maxx,diffx
     minx = maxx = voice[0];
     for(i=1; i<codec->samples_per_frame; i++) {
-        if voice[i]<minx
+        if (voice[i]<minx)
             minx = voice[i];
-        else if voice[i]>maxx
+        else if (voice[i]>maxx)
             maxx = voice[i];
     }
-    diffx = maxx - minx;
+    //diffx = maxx - minx;
 
     //get differencies of voice samples, mindv,maxdv,diffdv
     dv[0] = voice[1] - voice[0];
     mindv = maxdv = dv[0];
     for(i=1; i<codec->samples_per_frame-1; i++) {
         dv[i] = voice[i+1] - voice[i];
-        if dv[i] < mindv
+        if (dv[i] < mindv)
             mindv = dv[i];
-        else if dv[i] > maxdv
+        else if (dv[i] > maxdv)
             maxdv = dv[i];
     }
     diffdv = maxdv - mindv;
@@ -330,7 +347,7 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
         //dv[i]==const
         smin = 0;
         errmin = 0;
-        smooth0 = smin&1;
+        //smooth0 = smin&1;
         smooth1 = (smin>>1)&1;
         edata[smin][0] = minx;
         edata[smin][1] = maxx;
@@ -338,17 +355,17 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
         if (maxdv==0) {
             // We suppose, that codec->factor is even. So there is no enc.factor for dv=0
             for (i=0; i<codec->samples_per_frame-1; i+=2)
-                data[smin][3+i] = enc.factor/2;
+                edata[smin][3+i] = codec->factor/2;
             for (i=1; i<codec->samples_per_frame-1; i+=2)
-                data[smin][3+i] = enc.factor/2 - 1;
+                edata[smin][3+i] = codec->factor/2 - 1;
         }
         else if (maxdv>0) {
             for (i=0; i<codec->samples_per_frame-1; i++)
-                data[smin][3+i] = enc.factor-1;
+                edata[smin][3+i] = codec->factor-1;
         }
         else { //maxdv<0
             for (i=0; i<codec->samples_per_frame-1; i++)
-                data[smin][3+i] = 0;
+                edata[smin][3+i] = 0;
         }
         //go-go-go
     }
@@ -359,35 +376,36 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
         for(s=0; s<4; s++) {
             //encode with selected smooth
             if(s&1) {
-                data[s][0] = maxx; //smooth(bit0)==1
-                data[s][1] = minx;
+                edata[s][0] = maxx; //smooth(bit0)==1
+                edata[s][1] = minx;
             }
             else {
-                data[s][0] = minx; //smooth(bit0)==0
-                data[s][1] = maxx;
+                edata[s][0] = minx; //smooth(bit0)==0
+                edata[s][1] = maxx;
             }
-            data[s][2] = (s>>1)&1; //smooth(bit1)
+            edata[s][2] = (s>>1)&1; //smooth(bit1)
             
             for(i=0; i<codec->samples_per_frame-1; i++) {
                 // dvoice(i)=[-2*MAXX..+2*MAXX]
                 // div=[0..MAXX]
                 sss = dv[i] * div / (2*MAXX);  // sss=[-maxx..+maxx]
-                data[s][3+i] = enc.table[s][sss + enc.maxx];
+                edata[s][3+i] = codec->enctable[s][sss + MAXX];
             }
             
             //decode for selected smooth
-            bytes = ;
-            err = mmdq_decoder_nounpack( codec,
-                        data, bytes, voice2[s], sizeof(voice2[s]), &samples );
+            databytes = 8+8+1+ (codec->samples_per_frame-1) * codec->bits_per_sample;
+            err = mmdq_decode_nounpack( codec,
+                                        data, databytes,
+                                        voice2[s], sizeof(voice2[s]), &samples2 );
             if(err) {
                 MYLOG_ERROR("mmdq_decoder() failed for s=%d",s);
                 return -1;
             }
             
             //calculate error[s]=max(abs(voice[i]-voice[s][i]))
-            error[s] = abs(voice[0] - voice[s][0]);
+            error[s] = abs(voice[0] - voice2[s][0]);
             for(i=1; i<codec->samples_per_frame; i++) {
-                verr = abs(voice[0] - voice[s][0]);
+                verr = abs(voice[0] - voice2[s][0]);
                 if (verr>error[s])
                     error[s] = verr;
             }
@@ -406,15 +424,17 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     }
     
     //bit-pack data[smin] into data[]
-    data[0] = linear2alaw( data[smin][0] );
-    data[1] = linear2alaw( data[smin][1] );
+    data[0] = linear2alaw( edata[smin][0] );
+    data[1] = linear2alaw( edata[smin][1] );
 
     pos = 2;
-    bitshift = (bitshift << 1) | data[smin][2]; //smooth(bit1)
+    bitshift = 0;
+    bitcntr = 0;
+    bitshift = (bitshift << 1) | edata[smin][2]; //smooth(bit1)
     bitcntr++;
 
     for (i=0; i<codec->samples_per_frame-1; i++) {
-        bitshift = (bitshift << codec->bits_per_sample) | data[smin][3+i];
+        bitshift = (bitshift << codec->bits_per_sample) | edata[smin][3+i];
         if(bitcntr >= 8) {
             bitcntr -= 8;
             data[pos++] = bitshift >> bitcntr;
@@ -424,16 +444,32 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
         data[pos++] = bitshift << (8-bitcntr);
     }
     MYLOG_DEBUG("encoded data has been packed into %d bytes", pos);
-    bytes = pos;
+    *bytes = pos;
     return 0;
 }
 
 //------------------------------------------------------------------------------
-//mmdq_decoder version without bit-unpacking (for use in mmdq_encoder)
-int  mmdq_decoder_nounpack ( struct mmdq_decoder_s * dec,
+//mmdq_decode version without bit-unpacking (for use in mmdq_encoder)
+int  mmdq_decode_nounpack ( struct mmdq_codec_s * dec,
                              uint8_t * data, int bytes,
                              int16_t * voice, int voicesize, int * samples )
 {
+    int      i;
+    int16_t  minx;
+    int16_t  maxx;
+    int16_t  tmpx;
+    //int16_t  diffx;
+    int16_t  minv;
+    int16_t  maxv;
+    int16_t  diffv;
+    int16_t  minv_n;
+    int16_t  diffv_n;
+    int      smooth;
+    int      smooth0;
+    int      smooth1;
+    uint32_t div;
+    int16_t  voice_n;
+
     minx = alaw2linear( data[0] );
     maxx = alaw2linear( data[1] );
     if (minx>maxx) {
@@ -446,13 +482,14 @@ int  mmdq_decoder_nounpack ( struct mmdq_decoder_s * dec,
         smooth0 = 0;
     }
     smooth1 = data[2];
+    smooth = (smooth1<<1) | smooth0;
 
     //Reconstrunct voice in relative coordinats
     voice[0] = 0;
     for(i=0; i<dec->samples_per_frame-1; i++) {
         // dv[i] = [0..dec.factor-1]
         // dec->table[] = [-maxx..+maxx]
-        voice[i+1] = voice[i] + dec->table[smooth][ data[3+i] ];
+        voice[i+1] = voice[i] + dec->dectable[smooth][ data[3+i] ];
     }
 
     // Scale/shift absolute voice by minv,maxv reference points
@@ -466,14 +503,13 @@ int  mmdq_decoder_nounpack ( struct mmdq_decoder_s * dec,
     diffv = maxv - minv;
 
     diffv_n = (diffv * dec->h) / MAXX;
-    maxv_n  = (maxv  * dec->h) / MAXX;
     minv_n  = (minv  * dec->h) / MAXX;
 
-    div = dec->divtable[voicediff_n];  //div=[0..2*maxx]
+    div = dec->divtable[diffv_n];  //div=[0..2*maxx]
     
     for (i=0; i<dec->samples_per_frame; i++) {
         voice_n = (voice[i] * dec->h) / MAXX;
-        voice[i] = minv + diffv * div * (voice_n - minv_n) / (4*MAXX*MAXX);
+        voice[i] = minv + diffv * div * (voice_n - minv_n) / MAXXMAXX4;
     }
     
     return 0;
@@ -484,7 +520,27 @@ int  mmdq_decode ( struct mmdq_codec_s * codec,
                    uint8_t * data, int bytes,
                    int16_t * voice, int voicesize, int * samples )
 {
-    uint8_t dv[];
+    int      i;
+    int16_t  minx;
+    int16_t  maxx;
+    int16_t  tmpx;
+    //int16_t  diffx;
+    int16_t  minv;
+    int16_t  maxv;
+    int16_t  diffv;
+    int16_t  minv_n;
+    int16_t  diffv_n;
+    int      smooth;
+    int      smooth0;
+    int      smooth1;
+    uint32_t div;
+    int16_t  voice_n;
+    int16_t  dv[SAMPLES_PER_FRAME_MAX-1];
+
+    int      pos;
+    int      bitshift;
+    int      bitcntr;
+    int      dvpos;
 
 
     //Check input arguments
@@ -527,7 +583,7 @@ int  mmdq_decode ( struct mmdq_codec_s * codec,
     }
     smooth1 = (data[2]>>7) & 1;
 
-    smooth = (smooth1<<1)|smooth;
+    smooth = (smooth1<<1)|smooth0;
     
     pos = 2;
     bitcntr = 7;
@@ -539,7 +595,7 @@ int  mmdq_decode ( struct mmdq_codec_s * codec,
         bitcntr += 8;
         
         while(bitcntr >= codec->bits_per_sample) {
-            bitcntr -= codec->bits_per_samlpe;
+            bitcntr -= codec->bits_per_sample;
             dv[dvpos++] = bitshift >> bitcntr;
         }
     }
@@ -549,7 +605,7 @@ int  mmdq_decode ( struct mmdq_codec_s * codec,
     for(i=0; i<codec->samples_per_frame-1; i++) {
         // dv[i] = [0..codec->factor-1]
         // codec->table[] = [-maxx..+maxx]
-        voice[i+1] = voice[i] + codec->table[smooth][ dv[i] ];
+        voice[i+1] = voice[i] + codec->dectable[smooth][ dv[i] ];
     }
 
     // Scale/shift absolute voice by minv,maxv reference points
@@ -563,14 +619,13 @@ int  mmdq_decode ( struct mmdq_codec_s * codec,
     diffv = maxv - minv;
 
     diffv_n = (diffv * codec->h) / MAXX;
-    maxv_n  = (maxv  * codec->h) / MAXX;
     minv_n  = (minv  * codec->h) / MAXX;
 
-    div = codec->divtable[voicediff_n];  //div=[0..2*maxx]
+    div = codec->divtable[diffv_n];  //div=[0..2*maxx]
     
     for (i=0; i<codec->samples_per_frame; i++) {
         voice_n = (voice[i] * codec->h) / MAXX;
-        voice[i] = minv + diffv * div * (voice_n - minv_n) / (4*MAXX*MAXX);
+        voice[i] = minv + diffv * div * (voice_n - minv_n) / MAXXMAXX4;
     }
     
     return 0;
