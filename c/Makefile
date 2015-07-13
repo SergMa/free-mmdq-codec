@@ -4,7 +4,7 @@
 # (c) Sergei Mashkin, 2015                                                     #
 ################################################################################
 
-PROJ = free-mmdq-codec
+PROJ = test-mmdq
 
 CROSS_COMPILE =
 OUT     = out
@@ -20,13 +20,16 @@ HEADERS = mmdq_codec.h \
     private.h \
     proto.h \
     toast.h \
-    unproto.h
+    unproto.h \
+    g72x.h \
+    private.h
 
 CFLAGS  = -O0 -Wall -Werror
 DEFS    =
 
 CFLAGS += -I.\
-          -Iwave\
+          -Ig726lib \
+          -Iwave \
           -Iwave/gsmlib \
           -include "wave/gsmlib/_config.h"
 
@@ -36,6 +39,12 @@ CC = $(CROSS_COMPILE)gcc $(CFLAGS) $(DEFS)
 LD = $(CROSS_COMPILE)gcc $(LFLAGS)
 
 all: $(OUT)/$(PROJ)
+
+G726LIB_OBJS = $(OUT)/g72x.o \
+	$(OUT)/g726_16.o \
+	$(OUT)/g726_24.o \
+	$(OUT)/g726_32.o \
+	$(OUT)/g726_40.o
 
 GSMLIB_OBJS = $(OUT)/code.o \
 	$(OUT)/debug.o \
@@ -62,10 +71,11 @@ WAVE_OBJS = $(GSMLIB_OBJS) \
 	$(OUT)/wave.o
 
 OBJS = $(WAVE_OBJS) \
+	$(G726LIB_OBJS) \
 	$(OUT)/mmdq_codec.o \
 	$(OUT)/test.o
 
-VPATH := wave wave/gsmlib
+VPATH := wave wave/gsmlib g726lib
 
 $(OUT)/%.o: %.c $(HEADERS)
 	$(CC) -g -c $< -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o $@
@@ -74,6 +84,6 @@ $(OUT)/$(PROJ): $(OBJS) Makefile
 	$(LD) $(OBJS) -o $@
 
 clean:
-	rm -f $(OUT)/*
+	rm -f $(OUT)/*.o $(OUT)/*.d $(OUT)/test
 
 .PHONY: all compile clean
