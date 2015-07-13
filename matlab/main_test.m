@@ -14,8 +14,8 @@ disp('MMDQ-codec test started...');
 % Test settings
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
-SAMPLES = 1000:1300;
+SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
+%SAMPLES = 1000:5000;
 
 
 FS = 8000;            % Sample (discretization) frequency, Hz
@@ -31,7 +31,7 @@ CODEC_VERSION = 1;    % 0-no encode/decode operations
                       % 3-c-adapted, code tables, integer division
 
 
-SHOW_GRAPHICS = 0;    % 0 - disable plotting of graphics, 1 - enable it
+SHOW_GRAPHICS = 1;    % 0 - disable plotting of graphics, 1 - enable it
 
 SPECTROGRAM_WIDTH = 256; % Parameters of spectrograms
 SPECTROGRAM_OVR   = 8;
