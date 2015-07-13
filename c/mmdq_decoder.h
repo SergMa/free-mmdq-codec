@@ -14,16 +14,32 @@
 /******************************************************************************/
 
 struct mmdq_decoder_s {
-    fract32          hf100_xdelay;
-    fract32          hf100_ydelay;
-    struct fir_s     filter   [SUBBANDS];
+    int       samples_per_frame;
+    int       bits_per_sample;
+    int       smooth_on;
+    int       factor;
+    int       bitrate;
+    int       h;
+
+    int32_t * divtable = NULL;
+    uint8_t * dectable[4];
 };
 
 /******************************************************************************/
 /* FUNCTIONS                                                                  */
 /******************************************************************************/
 
-int  mmdq_decoder_init ( struct mmdq_decoder_s * enc );
-int  mmdq_decoder      ( struct mmdq_decoder_s * enc, int16_t * x );
+int  mmdq_decoder_init ( struct mmdq_decoder_s * dec,
+                         int samples_per_frame,
+                         int bits_per_sample,
+                         int smooth_on );
+
+int  mmdq_decoder      ( struct mmdq_decoder_s * dec,
+                         uint8_t * data, int bytes,
+                         int16_t * voice, int voicesize, int * samples );
+
+int  mmdq_decoder_nopack ( struct mmdq_decoder_s * dec,
+                           int16_t minx, int16_t maxx, int smooth, uint8_t * dv,
+                           int16_t * voice );
 
 #endif /* MMDQ_DECODER_H */
