@@ -4,7 +4,7 @@
 # (c) Sergei Mashkin, 2015                                                     #
 ################################################################################
 
-PROJ = test-mmdq
+PROJ = test
 
 CROSS_COMPILE =
 OUT     = out
