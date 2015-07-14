@@ -10,6 +10,7 @@
 #include <wave.h>
 #include <mmdq_codec.h>
 #include <g72x.h>
+#include <math.h>
 
 void usage(void)
 {
@@ -21,13 +22,13 @@ void usage(void)
     "    Encode <sound.wav> file with MMDQ-encoder, output result into <data.bin>.\n"
     "    <spf>      = 1..1000 - defines samples-per-frame parameter\n"
     "    <bps>      = 1..16   - defines bits-per-sample parameter\n"
-    "    <smoothon> = 0,1     - defines if smooth functions will be enabled or disabled\n"
+    "    <smoothon> = 0|1     - defines if smooth functions will be enabled or disabled\n"
     "\n"
     "  test --mmdq-decode <spf> <bps> <smoothon> <data.bin> <sound.wav>\n"
     "    Decode <data.bin> file with MMDQ-decoder, output result into <sound.wav>.\n"
     "    <spf>      = 1..1000 - defines samples-per-frame parameter\n"
     "    <bps>      = 1..16   - defines bits-per-sample parameter\n"
-    "    <smoothon> = 0,1     - defines if smooth functions will be enabled or disabled\n"
+    "    <smoothon> = 0|1     - defines if smooth functions will be enabled or disabled\n"
     "\n"
     "  test --g726-encode <bitrate> <sound.wav> <data.bin>\n"
     "    Encode <sound.wav> file with G726-encoder, output result into <data.bin>.\n"
@@ -37,9 +38,11 @@ void usage(void)
     "    Decode <data.bin> file with G726-decoder, output result into <sound.wav>.\n"
     "    <bitrate>  = 16|24|32|40 - defines G.726 bitrate parameter, kbit/sec\n"
     "\n"
-    "  test --mse <sound1.wav> <sound2.wav>\n"
+    "  test --mse <samples> <shift> <sound1.wav> <sound2.wav>\n"
     "    Calculate MSE (Mean Squared Error) of difference <sound1.wav> and <sound2.wav>.\n"
     "    MSE will be calculated for N samples, where N is minimal length of files.\n"
+    "    <samples> = number of samples to compare (0-compare N samples - see above).\n"
+    "    If <samples> > N, N samples will be compared.\n"
     "\n"
     "  test --help\n"
     "    Show this help message.\n"
@@ -80,6 +83,21 @@ int main( int argc, char **argv )
     int          wrsamples;
     int          bytes;
     uint32_t     processed;
+
+    int16_t      x1;
+    int16_t      x2;
+    int16_t      maxamp1;
+    int16_t      maxamp2;
+    int16_t      diffx;
+    int16_t      diffxmax;
+    
+    double       diffxn;
+    double       diffxnmax;
+    double       summ;
+    double       summn;
+
+    int          compare_samples;
+
 
     if(argc<=0) {
         printf("error: unexpected error\n");
@@ -138,10 +156,14 @@ int main( int argc, char **argv )
         out_wave_filename = argv[4];
         //go-go-go
     }
-    else if(argc==4 && 0==strcmp(argv[1],"--mse")) {
+    else if(argc==5 && 0==strcmp(argv[1],"--mse")) {
         action   = ACTION_MSE;
-        inp_wave_filename = argv[2]; //<sound1.wav>
-        out_wave_filename = argv[3]; //<sound2.wav>
+        spf      = 2;
+        bps      = 1;
+        smoothon = 0;
+        compare_samples = atoi(argv[2]);
+        inp_wave_filename = argv[3]; //<sound1.wav>
+        out_wave_filename = argv[4]; //<sound2.wav>
         data_filename = NULL;
         //go-go-go
     }
@@ -385,7 +407,7 @@ int main( int argc, char **argv )
                 goto exit_fail;
             }
 
-            processed += spf;
+            processed ++;
         }
         printf("%u samples has been successfully processed\n", processed);
 
@@ -455,16 +477,136 @@ int main( int argc, char **argv )
                 break;
             }
 
-            processed += spf;
+            processed ++;
         }
         printf("%u samples has been successfully processed\n", processed);
-
 
         break;
 
     case ACTION_MSE:
 
-        //...
+        /* open input wavefile 1, show file-info */
+        err = wavefile_read_open( iwf, inp_wave_filename );
+        if(err<0) {
+            printf("error: could not open wavefile \"%s\"\n", inp_wave_filename);
+            goto exit_fail;
+        }
+        printf("wavefile 1 info:\n");
+        printf("  filename : %s\n", inp_wave_filename);
+        printf("  format   : ");
+        switch( wavefile_get_wavetype( iwf ) ) {
+        case WAVETYPE_MONO_8000HZ_PCM16:   printf("pcm16 8000 Hz\n"); break;
+        case WAVETYPE_MONO_8000HZ_PCMA:    printf("pcma 8000 Hz\n"); break;
+        case WAVETYPE_MONO_8000HZ_PCMU:    printf("pcmu 8000 Hz\n"); break;
+        case WAVETYPE_MONO_8000HZ_GSM610:  printf("gsm0610 8000 Hz\n"); break;
+        default:
+            printf("unsupported\n");
+            printf("error: only 8000 hz pcm16/pcma/pcmu/gsm formats are supported\n");
+            goto exit_fail;
+        }
+        printf("  filesize : %u bytes\n", wavefile_get_bytes  ( iwf ) );
+        printf("  length   : %u sec\n",   wavefile_get_seconds( iwf ) );
+        samples = wavefile_get_samples( iwf );
+        printf("  samples  : %u\n", samples );
+
+
+        /* open input wavefile 2, show file-info */
+        err = wavefile_read_open( owf, out_wave_filename );
+        if(err<0) {
+            printf("error: could not open wavefile \"%s\"\n", out_wave_filename);
+            goto exit_fail;
+        }
+        printf("wavefile 2 info:\n");
+        printf("  filename : %s\n", out_wave_filename);
+        printf("  format   : ");
+        switch( wavefile_get_wavetype( owf ) ) {
+        case WAVETYPE_MONO_8000HZ_PCM16:   printf("pcm16 8000 Hz\n"); break;
+        case WAVETYPE_MONO_8000HZ_PCMA:    printf("pcma 8000 Hz\n"); break;
+        case WAVETYPE_MONO_8000HZ_PCMU:    printf("pcmu 8000 Hz\n"); break;
+        case WAVETYPE_MONO_8000HZ_GSM610:  printf("gsm0610 8000 Hz\n"); break;
+        default:
+            printf("unsupported\n");
+            printf("error: only 8000 hz pcm16/pcma/pcmu/gsm formats are supported\n");
+            goto exit_fail;
+        }
+        printf("  filesize : %u bytes\n", wavefile_get_bytes  ( owf ) );
+        printf("  length   : %u sec\n",   wavefile_get_seconds( owf ) );
+        samples = wavefile_get_samples( owf );
+        printf("  samples  : %u\n", samples );
+
+
+        /* main loop */
+        summ = 0.0;
+        summn = 0.0;
+        diffxmax = 0;
+        diffxnmax = 0.0;
+        processed = 0;
+        maxamp1 = 0;
+        maxamp2 = 0;
+        while(1) {
+            /* wavefile_read_voice() returns:
+            *  0 = ok
+            *  1 = end of file
+            * -1 = error
+            */
+            err = wavefile_read_voice ( iwf, &x1, 1 );  /* samples=1 */
+            if(err<0) {
+                printf("error: could not read sample from input file 1\n");
+                break;
+            }
+            else if(err==1) {
+                break; //eof
+            }
+
+            err = wavefile_read_voice ( owf, &x2, 1 );  /* samples=1 */
+            if(err<0) {
+                printf("error: could not read sample from input file 2\n");
+                break;
+            }
+            else if(err==1) {
+                break; //eof
+            }
+
+            if ( abs(x1) > maxamp1 )
+                maxamp1 = abs(x1);
+            if ( abs(x2) > maxamp2 )
+                maxamp2 = abs(x2);
+
+            //calc diffx, summ
+            diffx = x1 - x2;
+            if(diffx > diffxmax)
+                diffxmax = diffx;
+            summ += (double)(diffx * diffx);
+
+            diffxn = diffx/32768.0;
+            if(diffxn > diffxnmax)
+                diffxnmax = diffxn;
+            summn += (double)(diffxn * diffxn);
+
+            processed ++;
+
+            //limit number of samples to compare
+            if(compare_samples>0 && processed>=compare_samples) {
+                printf("compare samples=%d\n", compare_samples);
+                break;
+            }
+        }
+        printf("%u samples has been successfully processed\n", processed);
+
+        summ = summ / (double)processed;
+        summn = summn / (double)processed;
+
+        printf("Compare \"%s\" vs \"%s\" results:\n", inp_wave_filename, out_wave_filename );
+        printf("samples    : %12u\n", processed);
+        printf("max amp1   : %12d\n", maxamp1);
+        printf("max amp2   : %12d\n", maxamp2);
+        printf("max diffx  : %12d\n", diffxmax);
+        printf("MSE        : %12.6f\n", summ);
+        printf("n max amp1 : %12.6f\n", maxamp1/32768.0);
+        printf("n max amp2 : %12.6f\n", maxamp2/32768.0);
+        printf("n max diffx: %12.6f\n", diffxnmax);
+        printf("n MSE      : %12.6f\n", summn);
+        printf("\n");
 
         break;
 
