@@ -10,6 +10,7 @@
 #include <wave.h>
 #include <mmdq_codec.h>
 #include <g72x.h>
+#include <g711super.h>
 #include <math.h>
 
 //------------------------------------------------------------------------------
@@ -39,6 +40,14 @@ void usage(void)
     "    Decode <data.bin> with G726-decoder, output result into <sound.wav>.\n"
     "    <bitrate>  = 16|24|32|40 - G.726 bitrate parameter, kbit/sec\n"
     "\n"
+    "  test --g711-encode <law> <sound.wav> <data.bin>\n"
+    "    Encode <sound.wav> with G711-encoder, output result into <data.bin>.\n"
+    "    <law> = alaw|ulaw - A-law or mu-law\n"
+    "\n"
+    "  test --g711-decode <law> <data.bin> <sound.wav>\n"
+    "    Decode <data.bin> with G711-decoder, output result into <sound.wav>.\n"
+    "    <law> = alaw|ulaw - A-law or mu-law\n"
+    "\n"
     "  test --mse <samples> <shift> <sound1.wav> <sound2.wav>\n"
     "    Compare <sound1.wav> and <sound2.wav> and calculate MSE (Mean Squared\n"
     "    Error). MSE will be calculated for N samples, where N is minimal length\n"
@@ -58,7 +67,12 @@ void usage(void)
 #define ACTION_MMDQ_DECODE   1
 #define ACTION_G726_ENCODE   2
 #define ACTION_G726_DECODE   3
-#define ACTION_MSE           4
+#define ACTION_G711_ENCODE   4
+#define ACTION_G711_DECODE   5
+#define ACTION_MSE           6
+
+#define G711_ALAW            0
+#define G711_ULAW            1
 
 int main( int argc, char **argv )
 {
@@ -70,6 +84,7 @@ int main( int argc, char **argv )
     int          smoothon;
     int          action;
     int          bitrate;
+    int          g711law;
     char       * inp_wave_filename = NULL;
     char       * out_wave_filename = NULL;
     char       * data_filename = NULL;
@@ -153,6 +168,46 @@ int main( int argc, char **argv )
         bps      = 1;
         smoothon = 0;
         bitrate  = atoi(argv[2]);
+        inp_wave_filename = NULL;
+        data_filename = argv[3];
+        out_wave_filename = argv[4];
+        //go-go-go
+    }
+    else if(argc==5 && 0==strcmp(argv[1],"--g711-encode")) {
+        action   = ACTION_G711_ENCODE;
+        spf      = 2;
+        bps      = 1;
+        smoothon = 0;
+        if( 0==strcmp(argv[2],"alaw") ) {
+            g711law = G711_ALAW;
+        }
+        else if( 0==strcmp(argv[2],"ulaw") ) {
+            g711law = G711_ULAW;
+        }
+        else {
+            printf("error: invalid g711 <law>=%s argument", argv[2]);
+            goto exit_fail;
+        }
+        inp_wave_filename = argv[3];
+        out_wave_filename = NULL;
+        data_filename = argv[4];
+        //go-go-go
+    }
+    else if(argc==5 && 0==strcmp(argv[1],"--g711-decode")) {
+        action   = ACTION_G711_DECODE;
+        spf      = 2;
+        bps      = 1;
+        smoothon = 0;
+        if( 0==strcmp(argv[2],"alaw") ) {
+            g711law = G711_ALAW;
+        }
+        else if( 0==strcmp(argv[2],"ulaw") ) {
+            g711law = G711_ULAW;
+        }
+        else {
+            printf("error: invalid g711 <law>=%s argument", argv[2]);
+            goto exit_fail;
+        }
         inp_wave_filename = NULL;
         data_filename = argv[3];
         out_wave_filename = argv[4];
@@ -462,6 +517,144 @@ int main( int argc, char **argv )
                 break;
             default:
                 printf("error: unsupported G.726 bitrate=%d\n", bitrate);
+                goto exit_fail;
+            }
+            
+           /* wavefile_write_voice() returns:
+            *  0 = ok
+            *  1 = end of file
+            * -1 = error
+            */
+            err = wavefile_write_voice ( owf, x, 1 ); //wrsamples=1
+            if(err<0) {
+                printf("error: could not write sample to output wave-file\n");
+                break;
+            }
+            else if(err==1) {
+                break;
+            }
+
+            processed ++;
+        }
+        printf("%u samples has been successfully processed\n", processed);
+
+        break;
+
+    case ACTION_G711_ENCODE:
+
+        /* open input wavefile, show file-info */
+        err = wavefile_read_open( iwf, inp_wave_filename );
+        if(err<0) {
+            printf("error: could not open wavefile \"%s\"\n", inp_wave_filename);
+            goto exit_fail;
+        }
+        printf("wavefile info:\n");
+        printf("  filename : %s\n", inp_wave_filename);
+        printf("  format   : ");
+        switch( wavefile_get_wavetype( iwf ) ) {
+        case WAVETYPE_MONO_8000HZ_PCM16:   printf("pcm16 8000 Hz\n"); break;
+        case WAVETYPE_MONO_8000HZ_PCMA:    printf("pcma 8000 Hz\n"); break;
+        case WAVETYPE_MONO_8000HZ_PCMU:    printf("pcmu 8000 Hz\n"); break;
+        case WAVETYPE_MONO_8000HZ_GSM610:  printf("gsm0610 8000 Hz\n"); break;
+        default:
+            printf("unsupported\n");
+            printf("error: only 8000 hz pcm16/pcma/pcmu/gsm formats are supported\n");
+            goto exit_fail;
+        }
+        printf("  filesize : %u bytes\n", wavefile_get_bytes  ( iwf ) );
+        printf("  length   : %u sec\n",   wavefile_get_seconds( iwf ) );
+        samples = wavefile_get_samples( iwf );
+        printf("  samples  : %u\n", samples );
+
+        /* create/open output datafile */
+        df = fopen(data_filename,"w");
+        if(!df) {
+            printf("error: could not create/open output datafile \"%s\"", data_filename);
+            goto exit_fail;
+        }
+
+        /* main loop */
+        processed = 0;
+        while(1) {
+            /* wavefile_read_voice() returns:
+            *  0 = ok
+            *  1 = end of file
+            * -1 = error
+            */
+            err = wavefile_read_voice ( iwf, x, 1 );  /* samples=1 */
+            if(err<0) {
+                printf("error: could not read sample from input file\n");
+                break;
+            }
+            else if(err==1) {
+                break;
+            }
+
+            /* encode sample */
+            if (g711law == G711_ALAW) {
+                data[0] = linear2alaw( x[0] );
+            }
+            else if (g711law == G711_ULAW) {
+                data[0] = linear2mulaw( x[0] );
+            }
+            else {
+                printf("error: unsupported G.711 law=%d\n", g711law);
+                goto exit_fail;
+            }
+
+            /* write encode data into file */
+            err = fwrite( data, 1, 1, df ); //bytes = 1
+            if(err!=1) {
+                printf("error: fwrite(data) failed!\n");
+                goto exit_fail;
+            }
+
+            processed ++;
+        }
+        printf("%u samples has been successfully processed\n", processed);
+
+        break;
+
+    case ACTION_G711_DECODE:
+
+        /* open input datafile */
+        df = fopen(data_filename,"r");
+        if(!df) {
+            printf("error: could not open input datafile \"%s\"\n", data_filename);
+            goto exit_fail;
+        }
+
+        /* open output wavefile */
+        err = wavefile_write_open( owf, out_wave_filename, WAVETYPE_MONO_8000HZ_PCM16 );
+        if(err<0) {
+            printf("error: could not create wavefile \"%s\"\n", out_wave_filename);
+            goto exit_fail;
+        }
+
+        /* main loop */
+        processed = 0;
+        while(1) {
+
+            /* read encode data from file */
+            err = fread( data, 1, 1, df ); //bytes=1
+            if(err!=1) {
+                if(feof(df)) {
+                    //end of file has been reached
+                    break;
+                }
+                printf("error: fread(data) failed!\n");
+                goto exit_fail;
+            }
+
+            /* decode sample */
+            if (g711law == G711_ALAW) {
+                x[0] = alaw2linear( data[0] );
+            }
+            else if (g711law == G711_ULAW) {
+                x[0] = mulaw2linear( data[0] );
+            }
+            else {
+                printf("error: unsupported G.711 law=%d\n", g711law);
                 goto exit_fail;
             }
             
