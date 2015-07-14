@@ -34,8 +34,8 @@ out/test --g726-decode 32 out/g726-32kbps.bin out/g726-32kbps.wav
 out/test --g726-decode 40 out/g726-40kbps.bin out/g726-40kbps.wav
 
 echo "Decode sample sound with G711-codec:"
-out/test --g711-encode alaw out/g711-alaw.bin out/g711-alaw.wav 
-out/test --g711-encode ulaw out/g711-ulaw.bin out/g711-ulaw.wav 
+out/test --g711-decode alaw out/g711-alaw.bin out/g711-alaw.wav 
+out/test --g711-decode ulaw out/g711-ulaw.bin out/g711-ulaw.wav 
 
 
 echo "Measure quality of MMDQ-codec:"
