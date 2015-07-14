@@ -74,19 +74,16 @@ function [data,enc] = encoder2(voice,enc,dec)
     err3 = 0;
     if diffdv==0
         if maxdv==0
-            for i=1:2:N-1
-                data(3+i) = enc.factor/2;
-            end
-            for i=2:2:N-1
-                data(3+i) = enc.factor/2 - 1;
+            for i=1:N-1
+                data(3+i) = round( enc.factor/2 );
             end
         elseif maxdv>0
             for i=1:N-1
-                data(3+i) = enc.factor/2;
+                data(3+i) = enc.factor - 1;
             end
         else
             for i=1:N-1
-                data(3+i) = enc.factor/2 - 1;
+                data(3+i) = 0;
             end
         end
     else

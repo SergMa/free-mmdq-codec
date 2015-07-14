@@ -14,8 +14,8 @@ disp('MMDQ-codec test started...');
 % Test settings
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
-%SAMPLES = 1000:5000;
+%SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
+SAMPLES = 1000:5000;
 
 
 FS = 8000;            % Sample (discretization) frequency, Hz
@@ -25,7 +25,7 @@ AMP = 2^(BITS-1)-1;   % Maximum amplitude of original input signal (for BITS=16:
 
 USE_AUTOSCALE = 1;    % 0 - disable autoscale of input signals, 1 - enable
 
-CODEC_VERSION = 1;    % 0-no encode/decode operations
+CODEC_VERSION = 0;    % 0-no encode/decode operations
                       % 1-matlab float point
                       % 2-c-adapted, code tables, div tables
                       % 3-c-adapted, code tables, integer division
