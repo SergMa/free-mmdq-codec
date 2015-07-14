@@ -158,7 +158,7 @@ int mmdq_codec_init ( struct mmdq_codec_s * codec,
         MYLOG_ERROR("Invalid samples_per_frame=%d",samples_per_frame);
         return -1;
     }
-    if (bits_per_sample<BITS_PER_SAMPLE_MAX ||
+    if (bits_per_sample<BITS_PER_SAMPLE_MIN ||
         bits_per_sample>BITS_PER_SAMPLE_MAX) {
         MYLOG_ERROR("Invalid bits_per_sample=%d",bits_per_sample);
         return -1;
@@ -171,6 +171,7 @@ int mmdq_codec_init ( struct mmdq_codec_s * codec,
     codec->decoder_only      = decoder_only;
     codec->factor            = 1 << codec->bits_per_sample; //power_int( 2 , codec->bits_per_sample );
     codec->h                 = div_round( MAXX, codec->samples_per_frame );
+    codec->unpackmask        = (1<<codec->bits_per_sample)-1; //bits_per_samples ones: 000011..111
 
     // Clear tables
     codec->divtable = NULL;
@@ -279,7 +280,7 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     int      err;
     int16_t  verr;
     int      pos;
-    int32_t  bitshift;
+    uint32_t  bitshift;
     int      bitcntr;
 
     //Check input arguments
@@ -393,9 +394,9 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
             }
             
             //decode for selected smooth
-            databytes = 8+8+1+ (codec->samples_per_frame-1) * codec->bits_per_sample;
+            databytes = (8+8+1+ (codec->samples_per_frame-1) * codec->bits_per_sample) / 8;
             err = mmdq_decode_nounpack( codec,
-                                        data, databytes,
+                                        edata[s], databytes,
                                         voice2[s], sizeof(voice2[s]), &samples2 );
             if(err) {
                 MYLOG_ERROR("mmdq_decoder() failed for s=%d",s);
@@ -424,17 +425,18 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     }
     
     //bit-pack data[smin] into data[]
-    data[0] = linear2alaw( edata[smin][0] );
-    data[1] = linear2alaw( edata[smin][1] );
+    pos = 0;
+    data[pos++] = linear2alaw( edata[smin][0] );
+    data[pos++] = linear2alaw( edata[smin][1] );
 
-    pos = 2;
     bitshift = 0;
-    bitcntr = 0;
+    bitcntr  = 0;
     bitshift = (bitshift << 1) | edata[smin][2]; //smooth(bit1)
     bitcntr++;
 
     for (i=0; i<codec->samples_per_frame-1; i++) {
         bitshift = (bitshift << codec->bits_per_sample) | edata[smin][3+i];
+        bitcntr += 3;
         if(bitcntr >= 8) {
             bitcntr -= 8;
             data[pos++] = bitshift >> bitcntr;
@@ -442,8 +444,11 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     }
     if(bitcntr>0) {
         data[pos++] = bitshift << (8-bitcntr);
+        //bitcntr -= 8;
     }
-    MYLOG_DEBUG("encoded data has been packed into %d bytes", pos);
+
+    //MYLOG_DEBUG("encoded data has been packed into %d bytes", pos);
+
     *bytes = pos;
     return 0;
 }
@@ -538,7 +543,7 @@ int  mmdq_decode ( struct mmdq_codec_s * codec,
     int16_t  dv[SAMPLES_PER_FRAME_MAX-1];
 
     int      pos;
-    int      bitshift;
+    uint32_t bitshift;
     int      bitcntr;
     int      dvpos;
 
@@ -570,8 +575,9 @@ int  mmdq_decode ( struct mmdq_codec_s * codec,
     }
 
     //bit-unpack from data[] into minx, maxx, smooth1, dv[]
-    minx = alaw2linear( data[0] );
-    maxx = alaw2linear( data[1] );
+    pos = 0;
+    minx = alaw2linear( data[pos++] );
+    maxx = alaw2linear( data[pos++] );
     if (minx > maxx) {
         smooth0 = 1;
         tmpx = minx;
@@ -581,25 +587,31 @@ int  mmdq_decode ( struct mmdq_codec_s * codec,
     else {
         smooth0 = 0;
     }
-    smooth1 = (data[2]>>7) & 1;
+    smooth1 = (data[pos++]>>7) & 1;
 
-    smooth = (smooth1<<1)|smooth0;
+    smooth = (smooth1<<1) | smooth0;
     
-    pos = 2;
-    bitcntr = 7;
     bitshift = data[pos++] & 0x7F;
+    bitcntr = 7;
     dvpos = 0;
     
-    for(i=0; i<codec->samples_per_frame-1; i++) {
+#if 1
+    for(;;) {
         bitshift = (bitshift << 8) | data[pos++];
         bitcntr += 8;
         
         while(bitcntr >= codec->bits_per_sample) {
             bitcntr -= codec->bits_per_sample;
-            dv[dvpos++] = bitshift >> bitcntr;
+            dv[dvpos++] = (bitshift >> bitcntr) & codec->unpackmask;
+
+            if( dvpos >= (codec->samples_per_frame-1) )
+                break;
         }
+        if( dvpos >= (codec->samples_per_frame-1) )
+            break;
     }
-    
+#endif   
+
     //Reconstrunct voice in relative coordinats
     voice[0] = 0;
     for(i=0; i<codec->samples_per_frame-1; i++) {
@@ -627,6 +639,8 @@ int  mmdq_decode ( struct mmdq_codec_s * codec,
         voice_n = (voice[i] * codec->h) / MAXX;
         voice[i] = minv + diffv * div * (voice_n - minv_n) / MAXXMAXX4;
     }
+
+    *samples = codec->samples_per_frame;
     
     return 0;
 }

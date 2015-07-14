@@ -18,7 +18,7 @@
 #define MAXXMAXX4              4294967295U  /* MAXX*MAXX*4 */
 #define SAMPLES_PER_FRAME_MIN  2
 #define SAMPLES_PER_FRAME_MAX  1000
-#define BITS_PER_SAMPLE_MIN    8
+#define BITS_PER_SAMPLE_MIN    1
 #define BITS_PER_SAMPLE_MAX    8
 #define DATA_SIZE_MAX          (SAMPLES_PER_FRAME_MAX+3)
 #define SMOOTH_N               4
@@ -31,6 +31,7 @@ struct mmdq_codec_s {
     int        bitrate;
     int        decoder_only;
     int32_t    h;
+    uint32_t   unpackmask;   //used in decoder for unpacking bits
 
     uint32_t * divtable;
     uint8_t  * enctable[SMOOTH_N];
