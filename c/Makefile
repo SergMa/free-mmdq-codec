@@ -24,7 +24,8 @@ HEADERS = mmdq_codec.h \
     g72x.h \
     private.h
 
-CFLAGS  = -O0 -Wall -Werror
+#CFLAGS  = -O0 -Wall -Werror
+CFLAGS  = -O0
 DEFS    =
 
 CFLAGS += -I.\
