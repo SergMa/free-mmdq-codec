@@ -5,7 +5,10 @@
 /******************************************************************************/
 
 #include <wave.h>
+
+#define MYLOGDEVICE 0 //0=MYLOGDEVICE_NOLOGS
 #include <mylog.h>
+
 #include <string.h>
 #include <g711super.h>
 #include <gsm.h>      //GSM0610    (13 kbit/s)
