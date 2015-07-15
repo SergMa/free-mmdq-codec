@@ -30,9 +30,9 @@ function [voice,dec] = decoder2(data,dec)
 
     % Analize dvoice-s
     dvoice = data(3+1:end);
-    mindv  = min(dvoice);
-    maxdv  = max(dvoice);
-    diffdv = maxdv - mindv;
+    %mindv  = min(dvoice);
+    %maxdv  = max(dvoice);
+    %diffdv = maxdv - mindv;
 
     % Reconstrunct voice in relative coordinats
     voice = zeros(1,N);
@@ -88,7 +88,6 @@ function [voice,dec] = decoder2(data,dec)
 
     div = dec.divtable( voicediff_n + 1 ); %div=[0..2*FIXP]
     for i=1:N
-        tmp = voice(i);
         voice_n = fix( voice(i) * h / FIXP );
         voice(i) = minv + fix( diffv * (voice_n - voicemin_n)*div/(FIXP) );
     end
