@@ -46,6 +46,9 @@ OUTPUT_FILENAME_2 = './out2.wav';  % Name of file for output signal for codec ve
 %SAMPLES_PER_FRAME = 13; %40000 bit/s
 %BITS_PER_SAMPLE   = 4;
 
+SAMPLES_PER_FRAME = 6; %42666.(6) bit/s
+BITS_PER_SAMPLE   = 3;
+
 %SAMPLES_PER_FRAME = 7; %40000 bit/s
 %BITS_PER_SAMPLE   = 3;
 
@@ -55,8 +58,8 @@ OUTPUT_FILENAME_2 = './out2.wav';  % Name of file for output signal for codec ve
 %SAMPLES_PER_FRAME = 10; %35200 bit/s
 %BITS_PER_SAMPLE   = 3;
 
-SAMPLES_PER_FRAME = 14; %32000 bit/s
-BITS_PER_SAMPLE   = 3;
+%SAMPLES_PER_FRAME = 14; %32000 bit/s
+%BITS_PER_SAMPLE   = 3;
 
 %SAMPLES_PER_FRAME = 15; %24000 bit/s
 %BITS_PER_SAMPLE   = 2;
