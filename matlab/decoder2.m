@@ -45,7 +45,6 @@ function [voice,dec] = decoder2(data,dec)
             %dvoice(i)  = [0..dec.factor-1]
             %dec.table0 = [-FIXP..+FIXP]
             voice(i+1) = voice(i) + dec.table0( dvoice(i)+1 );
-            fprintf(1,'voice(i=%3d)=%8d , dec.table0( dvoice(i)=%8d )=%8d, voice(i+1)=%8d\n', i, voice(i), dvoice(i), dec.table0( dvoice(i)+1 ), voice(i+1));
         end
     case 1
         %expand/compand smoothing
@@ -54,7 +53,6 @@ function [voice,dec] = decoder2(data,dec)
             %dvoice(i)  = [0..dec.factor-1]
             %dec.table1 = [-FIXP..+FIXP]
             voice(i+1) = voice(i) + dec.table1( dvoice(i)+1 );
-            %fprintf(1,'voice(i=%d)=%6.3f , dec.table1( dvoice(i)=%6.3f )=%6.3f\n', i, voice(i), dvoice(i), dec.table1( dvoice(i)+1 ));
         end
     case 2
         %expand/compand smoothing
@@ -63,7 +61,6 @@ function [voice,dec] = decoder2(data,dec)
             %dvoice(i)  = [0..dec.factor-1]
             %dec.table2 = [-FIXP..+FIXP]
             voice(i+1) = voice(i) + dec.table2( dvoice(i)+1 );
-            %fprintf(1,'voice(i=%d)=%6.3f , dec.table2( dvoice(i)=%6.3f )=%6.3f\n', i, voice(i), dvoice(i), dec.table2( dvoice(i)+1 ));
         end
     case 3
         %expand/compand smoothing
@@ -72,7 +69,6 @@ function [voice,dec] = decoder2(data,dec)
             %dvoice(i)  = [0..dec.factor-1]
             %dec.table3 = [-FIXP..+FIXP]
             voice(i+1) = voice(i) + dec.table3( dvoice(i)+1 );
-            %fprintf(1,'voice(i=%d)=%6.3f , dec.table3( dvoice(i)=%6.3f )=%6.3f\n', i, voice(i), dvoice(i), dec.table3( dvoice(i)+1 ));
         end
     end
 
@@ -91,13 +87,10 @@ function [voice,dec] = decoder2(data,dec)
     % voicediff_n = [0..2*maxx]
 
     div = dec.divtable( voicediff_n + 1 ); %div=[0..2*FIXP]
-
-    %fprintf(1,'h=%8.3f, voicediff_n=%8.3f, div=%8.3f\n', h, voicediff_n, div);
     for i=1:N
         tmp = voice(i);
         voice_n = fix( voice(i) * h / FIXP );
         voice(i) = minv + fix( diffv * (voice_n - voicemin_n)*div/(FIXP) );
-        %fprintf(1,'i=%3d, minv=%8.3f, maxv=%8.3f, diffv=%8.3f, voice(i)=%8.3f --> voice(i)=%8.3f, voicemin=%8.3f\n', i, minv, maxv, diffv, tmp, voice(i), voicemin);
     end
 
     %for i=1:N
