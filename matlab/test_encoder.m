@@ -9,7 +9,7 @@ dv = -2*32768:2*32768;
 ampdv = 2*32768;
 
 sss   = compand( dv/ampdv , ver );
-ddd   = factor/2 * sss + factor/2;
+ddd   = fix( factor/2 * sss + factor/2 );
 ddd   = min(ddd,factor-1);
 data0 = fix( ddd );
 

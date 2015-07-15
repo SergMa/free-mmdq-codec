@@ -86,6 +86,7 @@ function [data,enc] = encoder(voice,enc,dec)
         for i=1:N-1
             sss = compand( dvoice(i)/ampdv , 0 );
             ddd = enc.factor/2 * sss + enc.factor/2;
+            ddd = fix(ddd);
             ddd = min(ddd,enc.factor-1);
             data0(3+i) = fix( ddd );
             %fprintf(1,'minv=%8d, maxv=%8d, dvoice(i=%d)=%8d, sss=%8.3f, ddd=%8.3f, data0(i)=%8d\n', minv, maxv, i, dvoice(i), sss, ddd, data0(3+i));
@@ -95,8 +96,9 @@ function [data,enc] = encoder(voice,enc,dec)
         data1(2) = minv;
         data1(3) = 0;
         for i=1:N-1
-            sss   = compand( dvoice(i)/ampdv , 1 );
-            ddd   = enc.factor/2 * sss + enc.factor/2;
+            sss = compand( dvoice(i)/ampdv , 1 );
+            ddd = enc.factor/2 * sss + enc.factor/2;
+            ddd = fix(ddd);
             ddd = min(ddd,enc.factor-1);
             data1(3+i) = fix( ddd );
         end
@@ -105,8 +107,9 @@ function [data,enc] = encoder(voice,enc,dec)
         data2(2) = maxv;
         data2(3) = 1;
         for i=1:N-1
-            sss   = compand( dvoice(i)/ampdv , 2 );
-            ddd   = enc.factor/2 * sss + enc.factor/2;
+            sss = compand( dvoice(i)/ampdv , 2 );
+            ddd = enc.factor/2 * sss + enc.factor/2;
+            ddd = fix(ddd);
             ddd = min(ddd,enc.factor-1);
             data2(3+i) = fix( ddd );
         end
@@ -115,8 +118,9 @@ function [data,enc] = encoder(voice,enc,dec)
         data3(2) = minv;
         data3(3) = 1;
         for i=1:N-1
-            sss   = compand( dvoice(i)/ampdv , 3 );
-            ddd   = enc.factor/2 * sss + enc.factor/2;
+            sss = compand( dvoice(i)/ampdv , 3 );
+            ddd = enc.factor/2 * sss + enc.factor/2;
+            ddd = fix(ddd);
             ddd = min(ddd,enc.factor-1);
             data3(3+i) = fix( ddd );
         end
