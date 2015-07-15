@@ -11,6 +11,8 @@
 
 function [data,enc] = encoder2(voice,enc,dec)
 
+    FIXP = 32768*2;
+
     N = enc.samples_per_frame;
 
     % Calculate minv,maxv,diffv
@@ -64,10 +66,10 @@ function [data,enc] = encoder2(voice,enc,dec)
     %fprintf(1,'diffdv=%d, maxdv=%d\n',diffdv,maxdv);
 
     % quantize dvoice
-    data0 = zeros(1,N-1);
-    data1 = zeros(1,N-1);
-    data2 = zeros(1,N-1);
-    data3 = zeros(1,N-1);
+    data0 = zeros(1,3+N-1);
+    data1 = zeros(1,3+N-1);
+    data2 = zeros(1,3+N-1);
+    data3 = zeros(1,3+N-1);
     err0 = 0;
     err1 = 0;
     err2 = 0;
@@ -87,7 +89,8 @@ function [data,enc] = encoder2(voice,enc,dec)
             end
         end
     else
-        %div = enc.maxx*2*enc.maxx/ampdv;  %ampdv=[0..2*maxx], div=[0..maxx]
+        %ampdv=[0..2*maxx]
+        %div=[0..FIXP]
         div = enc.divtable( ampdv+1 );
 
         %no smoothing (smooth0=0,smooth1=0)
@@ -96,9 +99,9 @@ function [data,enc] = encoder2(voice,enc,dec)
         data0(3) = 0;
         for i=1:N-1
             % dvoice(i)=[-2*maxx..+2*maxx]
-            % div=[0..maxx]
-            sss = fix( dvoice(i) * div / (2*enc.maxx) );  % sss=[-maxx..+maxx]
-            data0(3+i) = enc.table0( sss + enc.maxx + 1 );
+            % div=[0..FIXP]
+            sss = fix( dvoice(i)*div );  % sss=[-FIXP..+FIXP]
+            data0(3+i) = enc.table0( sss + FIXP + 1 );
             %fprintf(1,'minv=%8d, maxv=%8d, div=%8d, dvoice(i=%d)=%8d, sss=%8d, data0(i)=%8d\n', minv, maxv, div, i, dvoice(i), sss, data0(3+i));
         end
         %expand/compand smoothing (smooth0=1,smooth1=0)
@@ -107,9 +110,10 @@ function [data,enc] = encoder2(voice,enc,dec)
         data1(3) = 0;
         for i=1:N-1
             % dvoice(i)=[-2*maxx..+2*maxx]
-            % div=[0..maxx]
-            sss = fix( dvoice(i) * div / (2*enc.maxx) );  % sss=[-maxx..+maxx]
-            data1(3+i) = enc.table1( sss + enc.maxx + 1 );
+            % div=[0..FIXP]
+            sss = fix( dvoice(i)*div );  % sss=[-FIXP..+FIXP]
+            data1(3+i) = enc.table1( sss + FIXP + 1 );
+            %fprintf(1,'minv=%8d, maxv=%8d, div=%8d, dvoice(i=%d)=%8d, sss=%8d, data1(i)=%8d\n', minv, maxv, div, i, dvoice(i), sss, data1(3+i));
         end
         %expand/compand smoothing (smooth0=0,smooth1=1)
         data2(1) = minv;
@@ -117,9 +121,10 @@ function [data,enc] = encoder2(voice,enc,dec)
         data2(3) = 1;
         for i=1:N-1
             % dvoice(i)=[-2*maxx..+2*maxx]
-            % div=[0..maxx]
-            sss = fix( dvoice(i) * div / (2*enc.maxx) );  % sss=[-maxx..+maxx]
-            data2(3+i) = enc.table2( sss + enc.maxx + 1 );
+            % div=[0..FIXP]
+            sss = fix( dvoice(i)*div );  % sss=[-FIXP..+FIXP]
+            data2(3+i) = enc.table2( sss + FIXP + 1 );
+            %fprintf(1,'minv=%8d, maxv=%8d, div=%8d, dvoice(i=%d)=%8d, sss=%8d, data2(i)=%8d\n', minv, maxv, div, i, dvoice(i), sss, data2(3+i));
         end
         %expand/compand smoothing (smooth0=1,smooth1=1)
         data3(1) = maxv;
@@ -127,9 +132,10 @@ function [data,enc] = encoder2(voice,enc,dec)
         data3(3) = 1;
         for i=1:N-1
             % dvoice(i)=[-2*maxx..+2*maxx]
-            % div=[0..maxx]
-            sss = fix( dvoice(i) * div / (2*enc.maxx) );  % sss=[-maxx..+maxx]
-            data3(3+i) = enc.table3( sss + enc.maxx + 1 );
+            % div=[0..FIXP]
+            sss = fix( dvoice(i)*div );  % sss=[-FIXP..+FIXP]
+            data3(3+i) = enc.table3( sss + FIXP + 1 );
+            %fprintf(1,'minv=%8d, maxv=%8d, div=%8d, dvoice(i=%d)=%8d, sss=%8d, data3(i)=%8d\n', minv, maxv, div, i, dvoice(i), sss, data3(3+i));
         end
 
         %find reconstruction errors

@@ -11,6 +11,8 @@
 
 function [voice,dec] = decoder2(data,dec)
 
+    FIXP = 32768*2;
+
     N = dec.samples_per_frame;
 
     minv    = data(1);
@@ -41,16 +43,16 @@ function [voice,dec] = decoder2(data,dec)
         voice(1) = 0;
         for i=1:N-1
             %dvoice(i)  = [0..dec.factor-1]
-            %dec.table0 = [-maxx..+maxx]
+            %dec.table0 = [-FIXP..+FIXP]
             voice(i+1) = voice(i) + dec.table0( dvoice(i)+1 );
-            %fprintf(1,'voice(i=%d)=%6.3f , dec.table0( dvoice(i)=%6.3f )=%6.3f\n', i, voice(i), dvoice(i), dec.table0( dvoice(i)+1 ));
+            fprintf(1,'voice(i=%3d)=%8d , dec.table0( dvoice(i)=%8d )=%8d, voice(i+1)=%8d\n', i, voice(i), dvoice(i), dec.table0( dvoice(i)+1 ), voice(i+1));
         end
     case 1
         %expand/compand smoothing
         voice(1) = 0;
         for i=1:N-1
             %dvoice(i)  = [0..dec.factor-1]
-            %dec.table1 = [-maxx..+maxx]
+            %dec.table1 = [-FIXP..+FIXP]
             voice(i+1) = voice(i) + dec.table1( dvoice(i)+1 );
             %fprintf(1,'voice(i=%d)=%6.3f , dec.table1( dvoice(i)=%6.3f )=%6.3f\n', i, voice(i), dvoice(i), dec.table1( dvoice(i)+1 ));
         end
@@ -59,7 +61,7 @@ function [voice,dec] = decoder2(data,dec)
         voice(1) = 0;
         for i=1:N-1
             %dvoice(i)  = [0..dec.factor-1]
-            %dec.table2 = [-maxx..+maxx]
+            %dec.table2 = [-FIXP..+FIXP]
             voice(i+1) = voice(i) + dec.table2( dvoice(i)+1 );
             %fprintf(1,'voice(i=%d)=%6.3f , dec.table2( dvoice(i)=%6.3f )=%6.3f\n', i, voice(i), dvoice(i), dec.table2( dvoice(i)+1 ));
         end
@@ -68,7 +70,7 @@ function [voice,dec] = decoder2(data,dec)
         voice(1) = 0;
         for i=1:N-1
             %dvoice(i)  = [0..dec.factor-1]
-            %dec.table3 = [-maxx..+maxx]
+            %dec.table3 = [-FIXP..+FIXP]
             voice(i+1) = voice(i) + dec.table3( dvoice(i)+1 );
             %fprintf(1,'voice(i=%d)=%6.3f , dec.table3( dvoice(i)=%6.3f )=%6.3f\n', i, voice(i), dvoice(i), dec.table3( dvoice(i)+1 ));
         end
@@ -79,23 +81,22 @@ function [voice,dec] = decoder2(data,dec)
     voicemin  = min(voice);
     voicediff = voicemax - voicemin;
 
-    h = dec.maxx / dec.samples_per_frame;
-    voicediff_n = fix( voicediff * h / dec.maxx );
-    voicemax_n  = fix( voicemax  * h / dec.maxx );
-    voicemin_n  = fix( voicemin  * h / dec.maxx );
+    h = fix( FIXP / dec.samples_per_frame );
+    voicediff_n = fix( voicediff * h / FIXP );
+    voicemax_n  = fix( voicemax  * h / FIXP );
+    voicemin_n  = fix( voicemin  * h / FIXP );
 
     % voicemin_n  = [-maxx..+maxx]
     % voicemax_n  = [-maxx..+maxx]
     % voicediff_n = [0..2*maxx]
 
-    div = dec.divtable( voicediff_n + 1 ); %div=[0..2*maxx]
+    div = dec.divtable( voicediff_n + 1 ); %div=[0..2*FIXP]
 
     %fprintf(1,'h=%8.3f, voicediff_n=%8.3f, div=%8.3f\n', h, voicediff_n, div);
-
     for i=1:N
         tmp = voice(i);
-        voice_n = fix( voice(i) * h / dec.maxx );
-        voice(i) = minv + fix( diffv * (voice_n - voicemin_n)*div/(2*dec.maxx*2*dec.maxx) );
+        voice_n = fix( voice(i) * h / FIXP );
+        voice(i) = minv + fix( diffv * (voice_n - voicemin_n)*div/(FIXP) );
         %fprintf(1,'i=%3d, minv=%8.3f, maxv=%8.3f, diffv=%8.3f, voice(i)=%8.3f --> voice(i)=%8.3f, voicemin=%8.3f\n', i, minv, maxv, diffv, tmp, voice(i), voicemin);
     end
 

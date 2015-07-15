@@ -11,46 +11,47 @@
 
 function [dec] = decoder2_init( samples_per_frame, bits_per_sample, maxx )
 
+    FIXP = 32768*2;
+
     % set settings of decoder
     dec.samples_per_frame = samples_per_frame;
     dec.bits_per_sample   = bits_per_sample;
     dec.factor            = 2^dec.bits_per_sample;
     dec.maxx              = maxx;
 
-    % fill table for 1/div
-    % input values=[0..2*maxx]
-    % output values=[0..2*maxx]
-    dec.divtable = zeros(1,1+2*maxx);
+    % fill table for 1/voicediff_n, where voicediff_n=[0..2*maxx]
+    % values=[0..FIXP],  0<=>0.0  FIXP<=>1.0
+    dec.divtable = zeros(1,2*maxx+1);
     dec.divtable(1) = 0;
     for div=1:1:2*maxx
-        dec.divtable(div+1) = fix( 4 * maxx * maxx / div );
+        dec.divtable(div+1) = ( FIXP/div );
     end
 
     % fill tables
     % inputs=[0..(dec.factor-1)]
-    % returns=[-maxx..+maxx]
+    % returns=[-FIXP..+FIXP]
     dec.table0 = zeros(1,dec.factor);
     for dv=0:(dec.factor-1)
-        sss = fix( 2*maxx*dv/dec.factor - maxx );
-        dec.table0(dv+1) = fix( sss );
+        sss = expand( (dv+0.5)/dec.factor - 0.5 , 0 );
+        dec.table0(dv+1) = round(sss * FIXP);
     end
 
     dec.table1 = zeros(1,dec.factor);
     for dv=0:(dec.factor-1)
-        sss = fix( 2*maxx*dv/dec.factor - maxx );
-        dec.table1(dv+1) = fix( maxx * expand( sss/maxx , 1 ) );
+        sss = expand( (dv+0.5)/dec.factor - 0.5 , 1 );
+        dec.table1(dv+1) = round(sss * FIXP);
     end
 
     dec.table2 = zeros(1,dec.factor);
     for dv=0:(dec.factor-1)
-        sss = fix( 2*maxx*dv/dec.factor - maxx );
-        dec.table2(dv+1) = fix( maxx * expand( sss/maxx , 2 ) );
+        sss = expand( (dv+0.5)/dec.factor - 0.5 , 2 );
+        dec.table2(dv+1) = round(sss * FIXP);
     end
 
     dec.table3 = zeros(1,dec.factor);
     for dv=0:(dec.factor-1)
-        sss = fix( 2*maxx*dv/dec.factor - maxx );
-        dec.table3(dv+1) = fix( maxx * expand( sss/maxx , 3 ) );
+        sss = expand( (dv+0.5)/dec.factor - 0.5 , 3 );
+        dec.table3(dv+1) = round(sss * FIXP);
     end
 
 return
