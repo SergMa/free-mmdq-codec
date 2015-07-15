@@ -38,7 +38,7 @@ function [voice,dec] = decoder(data,dec)
         if smooth0==0 && smooth1==0
             voice(1) = 0;
             for i=1:N-1
-                sss = dvoice(i)/dec.factor - 0.5;
+                sss = expand( dvoice(i)/dec.factor - 0.5 , 0 );
                 voice(i+1) = voice(i) + sss;
             end
         elseif smooth0==1 && smooth1==0
