@@ -14,9 +14,9 @@ disp('MMDQ-codec test started...');
 % Test settings
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
-SAMPLES = 1:10000;
-SAMPLES = 1400:1800;
+SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
+%SAMPLES = 1:10000;
+%SAMPLES = 1400:2000;
 
 FS = 8000;            % Sample (discretization) frequency, Hz
 TS = 1/FS;            % Sample (discretization) period, sec
@@ -25,11 +25,9 @@ AMP = 2^(BITS-1)-1;   % Maximum amplitude of original input signal (for BITS=16:
 
 USE_AUTOSCALE = 1;    % 0 - disable autoscale of input signals, 1 - enable
 
-CODEC_VERSION = 1;    % 0-no encode/decode operations
+CODEC_VERSION = 2;    % 0-no encode/decode operations
                       % 1-matlab float point
                       % 2-c-adapted, code tables, div tables
-                      % 3-c-adapted, code tables, integer division
-
 
 SHOW_GRAPHICS = 1;    % 0 - disable plotting of graphics, 1 - enable it
 
@@ -40,7 +38,6 @@ INPUT_FILENAME    = './input.wav'; % Name of file for input signal
 OUTPUT_FILENAME_0 = './out0.wav';  % Name of file for output signal for codec version 0
 OUTPUT_FILENAME_1 = './out1.wav';  % Name of file for output signal for codec version 1
 OUTPUT_FILENAME_2 = './out2.wav';  % Name of file for output signal for codec version 2
-OUTPUT_FILENAME_3 = './out3.wav';  % Name of file for output signal for codec version 3
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Codec settings
@@ -184,9 +181,6 @@ case 1
 case 2
     enc = encoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
     dec = decoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
-case 3
-    enc = encoder3_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
-    dec = decoder3_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -236,8 +230,6 @@ for i=1:N
             [frame_data,enc] = encoder(frame_vinp,enc,dec);
         case 2
             [frame_data,enc] = encoder2(frame_vinp,enc,dec);
-        case 3
-            [frame_data,enc] = encoder3(frame_vinp,enc,dec);
         end
 
         % count smooth-es
@@ -266,8 +258,6 @@ for i=1:N
             [frame_vout,dec] = decoder(frame_data,dec);
         case 2
             [frame_vout,dec] = decoder2(frame_data,dec);
-        case 3
-            [frame_vout,dec] = decoder3(frame_data,dec);
         end
 
     end
@@ -394,8 +384,6 @@ case 1
     wavwrite( (y/AMP).', FS, bits_voice, OUTPUT_FILENAME_1 );
 case 2
     wavwrite( (y/AMP).', FS, bits_voice, OUTPUT_FILENAME_2 );
-case 3
-    wavwrite( (y/AMP).', FS, bits_voice, OUTPUT_FILENAME_3 );
 end
 
 fprintf(1,'test finished! %d samples processed!\n', N);
