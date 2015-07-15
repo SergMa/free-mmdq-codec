@@ -14,9 +14,9 @@
 /* DEFINITIONS                                                                */
 /******************************************************************************/
 
-#define MAXX                   32768U       /* must be power of 2 */
-#define MAXXMAXX4              4294967295U  /* MAXX*MAXX*4 */
-#define MAXXMAXX2              2147483648U  /* MAXX*MAXX*2 */
+#define FIXP                   (2*32768)
+
+#define MAXX                   32768    /* must be power of 2 */
 #define SAMPLES_PER_FRAME_MIN  2
 #define SAMPLES_PER_FRAME_MAX  1000
 #define BITS_PER_SAMPLE_MIN    1
@@ -36,9 +36,11 @@ struct mmdq_codec_s {
     int        databytes;       //size of encoded frame, bytes
     int        databytesnopack; //size of no-bit-packed encoded frame, bytes
 
-    uint32_t * divtable;
+    uint32_t * encdivtable;
     uint8_t  * enctable[SMOOTH_N];
-    int16_t  * dectable[SMOOTH_N];
+
+    uint32_t * decdivtable;
+    int32_t  * dectable[SMOOTH_N];
 };
 
 /******************************************************************************/
