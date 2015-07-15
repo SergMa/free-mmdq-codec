@@ -84,10 +84,11 @@ function [data,enc] = encoder(voice,enc,dec)
         data0(2) = maxv;
         data0(3) = 0;
         for i=1:N-1
-            sss   = compand( dvoice(i)/ampdv , 0 );
-            ddd   = enc.factor/2 * sss + enc.factor/2;
+            sss = compand( dvoice(i)/ampdv , 0 );
+            ddd = enc.factor/2 * sss + enc.factor/2;
             ddd = min(ddd,enc.factor-1);
-            data0(3+i) = round( ddd );
+            data0(3+i) = fix( ddd );
+            %fprintf(1,'minv=%8d, maxv=%8d, dvoice(i=%d)=%8d, sss=%8.3f, ddd=%8.3f, data0(i)=%8d\n', minv, maxv, i, dvoice(i), sss, ddd, data0(3+i));
         end
         %expand/compand smoothing (smooth0=1,smooth1=0)
         data1(1) = maxv;
@@ -97,7 +98,7 @@ function [data,enc] = encoder(voice,enc,dec)
             sss   = compand( dvoice(i)/ampdv , 1 );
             ddd   = enc.factor/2 * sss + enc.factor/2;
             ddd = min(ddd,enc.factor-1);
-            data1(3+i) = round( ddd );
+            data1(3+i) = fix( ddd );
         end
         %expand/compand smoothing (smooth0=0,smooth1=1)
         data2(1) = minv;
@@ -107,7 +108,7 @@ function [data,enc] = encoder(voice,enc,dec)
             sss   = compand( dvoice(i)/ampdv , 2 );
             ddd   = enc.factor/2 * sss + enc.factor/2;
             ddd = min(ddd,enc.factor-1);
-            data2(3+i) = round( ddd );
+            data2(3+i) = fix( ddd );
         end
         %expand/compand smoothing (smooth0=1,smooth1=1)
         data3(1) = maxv;
@@ -117,7 +118,7 @@ function [data,enc] = encoder(voice,enc,dec)
             sss   = compand( dvoice(i)/ampdv , 3 );
             ddd   = enc.factor/2 * sss + enc.factor/2;
             ddd = min(ddd,enc.factor-1);
-            data3(3+i) = round( ddd );
+            data3(3+i) = fix( ddd );
         end
 
         %find reconstruction errors
