@@ -39,7 +39,7 @@ xlabel('x');
 ylabel('y');
 grid on;
 
-figure(2);
+figure(3);
 plot(x,z0,'r.-', x,z1,'g.-', x,z2,'b.-', x,z3,'k.-');
 title('expand(compand(x))');
 legend('ver0','ver1','ver2','ver3');

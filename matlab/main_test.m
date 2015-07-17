@@ -25,7 +25,7 @@ AMP = 2^(BITS-1)-1;   % Maximum amplitude of original input signal (for BITS=16:
 
 USE_AUTOSCALE = 1;    % 0 - disable autoscale of input signals, 1 - enable
 
-CODEC_VERSION = 2;    % 0-no encode/decode operations
+CODEC_VERSION = 1;    % 0-no encode/decode operations
                       % 1-matlab float point
                       % 2-c-adapted, code tables, div tables
 
@@ -46,8 +46,8 @@ OUTPUT_FILENAME_2 = './out2.wav';  % Name of file for output signal for codec ve
 %SAMPLES_PER_FRAME = 13; %40000 bit/s
 %BITS_PER_SAMPLE   = 4;
 
-SAMPLES_PER_FRAME = 6; %42666.(6) bit/s
-BITS_PER_SAMPLE   = 3;
+%SAMPLES_PER_FRAME = 6; %42666.(6) bit/s
+%BITS_PER_SAMPLE   = 3;
 
 %SAMPLES_PER_FRAME = 7; %40000 bit/s
 %BITS_PER_SAMPLE   = 3;
@@ -58,8 +58,8 @@ BITS_PER_SAMPLE   = 3;
 %SAMPLES_PER_FRAME = 10; %35200 bit/s
 %BITS_PER_SAMPLE   = 3;
 
-%SAMPLES_PER_FRAME = 14; %32000 bit/s
-%BITS_PER_SAMPLE   = 3;
+SAMPLES_PER_FRAME = 14; %32000 bit/s
+BITS_PER_SAMPLE   = 3;
 
 %SAMPLES_PER_FRAME = 15; %24000 bit/s
 %BITS_PER_SAMPLE   = 2;
@@ -205,69 +205,59 @@ smooth1_N = 0;
 smooth2_N = 0;
 smooth3_N = 0;
 
-for i=1:N
+i = 1;
+while i<=N-SAMPLES_PER_FRAME+1
 
-    % scale input, put input into frame-buffer
-    vinp = fix( MAXX*x(i)/AMP );
-    if vinp>MAXX
-        vinp = MAXX;
-    elseif vinp<-MAXX
-        vinp = -MAXX;
-    end
-    frame_vinp( frame_pos ) = vinp;
+    % scale input, get enc_voice[] buffer
+    enc_voice = x(i:i+SAMPLES_PER_FRAME-1);
+    enc_voice = fix( MAXX*enc_voice/AMP );
+    enc_voice = my_clip( enc_voice, MAXX );
 
-    % get output from frame-buffer, scale it
-    vout = frame_vout( frame_pos );
-    y(i) = fix( AMP*vout/MAXX );
-
-    % process samples
-    frame_pos = frame_pos + 1;
-    if frame_pos > SAMPLES_PER_FRAME
-        frame_pos = 1;
-
-        % voice frame is ready, encode it to data
-        switch CODEC_VERSION
-        case 0
-            frame_data = [ 0, 0, 0, frame_vinp ];
-        case 1
-            [frame_data,enc] = encoder(frame_vinp,enc,dec);
-        case 2
-            [frame_data,enc] = encoder2(frame_vinp,enc,dec);
-        end
-
-        % count smooth-es
-        if frame_data(1)<=frame_data(2)
-            smooth0 = 0;
-        else
-            smooth0 = 1;
-        end
-        smooth1 = frame_data(3);
-
-        if smooth0==0 && smooth1==0
-            smooth0_N = smooth0_N + 1;
-        elseif smooth0==1 && smooth1==0
-            smooth1_N = smooth1_N + 1;
-        elseif smooth0==0 && smooth1==1
-            smooth2_N = smooth2_N + 1;
-        else
-            smooth3_N = smooth3_N + 1;
-        end
-
-        % decode data frame to voice
-        switch CODEC_VERSION
-        case 0
-            frame_vout = frame_data(4:end);
-        case 1
-            [frame_vout,dec] = decoder(frame_data,dec);
-        case 2
-            [frame_vout,dec] = decoder2(frame_data,dec);
-        end
-
+    % encode frame
+    switch CODEC_VERSION
+    case 0
+        enc_data = [ 0, 0, 0, enc_voice ];
+    case 1
+        [enc_data,enc] = encoder(enc_voice,enc,dec);
+    case 2
+        [enc_data,enc] = encoder2(enc_voice,enc,dec);
     end
 
-    ttt_vinp(i) = vinp;
-    ttt_vout(i) = vout;
+    % count smooth-es
+    if enc_data(1)<=enc_data(2)
+        smooth0 = 0;
+    else
+        smooth0 = 1;
+    end
+    smooth1 = enc_data(3);
 
+    if smooth0==0 && smooth1==0
+        smooth0_N = smooth0_N + 1;
+    elseif smooth0==1 && smooth1==0
+        smooth1_N = smooth1_N + 1;
+    elseif smooth0==0 && smooth1==1
+        smooth2_N = smooth2_N + 1;
+    else
+        smooth3_N = smooth3_N + 1;
+    end
+    
+    % decode data frame to voice
+    switch CODEC_VERSION
+    case 0
+        dec_voice = enc_data(4:end);
+    case 1
+        [dec_voice,dec] = decoder(enc_data,dec);
+    case 2
+        [dec_voice,dec] = decoder2(enc_data,dec);
+    end
+
+    %scale back, output voice
+    y(i:i+SAMPLES_PER_FRAME-1) = fix( dec_voice*AMP/MAXX );
+
+    ttt_vinp(i:i+SAMPLES_PER_FRAME-1) = enc_voice;
+    ttt_vout(i:i+SAMPLES_PER_FRAME-1) = dec_voice;
+
+    i = i + SAMPLES_PER_FRAME;
 end
 
 fprintf(1,'smooth_N:  0=%6d  1=%6d  2=%6d  3=%6d\n', smooth0_N, smooth1_N, smooth2_N, smooth3_N);
@@ -276,40 +266,57 @@ fprintf(1,'smooth_N:  0=%6d  1=%6d  2=%6d  3=%6d\n', smooth0_N, smooth1_N, smoot
 % Make error estimates
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-SHIFT = SAMPLES_PER_FRAME;
-
-%shift vout to compensate encoder delay
-ttt_vout_shifted = [ ttt_vout(SHIFT+1:end) , zeros(1,SHIFT) ];
-%shift y to compensate encoder delay
-y_shifted = [ y(SHIFT+1:end) , zeros(1,SHIFT) ];
-
 % Calculate and print errors values
-err = ttt_vinp - ttt_vout_shifted;
-err = err(1:end-SAMPLES_PER_FRAME*2);
+err = ttt_vinp - ttt_vout;
 avg_err = mean( abs(err) );
 max_err = max( abs(err) );
 std_err = std( abs(err) );
-mse_err = mean((err/MAXX).^2);
+mse_err = mean(err.^2);
+
+nerr = (ttt_vinp - ttt_vout)/MAXX;
+avg_nerr = mean( abs(nerr) );
+max_nerr = max( abs(nerr) );
+std_nerr = std( abs(nerr) );
+mse_nerr = mean(nerr.^2);
 
 fprintf(1,'\n');
 fprintf(1,'vinp,vout errors:\n');
-fprintf(1,'avg error=%6d\n',avg_err);
-fprintf(1,'max error=%6d\n',max_err);
-fprintf(1,'std error=%6d\n',std_err);
-fprintf(1,'mse error=%12.6f\n',mse_err);
+fprintf(1,'  avg error=%6d\n',avg_err);
+fprintf(1,'  max error=%6d\n',max_err);
+fprintf(1,'  std error=%6d\n',std_err);
+fprintf(1,'  mse error=%12.8f\n',mse_err);
 
-erry = x - y_shifted;
-erry = erry(1:end-SAMPLES_PER_FRAME*2);
+fprintf(1,'vinp,vout normalized errors:\n');
+fprintf(1,'avg nerror=%6d\n',avg_nerr);
+fprintf(1,'max nerror=%6d\n',max_nerr);
+fprintf(1,'std nerror=%6d\n',std_nerr);
+fprintf(1,'mse nerror=%12.8f\n',mse_nerr);
+
+
+erry = x - y;
 avg_erry = mean( abs(erry) );
 max_erry = max( abs(erry) );
 std_erry = std( abs(erry) );
-mse_erry = mean((erry/AMP).^2);
+mse_erry = mean(erry.^2);
+
+nerry = (x - y)/AMP;
+avg_nerry = mean( abs(nerry) );
+max_nerry = max( abs(nerry) );
+std_nerry = std( abs(nerry) );
+mse_nerry = mean(nerry.^2);
+
 fprintf(1,'\n');
 fprintf(1,'x,y errors:\n');
-fprintf(1,'avg error=%6d\n',avg_erry);
-fprintf(1,'max error=%6d\n',max_erry);
-fprintf(1,'std error=%6d\n',std_erry);
-fprintf(1,'mse error=%12.6f\n',mse_erry);
+fprintf(1,'  avg errory=%6d\n',avg_erry);
+fprintf(1,'  max errory=%6d\n',max_erry);
+fprintf(1,'  std errory=%6d\n',std_erry);
+fprintf(1,'  mse errory=%12.8f\n',mse_erry);
+
+fprintf(1,'x,y normalized errors:\n');
+fprintf(1,'avg nerrory=%6d\n',avg_nerry);
+fprintf(1,'max nerrory=%6d\n',max_nerry);
+fprintf(1,'std nerrory=%6d\n',std_nerry);
+fprintf(1,'mse nerrory=%12.8f\n',mse_nerry);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plot graphics
@@ -333,15 +340,15 @@ subplot(2,1,2);
 % Build and plot spectrogramms of signals
 figure(2);
 subplot(3,1,1);
-    s_signal = spectrogram( x, SPECTROGRAM_WIDTH, FS, SPECTROGRAM_OVR);
+    sx = spectrogram( x, SPECTROGRAM_WIDTH, FS, SPECTROGRAM_OVR);
     title('original signal spectrogramm');
 subplot(3,1,2);
-    s_clean = spectrogram( y, SPECTROGRAM_WIDTH, FS, SPECTROGRAM_OVR);
+    sy = spectrogram( y, SPECTROGRAM_WIDTH, FS, SPECTROGRAM_OVR);
     title('encoded/decoded signal spectrogramm');
 subplot(3,1,3);
     time = (0:N)/FS;
     freq = 0:FS/2/SPECTROGRAM_WIDTH:FS/2;
-    imagesc(time,freq,abs(s_signal - s_clean) );
+    imagesc(time,freq,abs(sx - sy) );
     axis xy;
     xlabel('time,sec');
     ylabel('freq,Hz');
@@ -350,29 +357,53 @@ subplot(3,1,3);
 
 % Compare input/output waveforms [-MAXX..MAXX] scale
 figure(3);
-    plot( t, ttt_vinp,'r.-',  t, ttt_vout_shifted,'b.-' );  xlabel('t,sec');  ylabel('y');
+    plot( t, ttt_vinp,'r.-',  t, ttt_vout,'b.-' );  xlabel('t,sec');  ylabel('y');
     ylim([-MAXX MAXX]);
     title('-MAXX..+MAXX quantizied signal');
     legend('vinp','vout(shifted)');
 
 figure(4);
-    plot( t, ttt_vinp - ttt_vout_shifted,'r.-' );  xlabel('t,sec');  ylabel('y');
+    plot( t, ttt_vinp - ttt_vout,'r.-' );  xlabel('t,sec');  ylabel('y');
     title('-MAXX..+MAXX quantizied signal error');
     legend('error(vinp,vout(shifted))');
     ylim([-MAXX MAXX]);
 
 % Compare input/output waveforms [-AMP..AMP] scale
 figure(5);
-    plot( t, x,'r.-',  t, y_shifted,'b.-' );  xlabel('t,sec');  ylabel('y');
+    plot( t, x,'r.-',  t, y,'b.-' );  xlabel('t,sec');  ylabel('y');
     title('-AMP..+AMP quantizied signal');
     legend('x','y(shifted)');
     ylim([-AMP AMP]);
 
 figure(6);
-    plot( t, x - y_shifted,'r.-' );  xlabel('t,sec');  ylabel('y');
+    plot( t, x - y,'r.-' );  xlabel('t,sec');  ylabel('y');
     title('-AMP..+AMP quantizied signal error');
     legend('error(x,y(shifted))');
     ylim([-AMP AMP]);
+
+
+if CODEC_VERSION==2
+    % Show compand/expand functions tables
+    figure(7);
+
+    subplot(4,2,1);
+    hist(enc.table0,100);
+    subplot(4,2,3);
+    hist(enc.table1,100);
+    subplot(4,2,5);
+    hist(enc.table2,100);
+    subplot(4,2,7);
+    hist(enc.table3,100);
+
+    subplot(4,2,2);
+    hist(dec.table0,100);
+    subplot(4,2,4);
+    hist(dec.table1,100);
+    subplot(4,2,6);
+    hist(dec.table2,100);
+    subplot(4,2,8);
+    hist(dec.table3,100);
+end
 
 end
 
