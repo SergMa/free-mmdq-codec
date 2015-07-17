@@ -5,13 +5,12 @@
 %   samples_per_frame = number of voice samples per frame
 %   bits_per_sample   = number of bits per sample
 %   maxx              = amplitude of signal: signal=[-maxx...+maxx]
+%   FIXP  = constant of fixed-point arithmetics
 % OUTPUTS:
 %   dec   = decoder structure
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [dec] = decoder2_init( samples_per_frame, bits_per_sample, maxx )
-
-    FIXP = 32768*2;
+function [dec] = decoder2_init( samples_per_frame, bits_per_sample, maxx, FIXP )
 
     % set settings of decoder
     dec.samples_per_frame = samples_per_frame;
@@ -20,11 +19,11 @@ function [dec] = decoder2_init( samples_per_frame, bits_per_sample, maxx )
     dec.maxx              = maxx;
 
     % fill table for 1/voicediff_n, where voicediff_n=[0..2*maxx]
-    % values=[0..FIXP],  0<=>0.0  FIXP<=>1.0
+    % values=[0..FIXP*FIXP],  0<=>0.0  FIXP*FIXP<=>1.0
     dec.divtable = zeros(1,2*maxx+1);
     dec.divtable(1) = 0;
     for div=1:1:2*maxx
-        dec.divtable(div+1) = round( FIXP/div );
+        dec.divtable(div+1) = round( FIXP*FIXP/div );
     end
 
     % fill tables

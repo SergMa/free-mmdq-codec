@@ -5,14 +5,12 @@
 %   samples_per_frame = number of voice samples per frame
 %   bits_per_sample   = number of bits per sample
 %   maxx              = amplitude of signal: signal=[-maxx...+maxx]
+%   FIXP  = constant of fixed-point arithmetics
 % OUTPUTS:
 %   enc   = encoder structure
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [enc] = encoder2_init( samples_per_frame, bits_per_sample, maxx )
-
-    % fixed-point constant
-    FIXP = 32768*2;
+function [enc] = encoder2_init( samples_per_frame, bits_per_sample, maxx, FIXP )
 
     % set settings of encoder
     enc.samples_per_frame = samples_per_frame;

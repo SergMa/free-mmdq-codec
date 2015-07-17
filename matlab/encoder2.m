@@ -4,14 +4,13 @@
 % INPUTS:
 %   voice = dim 1xN = voice samples to encode
 %   enc   = encoder structure
+%   FIXP  = constant of fixed-point arithmetics
 % OUTPUTS:
 %   data  = dim 1xM = encoded voice data frame
 %   enc   = encoder structure
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [data,enc] = encoder2(voice,enc,dec)
-
-    FIXP = 32768*2;
+function [data,enc] = encoder2( voice, enc, dec, FIXP )
 
     N = enc.samples_per_frame;
 

@@ -4,14 +4,13 @@
 % INPUTS:
 %   data  = dim 1xM = data frame to decode
 %   dec   = decoder structure
+%   FIXP  = constant of fixed-point arithmetics
 % OUTPUTS:
 %   voice = dim 1xN = decoded voice samples
 %   dec   = decoder structure
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [voice,dec] = decoder2(data,dec)
-
-    FIXP = 32768*2;
+function [voice,dec] = decoder2( data, dec, FIXP )
 
     N = dec.samples_per_frame;
 
@@ -86,10 +85,14 @@ function [voice,dec] = decoder2(data,dec)
     % voicemax_n  = [-maxx..+maxx]
     % voicediff_n = [0..2*maxx]
 
-    div = dec.divtable( voicediff_n + 1 ); %div=[0..2*FIXP]
+    div = dec.divtable( voicediff_n + 1 ); %div=[0..FIXP*FIXP]
+    %div = FIXP / voicediff_n;
+
+    %fprintf(1,'voicediff_n=%12d, div=%12d\n', voicediff_n, div );
+
     for i=1:N
         voice_n = fix( voice(i) * h / FIXP );
-        voice(i) = minv + fix( diffv * (voice_n - voicemin_n)*div/(FIXP) );
+        voice(i) = minv + fix( diffv * (voice_n - voicemin_n)*div/(FIXP*FIXP) );
     end
 
     %for i=1:N
