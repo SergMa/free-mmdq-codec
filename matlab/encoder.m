@@ -16,9 +16,9 @@ function [data,enc] = encoder(voice,enc,dec)
 
     N = enc.samples_per_frame;
 
-    for i=1:N
-        %fprintf(1,'i=%6d, voice=%8.3f\n', i, voice(i) );
-    end
+    %for i=1:N
+    %    fprintf(1,'i=%6d, voice=%8.3f\n', i, voice(i) );
+    %end
 
     data = zeros(1,3+N-1);
     % If smooth0==0, minv first, maxv second,

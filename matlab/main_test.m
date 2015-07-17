@@ -16,7 +16,7 @@ disp('MMDQ-codec test started...');
 
 SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
 %SAMPLES = 1:10000;
-%SAMPLES = 1400:2000;
+%SAMPLES = 1:2000;
 
 FS = 8000;            % Sample (discretization) frequency, Hz
 TS = 1/FS;            % Sample (discretization) period, sec
@@ -25,7 +25,7 @@ AMP = 2^(BITS-1)-1;   % Maximum amplitude of original input signal (for BITS=16:
 
 USE_AUTOSCALE = 1;    % 0 - disable autoscale of input signals, 1 - enable
 
-CODEC_VERSION = 1;    % 0-no encode/decode operations
+CODEC_VERSION = 2;    % 0-no encode/decode operations
                       % 1-matlab float point
                       % 2-c-adapted, code tables, div tables
 
@@ -70,6 +70,7 @@ BITS_PER_SAMPLE   = 3;
 BITS_INPUT_SIGNAL = 16;
 MAXX = (2^BITS_INPUT_SIGNAL)/2-1;
 FACTOR = 2^BITS_PER_SAMPLE;
+FIXP = 32768*2;
 
 % encoded frame data format:
 % 8 bits   = min/max value (we will store A-law or u-law code here)
@@ -182,8 +183,8 @@ case 1
     enc = encoder_init ( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
     dec = decoder_init ( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
 case 2
-    enc = encoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
-    dec = decoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
+    enc = encoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX, FIXP );
+    dec = decoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX, FIXP );
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -220,7 +221,7 @@ while i<=N-SAMPLES_PER_FRAME+1
     case 1
         [enc_data,enc] = encoder(enc_voice,enc,dec);
     case 2
-        [enc_data,enc] = encoder2(enc_voice,enc,dec);
+        [enc_data,enc] = encoder2(enc_voice,enc,dec,FIXP);
     end
 
     % count smooth-es
@@ -248,7 +249,7 @@ while i<=N-SAMPLES_PER_FRAME+1
     case 1
         [dec_voice,dec] = decoder(enc_data,dec);
     case 2
-        [dec_voice,dec] = decoder2(enc_data,dec);
+        [dec_voice,dec] = decoder2(enc_data,dec,FIXP);
     end
 
     %scale back, output voice

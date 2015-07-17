@@ -25,10 +25,12 @@ ORIGINAL_FILENAME = '../c/out/input.wav';
 
 % Name of file for signal which has been encoded/decoded by codec 1
 CODEC1_FILENAME   = '../c/out/g726-32kbps.wav';   
+%CODEC1_FILENAME   = '../c/out/g726-40kbps.wav';   
 
 % Name of file for signal which has been encoded/decoded by codec 2
-%CODEC2_FILENAME   = '../c/out/mmdq-32kbps.wav';
-CODEC2_FILENAME   = 'out1.wav';
+CODEC2_FILENAME   = '../c/out/mmdq-32kbps.wav';
+%CODEC2_FILENAME   = '../c/out/mmdq-42kbps.wav';
+%CODEC2_FILENAME   = 'out1.wav';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load input (voice,noise) signals from wave-files, generate signal to process
