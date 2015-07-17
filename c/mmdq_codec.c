@@ -206,14 +206,14 @@ int mmdq_codec_init ( struct mmdq_codec_s * codec,
         codec->encdivtable[i] = trunc( (double)FIXP / i );
     }
 
-    codec->decdivtable = calloc( 2*MAXX+1, sizeof(int32_t) );
+    codec->decdivtable = calloc( 2*MAXX+1, sizeof(uint32_t) );
     if(codec->decdivtable==NULL) {
         MYLOG_ERROR("Could not allocate memory for codec->decdivtable");
         goto exit_fail;
     }
     codec->decdivtable[0] = 0;
     for(i=1; i<2*MAXX+1; i++) {
-        codec->decdivtable[i] = round( (double)FIXP / i );
+        codec->decdivtable[i] = round( (double)FIXP*(double)FIXP / (double)i );
     }
 
     // fill encode tables
@@ -563,7 +563,7 @@ int  mmdq_decode_nounpack ( struct mmdq_codec_s * codec,
     
     for (i=0; i<codec->samples_per_frame; i++) {
         voice_n = ((int64_t)voice2[i] * codec->h) / FIXP;
-        voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / FIXP;
+        voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / ((uint64_t)FIXP*FIXP);
     }
     
     return 0;
@@ -699,7 +699,7 @@ int  mmdq_decode ( struct mmdq_codec_s * codec,
 
     for (i=0; i<codec->samples_per_frame; i++) {
         voice_n = ((int64_t)voice2[i] * codec->h) / FIXP;
-        voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / FIXP;
+        voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / ((uint64_t)FIXP*FIXP);
     }
 
     *samples = codec->samples_per_frame;
