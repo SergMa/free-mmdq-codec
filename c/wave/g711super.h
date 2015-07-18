@@ -9,6 +9,8 @@
 
 #include <types.h>
 
+//NOTE: linear2mulaw(a), linear2alaw(a) give BUG output for a<=-32765
+
 //------------------------------------------------------------
 inline void  init_g711(void);
 
