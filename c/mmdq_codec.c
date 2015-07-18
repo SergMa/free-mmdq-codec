@@ -185,35 +185,29 @@ int mmdq_codec_init ( struct mmdq_codec_s * codec,
     codec->databytesnopack = 1 + 1 + 1 + (codec->samples_per_frame-1);
 
     // Clear tables
-    codec->encdivtable = NULL;
+    codec->divtable = NULL;
+
     for(s=0; s<SMOOTH_N; s++)
         codec->enctable[s] = NULL;
 
-    codec->decdivtable = NULL;
     for(s=0; s<SMOOTH_N; s++)
         codec->dectable[s] = NULL;
 
     // fill table for 1/ampdv, where
     // ampdv=[0...2*MAXX]
     // values=[0..MAXX]
-    codec->encdivtable = calloc( 2*MAXX+1, sizeof(int32_t) );
-    if(codec->encdivtable==NULL) {
+    codec->divtable = calloc( 2*MAXX+1, sizeof(int32_t) );
+    if(codec->divtable==NULL) {
         MYLOG_ERROR("Could not allocate memory for codec->encdivtable");
         goto exit_fail;
     }
-    codec->encdivtable[0] = 0;
+    codec->divtable[0] = 0;
     for(i=1; i<2*MAXX+1; i++) {
-        codec->encdivtable[i] = trunc( (double)FIXP / i );
-    }
-
-    codec->decdivtable = calloc( 2*MAXX+1, sizeof(uint32_t) );
-    if(codec->decdivtable==NULL) {
-        MYLOG_ERROR("Could not allocate memory for codec->decdivtable");
-        goto exit_fail;
-    }
-    codec->decdivtable[0] = 0;
-    for(i=1; i<2*MAXX+1; i++) {
-        codec->decdivtable[i] = round( (double)FIXP*(double)FIXP / (double)i );
+        //this will decrease error of integer division see encoder(), decoder():
+        if(i<2*MAXX/256)
+            codec->divtable[i] = trunc( (double)FIXP / i );
+        else
+            codec->divtable[i] = trunc( (double)FIXP / (i/256.0) );
     }
 
     // fill encode tables
@@ -222,7 +216,7 @@ int mmdq_codec_init ( struct mmdq_codec_s * codec,
         // values=[0..(codec->factor-1)]
         for(s=0; s<SMOOTH_N; s++) {
             //allocate
-            codec->enctable[s] = calloc( 2*FIXP+1, sizeof(uint8_t) );
+            codec->enctable[s] = calloc( 2*FIXP+1, sizeof(int8_t) );
             if(codec->enctable[s] == NULL) {
                 MYLOG_ERROR("Could not allocate memory for codec->enctable[%d]", s);
                 goto exit_fail;
@@ -259,13 +253,9 @@ int mmdq_codec_init ( struct mmdq_codec_s * codec,
     return 0;
 
 exit_fail:
-    if (codec->encdivtable) {
-        free(codec->encdivtable);
-        codec->encdivtable = NULL;
-    }
-    if (codec->decdivtable) {
-        free(codec->decdivtable);
-        codec->decdivtable = NULL;
+    if (codec->divtable) {
+        free(codec->divtable);
+        codec->divtable = NULL;
     }
     for(s=0; s<SMOOTH_N; s++) {
         if (codec->enctable[s]) {
@@ -315,6 +305,8 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     int       pos;
     uint32_t  bitshift;
     int       bitcntr;
+    
+    int       smn;
 
     //Check input arguments
     if(codec==NULL) {
@@ -379,9 +371,6 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     else
         ampdv = b;
 
-    //printf("minx=%6d, maxx=%6d, mindv=%6d, diffdv=%6d, ampdv=%6d\n",
-    //       minx, maxx, mindv, diffdv, ampdv);
-
     //==========================================================================
     //quantize dv[i]
     if (diffdv==0)
@@ -395,12 +384,12 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
         edata[smin][2] = smooth1;
         if (maxdv==0) {
             // We suppose, that codec->factor is even. So there is no enc.factor for dv=0
-            //for (i=0; i<codec->samples_per_frame-1; i+=2)
-            //    edata[smin][3+i] = codec->factor/2;
-            //for (i=1; i<codec->samples_per_frame-1; i+=2)
-            //    edata[smin][3+i] = codec->factor/2 - 1;
-            for (i=0; i<codec->samples_per_frame-1; i++)
+            for (i=0; i<codec->samples_per_frame-1; i+=2)
                 edata[smin][3+i] = codec->factor/2;
+            for (i=1; i<codec->samples_per_frame-1; i+=2)
+                edata[smin][3+i] = codec->factor/2 - 1;
+            //for (i=0; i<codec->samples_per_frame-1; i++)
+            //    edata[smin][3+i] = codec->factor/2;
         }
         else if (maxdv>0) {
             for (i=0; i<codec->samples_per_frame-1; i++)
@@ -418,9 +407,14 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
         
         // ampdv=[0..2*maxx]
         // div=[0..FIXP]
-        div = codec->encdivtable[ ampdv ];
+        div = codec->divtable[ ampdv ];
 
-        for(s=0; s<4; s++) {
+        if(codec->smooth_on)
+            smn = SMOOTH_N;
+        else
+            smn = 1;
+
+        for(s=0; s<smn; s++) {
             //encode with selected smooth
             if(s&1) {
                 edata[s][0] = maxx; //smooth(bit0)==1
@@ -432,11 +426,23 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
             }
             edata[s][2] = (s>>1)&1; //smooth(bit1)
             
-            for(i=0; i<codec->samples_per_frame-1; i++) {
-                // dvoice(i)=[-2*maxx..+2*maxx]
-                // div=[0..FIXP]
-                sss = dv[i] * div;  // sss=[-FIXP..+FIXP]
-                edata[s][3+i] = codec->enctable[s][sss + FIXP];
+            if(ampdv < 2*MAXX/256) {
+                //K = 1
+                for(i=0; i<codec->samples_per_frame-1; i++) {
+                    // dvoice(i)=[-2*maxx..+2*maxx]
+                    // div=[0..FIXP]
+                    sss = dv[i] * div;  // sss=[-FIXP..+FIXP]
+                    edata[s][3+i] = codec->enctable[s][sss + FIXP];
+                }
+            }
+            else {
+                //K = 256
+                for(i=0; i<codec->samples_per_frame-1; i++) {
+                    // dvoice(i)=[-2*maxx..+2*maxx]
+                    // div=[0..FIXP]
+                    sss = (dv[i] * (int)div) >> 8;  // sss=[-FIXP..+FIXP]
+                    edata[s][3+i] = codec->enctable[s][sss + FIXP];
+                }
             }
             
             //decode for selected smooth
@@ -460,7 +466,7 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
         //find s0=s with minimal error
         smin   = 0;
         errmin = error[0];
-        for (s=1; s<SMOOTH_N; s++) {
+        for (s=1; s<smn; s++) {
             if (error[s] < errmin) {
                 errmin = error[s];
                 smin = s;
@@ -468,10 +474,16 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
         }
         //go-go-go
     }
-    
+
     //==========================================================================
     //bit-pack data[smin] into data[]
     pos = 0;
+
+    if(edata[smin][0] <= -32765)  //Note: current linear2alaw(x), linear2mulaw(x) give BIG errors for x<=32765
+        edata[smin][0] = -32764;
+    if(edata[smin][1] <= -32765)
+        edata[smin][1] = -32764;
+
     data[pos++] = linear2alaw( edata[smin][0] );
     data[pos++] = linear2alaw( edata[smin][1] );
 
@@ -518,7 +530,7 @@ int  mmdq_decode_nounpack ( struct mmdq_codec_s * codec,
     int32_t    voicediff;
     int32_t    voicemin_n;
     int32_t    voicediff_n;
-    uint32_t   div;
+    int32_t    div;
     int32_t    voice_n;
     int32_t    voice2[SAMPLES_PER_FRAME_MAX];
 
@@ -559,13 +571,22 @@ int  mmdq_decode_nounpack ( struct mmdq_codec_s * codec,
     voicemin_n  = (voicemin  * codec->h) / FIXP;
     voicediff_n = (voicediff * codec->h) / FIXP;
 
-    div = codec->decdivtable[ voicediff_n ];  //div=[0..2*FIXP]
-    
-    for (i=0; i<codec->samples_per_frame; i++) {
-        voice_n = ((int64_t)voice2[i] * codec->h) / FIXP;
-        voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / ((uint64_t)FIXP*FIXP);
+    div = codec->divtable[ voicediff_n ];  //div=[0..2*FIXP]
+
+    if (voicediff_n < 2*MAXX/256 ) {
+        //K=1
+        for (i=0; i<codec->samples_per_frame; i++) {
+            voice_n = ((int64_t)voice2[i] * codec->h) / FIXP;
+            voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / FIXP;
+        }
     }
-    
+    else {
+        //K=256
+        for (i=0; i<codec->samples_per_frame; i++) {
+            voice_n = ((int64_t)voice2[i] * codec->h) / FIXP;
+            voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / (FIXP * 256);
+        }
+    }
     return 0;
 }
 
@@ -587,7 +608,7 @@ int  mmdq_decode ( struct mmdq_codec_s * codec,
     int      smooth;
     int      smooth0;
     int      smooth1;
-    uint32_t div;
+    int32_t  div;
     int32_t  voice_n;
     uint8_t  dv[SAMPLES_PER_FRAME_MAX-1];
     int32_t  voice2[SAMPLES_PER_FRAME_MAX];
@@ -659,21 +680,13 @@ int  mmdq_decode ( struct mmdq_codec_s * codec,
         if( dvpos >= (codec->samples_per_frame-1) )
             break;
     }
-
-    // printf("data[%2d]: ", bytes);
-    // for(i=0; i<bytes; i++) {
-    //     printf("%02X ", data[i]);
-    // }
-    // printf(", minx=%6d, maxx=%6d, smooth0=%d, smooth1=%d , dv[]: ",
-    //     minx, maxx, smooth0, smooth1);
-    // for(i=0; i<codec->samples_per_frame-1; i++) {
-    //     printf("%02X ", dv[i]);
-    // }
-    // printf("\n");
-
+    
     //==========================================================================
     //Reconstrunct voice in relative coordinats
-    //Reconstrunct voice in relative coordinats
+
+    if(codec->smooth_on==0)
+        smooth = 0;
+
     voice2[0] = 0;
     for(i=0; i < codec->samples_per_frame-1; i++) {
         // dvoice(i)  = [0..dec.factor-1]
@@ -695,11 +708,21 @@ int  mmdq_decode ( struct mmdq_codec_s * codec,
     voicemin_n  = (voicemin  * codec->h) / FIXP;
     voicediff_n = (voicediff * codec->h) / FIXP;
 
-    div = codec->decdivtable[ voicediff_n ];  //div=[0..2*FIXP]
+    div = codec->divtable[ voicediff_n ];  //div=[0..2*FIXP]
 
-    for (i=0; i<codec->samples_per_frame; i++) {
-        voice_n = ((int64_t)voice2[i] * codec->h) / FIXP;
-        voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / ((uint64_t)FIXP*FIXP);
+    if (voicediff_n < 2*MAXX/256 ) {
+        //K=1
+        for (i=0; i<codec->samples_per_frame; i++) {
+            voice_n = (voice2[i] * codec->h) / FIXP;
+            voice[i] = minv + (int64_t)(voice_n - voicemin_n) * (int64_t)(diffv * div) / FIXP;
+        }
+    }
+    else {
+        //K=256
+        for (i=0; i<codec->samples_per_frame; i++) {
+            voice_n = (voice2[i] * codec->h) / FIXP;
+            voice[i] = minv + (int64_t)(voice_n - voicemin_n) * (int64_t)(diffv * div) / (FIXP*256);
+        }
     }
 
     *samples = codec->samples_per_frame;

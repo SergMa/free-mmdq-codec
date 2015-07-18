@@ -36,10 +36,8 @@ struct mmdq_codec_s {
     int        databytes;       //size of encoded frame, bytes
     int        databytesnopack; //size of no-bit-packed encoded frame, bytes
 
-    uint32_t * encdivtable;
-    uint8_t  * enctable[SMOOTH_N];
-
-    uint32_t * decdivtable;
+    int32_t  * divtable;
+    int8_t   * enctable[SMOOTH_N];
     int32_t  * dectable[SMOOTH_N];
 };
 
