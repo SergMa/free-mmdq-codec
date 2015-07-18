@@ -76,6 +76,28 @@ void usage(void)
 #define G711_ALAW            0
 #define G711_ULAW            1
 
+//------------------------------------------------------------------------------
+//Measure time utils
+unsigned long long t_before_ms;  //global variable
+
+void start_time( void )
+{
+    struct timeval  tv;
+    gettimeofday(&tv, NULL);
+    t_before_ms = 1000*tv.tv_sec + tv.tv_usec/1000;
+    return;
+}
+
+unsigned long long stop_time( void )
+{
+    struct timeval  tv;
+    unsigned long long t_after_ms;
+    gettimeofday(&tv, NULL);
+    t_after_ms = 1000*tv.tv_sec + tv.tv_usec/1000;
+    return (t_after_ms - t_before_ms);
+}
+
+//------------------------------------------------------------------------------
 int main( int argc, char **argv )
 {
     struct mmdq_codec_s codec;
@@ -117,9 +139,6 @@ int main( int argc, char **argv )
 
     int          compare_samples;
 
-    struct timeval     tv_before;
-    struct timeval     tv_after;
-    unsigned long long t_before_ms, t_after_ms;
     unsigned long long t_ms;
 
 
@@ -296,7 +315,7 @@ int main( int argc, char **argv )
 
         /* main loop */
         processed = 0;
-        gettimeofday(&tv_before, NULL);
+        start_time();
         while(1) {
             /* wavefile_read_voice() returns:
             *  0 = ok
@@ -328,11 +347,7 @@ int main( int argc, char **argv )
 
             processed += spf;
         }
-        gettimeofday(&tv_after, NULL);
-        t_before_ms = 1000*tv_before.tv_sec + tv_before.tv_usec/1000;
-        t_after_ms = 1000*tv_after.tv_sec + tv_after.tv_usec/1000;
-        t_ms = t_after_ms - t_before_ms;
-
+        t_ms = stop_time();
         printf("%u samples has been successfully processed\n", processed);
         printf("in %llu ms\n", t_ms);
         break;
@@ -355,7 +370,7 @@ int main( int argc, char **argv )
 
         /* main loop */
         processed = 0;
-        gettimeofday(&tv_before, NULL);
+        start_time();
         while(1) {
 
             bytes = (8+8+1+(spf-1)*bps) / 8;  //TODO: zero add bits to full bytes
@@ -397,11 +412,7 @@ int main( int argc, char **argv )
 
             processed += spf;
         }
-        gettimeofday(&tv_after, NULL);
-        t_before_ms = 1000*tv_before.tv_sec + tv_before.tv_usec/1000;
-        t_after_ms = 1000*tv_after.tv_sec + tv_after.tv_usec/1000;
-        t_ms = t_after_ms - t_before_ms;
-
+        t_ms = stop_time();
         printf("%u samples has been successfully processed\n", processed);
         printf("in %llu ms\n", t_ms);
         break;
@@ -441,7 +452,7 @@ int main( int argc, char **argv )
 
         /* main loop */
         processed = 0;
-        gettimeofday(&tv_before, NULL);
+        start_time();
         while(1) {
             /* wavefile_read_voice() returns:
             *  0 = ok
@@ -485,11 +496,7 @@ int main( int argc, char **argv )
 
             processed ++;
         }
-        gettimeofday(&tv_after, NULL);
-        t_before_ms = 1000*tv_before.tv_sec + tv_before.tv_usec/1000;
-        t_after_ms = 1000*tv_after.tv_sec + tv_after.tv_usec/1000;
-        t_ms = t_after_ms - t_before_ms;
-
+        t_ms = stop_time();
         printf("%u samples has been successfully processed\n", processed);
         printf("in %llu ms\n", t_ms);
         break;
@@ -512,7 +519,7 @@ int main( int argc, char **argv )
 
         /* main loop */
         processed = 0;
-        gettimeofday(&tv_before, NULL);
+        start_time();
         while(1) {
 
             /* read encode data from file */
@@ -561,11 +568,7 @@ int main( int argc, char **argv )
 
             processed ++;
         }
-        gettimeofday(&tv_after, NULL);
-        t_before_ms = 1000*tv_before.tv_sec + tv_before.tv_usec/1000;
-        t_after_ms = 1000*tv_after.tv_sec + tv_after.tv_usec/1000;
-        t_ms = t_after_ms - t_before_ms;
-
+        t_ms = stop_time();
         printf("%u samples has been successfully processed\n", processed);
         printf("in %llu ms\n", t_ms);
         break;
@@ -605,7 +608,7 @@ int main( int argc, char **argv )
 
         /* main loop */
         processed = 0;
-        gettimeofday(&tv_before, NULL);
+        start_time();
         while(1) {
             /* wavefile_read_voice() returns:
             *  0 = ok
@@ -642,11 +645,7 @@ int main( int argc, char **argv )
 
             processed ++;
         }
-        gettimeofday(&tv_after, NULL);
-        t_before_ms = 1000*tv_before.tv_sec + tv_before.tv_usec/1000;
-        t_after_ms = 1000*tv_after.tv_sec + tv_after.tv_usec/1000;
-        t_ms = t_after_ms - t_before_ms;
-
+        t_ms = stop_time();
         printf("%u samples has been successfully processed\n", processed);
         printf("in %llu ms\n", t_ms);
         break;
@@ -669,7 +668,7 @@ int main( int argc, char **argv )
 
         /* main loop */
         processed = 0;
-        gettimeofday(&tv_before, NULL);
+        start_time();
         while(1) {
 
             /* read encode data from file */
@@ -711,11 +710,7 @@ int main( int argc, char **argv )
 
             processed ++;
         }
-        gettimeofday(&tv_after, NULL);
-        t_before_ms = 1000*tv_before.tv_sec + tv_before.tv_usec/1000;
-        t_after_ms = 1000*tv_after.tv_sec + tv_after.tv_usec/1000;
-        t_ms = t_after_ms - t_before_ms;
-
+        t_ms = stop_time();
         printf("%u samples has been successfully processed\n", processed);
         printf("in %llu ms\n", t_ms);
         break;
