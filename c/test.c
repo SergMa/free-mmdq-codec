@@ -12,6 +12,8 @@
 #include <g72x.h>
 #include <g711super.h>
 #include <math.h>
+#include <sys/time.h>
+#include <time.h>
 
 //------------------------------------------------------------------------------
 void usage(void)
@@ -114,6 +116,11 @@ int main( int argc, char **argv )
     double       summn;
 
     int          compare_samples;
+
+    struct timeval     tv_before;
+    struct timeval     tv_after;
+    unsigned long long t_before_ms, t_after_ms;
+    unsigned long long t_ms;
 
 
     if(argc<=0) {
@@ -289,6 +296,7 @@ int main( int argc, char **argv )
 
         /* main loop */
         processed = 0;
+        gettimeofday(&tv_before, NULL);
         while(1) {
             /* wavefile_read_voice() returns:
             *  0 = ok
@@ -320,8 +328,13 @@ int main( int argc, char **argv )
 
             processed += spf;
         }
-        printf("%u samples has been successfully processed\n", processed);
+        gettimeofday(&tv_after, NULL);
+        t_before_ms = 1000*tv_before.tv_sec + tv_before.tv_usec/1000;
+        t_after_ms = 1000*tv_after.tv_sec + tv_after.tv_usec/1000;
+        t_ms = t_after_ms - t_before_ms;
 
+        printf("%u samples has been successfully processed\n", processed);
+        printf("in %llu ms\n", t_ms);
         break;
 
     case ACTION_MMDQ_DECODE:
@@ -342,6 +355,7 @@ int main( int argc, char **argv )
 
         /* main loop */
         processed = 0;
+        gettimeofday(&tv_before, NULL);
         while(1) {
 
             bytes = (8+8+1+(spf-1)*bps) / 8;  //TODO: zero add bits to full bytes
@@ -383,9 +397,13 @@ int main( int argc, char **argv )
 
             processed += spf;
         }
+        gettimeofday(&tv_after, NULL);
+        t_before_ms = 1000*tv_before.tv_sec + tv_before.tv_usec/1000;
+        t_after_ms = 1000*tv_after.tv_sec + tv_after.tv_usec/1000;
+        t_ms = t_after_ms - t_before_ms;
+
         printf("%u samples has been successfully processed\n", processed);
-
-
+        printf("in %llu ms\n", t_ms);
         break;
 
     case ACTION_G726_ENCODE:
@@ -423,6 +441,7 @@ int main( int argc, char **argv )
 
         /* main loop */
         processed = 0;
+        gettimeofday(&tv_before, NULL);
         while(1) {
             /* wavefile_read_voice() returns:
             *  0 = ok
@@ -466,8 +485,13 @@ int main( int argc, char **argv )
 
             processed ++;
         }
-        printf("%u samples has been successfully processed\n", processed);
+        gettimeofday(&tv_after, NULL);
+        t_before_ms = 1000*tv_before.tv_sec + tv_before.tv_usec/1000;
+        t_after_ms = 1000*tv_after.tv_sec + tv_after.tv_usec/1000;
+        t_ms = t_after_ms - t_before_ms;
 
+        printf("%u samples has been successfully processed\n", processed);
+        printf("in %llu ms\n", t_ms);
         break;
 
     case ACTION_G726_DECODE:
@@ -488,6 +512,7 @@ int main( int argc, char **argv )
 
         /* main loop */
         processed = 0;
+        gettimeofday(&tv_before, NULL);
         while(1) {
 
             /* read encode data from file */
@@ -536,8 +561,13 @@ int main( int argc, char **argv )
 
             processed ++;
         }
-        printf("%u samples has been successfully processed\n", processed);
+        gettimeofday(&tv_after, NULL);
+        t_before_ms = 1000*tv_before.tv_sec + tv_before.tv_usec/1000;
+        t_after_ms = 1000*tv_after.tv_sec + tv_after.tv_usec/1000;
+        t_ms = t_after_ms - t_before_ms;
 
+        printf("%u samples has been successfully processed\n", processed);
+        printf("in %llu ms\n", t_ms);
         break;
 
     case ACTION_G711_ENCODE:
@@ -575,6 +605,7 @@ int main( int argc, char **argv )
 
         /* main loop */
         processed = 0;
+        gettimeofday(&tv_before, NULL);
         while(1) {
             /* wavefile_read_voice() returns:
             *  0 = ok
@@ -611,8 +642,13 @@ int main( int argc, char **argv )
 
             processed ++;
         }
-        printf("%u samples has been successfully processed\n", processed);
+        gettimeofday(&tv_after, NULL);
+        t_before_ms = 1000*tv_before.tv_sec + tv_before.tv_usec/1000;
+        t_after_ms = 1000*tv_after.tv_sec + tv_after.tv_usec/1000;
+        t_ms = t_after_ms - t_before_ms;
 
+        printf("%u samples has been successfully processed\n", processed);
+        printf("in %llu ms\n", t_ms);
         break;
 
     case ACTION_G711_DECODE:
@@ -633,6 +669,7 @@ int main( int argc, char **argv )
 
         /* main loop */
         processed = 0;
+        gettimeofday(&tv_before, NULL);
         while(1) {
 
             /* read encode data from file */
@@ -674,8 +711,13 @@ int main( int argc, char **argv )
 
             processed ++;
         }
-        printf("%u samples has been successfully processed\n", processed);
+        gettimeofday(&tv_after, NULL);
+        t_before_ms = 1000*tv_before.tv_sec + tv_before.tv_usec/1000;
+        t_after_ms = 1000*tv_after.tv_sec + tv_after.tv_usec/1000;
+        t_ms = t_after_ms - t_before_ms;
 
+        printf("%u samples has been successfully processed\n", processed);
+        printf("in %llu ms\n", t_ms);
         break;
 
     case ACTION_MSE:
