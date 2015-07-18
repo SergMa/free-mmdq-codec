@@ -86,13 +86,19 @@ function [voice,dec] = decoder2( data, dec, FIXP )
     % voicediff_n = [0..2*maxx]
 
     div = dec.divtable( voicediff_n + 1 ); %div=[0..FIXP*FIXP]
+    if voicediff_n <= (2*dec.maxx)/256
+        K = 1;
+    else
+        K = 256;
+    end
+
     %div = FIXP / voicediff_n;
 
     %fprintf(1,'voicediff_n=%12d, div=%12d\n', voicediff_n, div );
 
     for i=1:N
         voice_n = fix( voice(i) * h / FIXP );
-        voice(i) = minv + fix( diffv * (voice_n - voicemin_n)*div/(FIXP*FIXP) );
+        voice(i) = minv + fix( diffv * (voice_n - voicemin_n)*div/(FIXP*K) );
     end
 
     %for i=1:N

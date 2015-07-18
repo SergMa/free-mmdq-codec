@@ -23,7 +23,12 @@ function [enc] = encoder2_init( samples_per_frame, bits_per_sample, maxx, FIXP )
     enc.divtable = zeros(1,2*maxx+1);
     enc.divtable(1) = 0;
     for div=1:1:2*maxx
-        enc.divtable(div+1) = fix( FIXP/div );
+        %this decrease error of integer division see encoder2():
+        if div <= (2*maxx)/256
+            enc.divtable(div+1) = fix( FIXP/div );
+        else
+            enc.divtable(div+1) = fix( FIXP/(div/256) );
+        end
     end
 
     % encode tables

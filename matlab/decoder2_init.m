@@ -19,11 +19,16 @@ function [dec] = decoder2_init( samples_per_frame, bits_per_sample, maxx, FIXP )
     dec.maxx              = maxx;
 
     % fill table for 1/voicediff_n, where voicediff_n=[0..2*maxx]
-    % values=[0..FIXP*FIXP],  0<=>0.0  FIXP*FIXP<=>1.0
+    % values=[0..FIXP],  0<=>0.0  FIXP<=>1.0
     dec.divtable = zeros(1,2*maxx+1);
     dec.divtable(1) = 0;
     for div=1:1:2*maxx
-        dec.divtable(div+1) = round( FIXP*FIXP/div );
+        %this decrease error of integer division see decoder2():
+        if div <= (2*maxx)/256
+            dec.divtable(div+1) = fix( FIXP/div ); %K=1
+        else
+            dec.divtable(div+1) = fix( FIXP/(div/256) ); %K=256
+        end
     end
 
     % fill tables

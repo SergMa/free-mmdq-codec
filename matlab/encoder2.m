@@ -91,6 +91,11 @@ function [data,enc] = encoder2( voice, enc, dec, FIXP )
         %ampdv=[0..2*maxx]
         %div=[0..FIXP]
         div = enc.divtable( ampdv+1 );
+        if ampdv <= (2*enc.maxx)/256
+            K = 1;
+        else
+            K = 256;
+        end
 
         %no smoothing (smooth0=0,smooth1=0)
         data0(1) = minv;
@@ -99,7 +104,7 @@ function [data,enc] = encoder2( voice, enc, dec, FIXP )
         for i=1:N-1
             % dvoice(i)=[-2*maxx..+2*maxx]
             % div=[0..FIXP]
-            sss = fix( dvoice(i)*div );  % sss=[-FIXP..+FIXP]
+            sss = fix( dvoice(i)*div/K );  % sss=[-FIXP..+FIXP]
             data0(3+i) = enc.table0( sss + FIXP + 1 );
         end
         %expand/compand smoothing (smooth0=1,smooth1=0)
@@ -109,7 +114,7 @@ function [data,enc] = encoder2( voice, enc, dec, FIXP )
         for i=1:N-1
             % dvoice(i)=[-2*maxx..+2*maxx]
             % div=[0..FIXP]
-            sss = fix( dvoice(i)*div );  % sss=[-FIXP..+FIXP]
+            sss = fix( dvoice(i)*div/K );  % sss=[-FIXP..+FIXP]
             data1(3+i) = enc.table1( sss + FIXP + 1 );
         end
         %expand/compand smoothing (smooth0=0,smooth1=1)
@@ -119,7 +124,7 @@ function [data,enc] = encoder2( voice, enc, dec, FIXP )
         for i=1:N-1
             % dvoice(i)=[-2*maxx..+2*maxx]
             % div=[0..FIXP]
-            sss = fix( dvoice(i)*div );  % sss=[-FIXP..+FIXP]
+            sss = fix( dvoice(i)*div/K );  % sss=[-FIXP..+FIXP]
             data2(3+i) = enc.table2( sss + FIXP + 1 );
         end
         %expand/compand smoothing (smooth0=1,smooth1=1)
@@ -129,7 +134,7 @@ function [data,enc] = encoder2( voice, enc, dec, FIXP )
         for i=1:N-1
             % dvoice(i)=[-2*maxx..+2*maxx]
             % div=[0..FIXP]
-            sss = fix( dvoice(i)*div );  % sss=[-FIXP..+FIXP]
+            sss = fix( dvoice(i)*div/K );  % sss=[-FIXP..+FIXP]
             data3(3+i) = enc.table3( sss + FIXP + 1 );
         end
 
