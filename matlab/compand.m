@@ -9,18 +9,18 @@ function y = compand( x , ver )
         y = x;
 
     case 1
-        %% VER1: power 1.2 table
+        % VER1: power 1.2 table
         %y = sign(x) .* abs(x) .^ (1/1.2);
 
         % VER1: power 1.5 table
         y = sign(x) .* abs(x) .^ (1/1.25);
 
     case 2
-        % VER2: power 0.65 table
+        % VER2: power 0.85 table
         %y = sign(x) .* (1 - (1 - abs(x)) .^ (1/0.85));
 
         % VER2: power 1.4 table
-        %y = sign(x) .* abs(x) .^ (1/1.2);
+        %y = sign(x) .* abs(x) .^ (1/1.4);
 
         PWR = 1.35;
         N = length(x);
@@ -38,7 +38,7 @@ function y = compand( x , ver )
         end
 
     case 3
-        %% VER2: power 1.8 table
+        % VER2: power 1.8 table
         %y = sign(x) .* abs(x) .^ (1/1.8);
 
         % VER3: power 1.5 table
