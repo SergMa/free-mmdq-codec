@@ -15,17 +15,16 @@ disp('MMDQ-codec test started...');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
-%SAMPLES = 1:10000;
-%SAMPLES = 1:2000;
+%SAMPLES = 1000:5000;
 
 FS = 8000;            % Sample (discretization) frequency, Hz
 TS = 1/FS;            % Sample (discretization) period, sec
 BITS = 16;            % Bits per sample in original input signal
-AMP = 2^(BITS-1)-1;   % Maximum amplitude of original input signal (for BITS=16: AMP=32767)
+MAXX = 2^(BITS-1);    % Maximum amplitude of original input signal (for BITS=16: AMP=32768)
 
 USE_AUTOSCALE = 1;    % 0 - disable autoscale of input signals, 1 - enable
 
-CODEC_VERSION = 2;    % 0-no encode/decode operations
+CODEC_VERSION = 1;    % 0-no encode/decode operations
                       % 1-matlab float point
                       % 2-c-adapted, code tables, div tables
 
@@ -67,14 +66,12 @@ BITS_PER_SAMPLE   = 3;
 %SAMPLES_PER_FRAME = 20; %22000 bit/s
 %BITS_PER_SAMPLE   = 2;
 
-BITS_INPUT_SIGNAL = 16;
-MAXX = (2^BITS_INPUT_SIGNAL)/2-1;
 FACTOR = 2^BITS_PER_SAMPLE;
 FIXP = 32768*2;
 
 % encoded frame data format:
-% 8 bits   = min/max value (we will store A-law or u-law code here)
-% 8 bits   = max/min value (we will store A-law or u-law code here)
+% 8 bits   = min/max value (we will store A-law code here)
+% 8 bits   = max/min value (we will store A-law code here)
 % 1 bit    = smooth1 bit
 % S*B bits = S=(SAMPLES_PER_FRAME-1), B=BITS_PER_SAMPLE - differences codes
 
@@ -84,18 +81,15 @@ BITRATE = 64000 / COMPRESSION;
 % Print codec settings
 fprintf(1,'test of mycodec started...\n');
 fprintf(1,'-----------------------\n');
-fprintf(1,'codec version    : %d\n', CODEC_VERSION);
 fprintf(1,'bits             : %d\n', BITS);
-fprintf(1,'amp              : %d\n', AMP);
-fprintf(1,'bits input signal: %d\n', BITS_INPUT_SIGNAL);
 fprintf(1,'maxx             : %d\n', MAXX);
 fprintf(1,'-----------------------\n');
+fprintf(1,'codec version    : %d\n', CODEC_VERSION);
 fprintf(1,'samles per frame : %d\n', SAMPLES_PER_FRAME);
 fprintf(1,'bits per sample  : %d\n', BITS_PER_SAMPLE);
 fprintf(1,'factor           : %d\n', FACTOR);
 fprintf(1,'compression      : %f\n', COMPRESSION);
-fprintf(1,'bitrate, bit/s   : %i\n', BITRATE);
-fprintf(1,'maxx             : %i\n', MAXX);
+fprintf(1,'bitrate, bit/s   : %d\n', BITRATE);
 fprintf(1,'-----------------------\n');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -141,7 +135,7 @@ end
 % Make horizontal vectors. If wavefiles are stereo, use only the first channels
 % now x_voice, x_noise have range [-1..+1]
 x_voice = x_voice(:,1).';
-x_voice = fix(x_voice * AMP);
+x_voice = fix(x_voice * MAXX);
 N_voice = size(x_voice,2);
 
 % Limit lenght of signal, if needed.
@@ -151,13 +145,13 @@ if size(SAMPLES,2) > 1
 end
 
 x_noise = x_noise(:,1).';
-x_noise = fix(x_noise * AMP);
+x_noise = fix(x_noise * MAXX);
 N_noise = size(x_noise,2);
 
 % Normalize power of signals, if needed
 if USE_AUTOSCALE==1
-    x_voice = fix( autoscale(x_voice, AMP) );
-    x_noise = fix( autoscale(x_noise, AMP) );
+    x_voice = fix( autoscale(x_voice, MAXX) );
+    x_noise = fix( autoscale(x_noise, MAXX) );
 end
 
 % Add noise to voice
@@ -168,7 +162,7 @@ N = length(x);
 t = (1:N)/FS;
 
 % Save input signal into input wavefile
-wavwrite( (x/AMP).',FS,bits_voice,INPUT_FILENAME);
+wavwrite( (x/MAXX).', FS, bits_voice, INPUT_FILENAME );
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Initialization
@@ -211,7 +205,6 @@ while i<=N-SAMPLES_PER_FRAME+1
 
     % scale input, get enc_voice[] buffer
     enc_voice = x(i:i+SAMPLES_PER_FRAME-1);
-    enc_voice = fix( MAXX*enc_voice/AMP );
     enc_voice = my_clip( enc_voice, MAXX );
 
     % encode frame
@@ -253,7 +246,7 @@ while i<=N-SAMPLES_PER_FRAME+1
     end
 
     %scale back, output voice
-    y(i:i+SAMPLES_PER_FRAME-1) = fix( dec_voice*AMP/MAXX );
+    y(i:i+SAMPLES_PER_FRAME-1) = fix( dec_voice );
 
     ttt_vinp(i:i+SAMPLES_PER_FRAME-1) = enc_voice;
     ttt_vout(i:i+SAMPLES_PER_FRAME-1) = dec_voice;
@@ -268,39 +261,13 @@ fprintf(1,'smooth_N:  0=%6d  1=%6d  2=%6d  3=%6d\n', smooth0_N, smooth1_N, smoot
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Calculate and print errors values
-err = ttt_vinp - ttt_vout;
-avg_err = mean( abs(err) );
-max_err = max( abs(err) );
-std_err = std( abs(err) );
-mse_err = mean(err.^2);
-
-nerr = (ttt_vinp - ttt_vout)/MAXX;
-avg_nerr = mean( abs(nerr) );
-max_nerr = max( abs(nerr) );
-std_nerr = std( abs(nerr) );
-mse_nerr = mean(nerr.^2);
-
-fprintf(1,'\n');
-fprintf(1,'vinp,vout errors:\n');
-fprintf(1,'  avg error=%6d\n',avg_err);
-fprintf(1,'  max error=%6d\n',max_err);
-fprintf(1,'  std error=%6d\n',std_err);
-fprintf(1,'  mse error=%12.8f\n',mse_err);
-
-fprintf(1,'vinp,vout normalized errors:\n');
-fprintf(1,'avg nerror=%6d\n',avg_nerr);
-fprintf(1,'max nerror=%6d\n',max_nerr);
-fprintf(1,'std nerror=%6d\n',std_nerr);
-fprintf(1,'mse nerror=%12.8f\n',mse_nerr);
-
-
 erry = x - y;
 avg_erry = mean( abs(erry) );
 max_erry = max( abs(erry) );
 std_erry = std( abs(erry) );
 mse_erry = mean(erry.^2);
 
-nerry = (x - y)/AMP;
+nerry = (x - y)/MAXX;
 avg_nerry = mean( abs(nerry) );
 max_nerry = max( abs(nerry) );
 std_nerry = std( abs(nerry) );
@@ -314,10 +281,10 @@ fprintf(1,'  std errory=%6d\n',std_erry);
 fprintf(1,'  mse errory=%12.8f\n',mse_erry);
 
 fprintf(1,'x,y normalized errors:\n');
-fprintf(1,'avg nerrory=%6d\n',avg_nerry);
-fprintf(1,'max nerrory=%6d\n',max_nerry);
-fprintf(1,'std nerrory=%6d\n',std_nerry);
-fprintf(1,'mse nerrory=%12.8f\n',mse_nerry);
+fprintf(1,'  avg nerrory=%6d\n',avg_nerry);
+fprintf(1,'  max nerrory=%6d\n',max_nerry);
+fprintf(1,'  std nerrory=%6d\n',std_nerry);
+fprintf(1,'  mse nerrory=%12.8f\n',mse_nerry);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plot graphics
@@ -330,12 +297,12 @@ figure(1);
 subplot(2,1,1);
     plot(t,x);
     title('original signal');  xlabel('t,sec');  ylabel('x');
-    ylim([-AMP, +AMP]);
+    ylim([-MAXX, +MAXX]);
     grid on;
 subplot(2,1,2);
     plot(t,y);
     title('encoded/decoded signal');  xlabel('t,sec');  ylabel('y');
-    ylim([-AMP, +AMP]);
+    ylim([-MAXX, +MAXX]);
     grid on;
 
 % Build and plot spectrogramms of signals
@@ -356,36 +323,9 @@ subplot(3,1,3);
     %colorbar;
     title('difference of spectrogramms');
 
-% Compare input/output waveforms [-MAXX..MAXX] scale
-figure(3);
-    plot( t, ttt_vinp,'r.-',  t, ttt_vout,'b.-' );  xlabel('t,sec');  ylabel('y');
-    ylim([-MAXX MAXX]);
-    title('-MAXX..+MAXX quantizied signal');
-    legend('vinp','vout(shifted)');
-
-figure(4);
-    plot( t, ttt_vinp - ttt_vout,'r.-' );  xlabel('t,sec');  ylabel('y');
-    title('-MAXX..+MAXX quantizied signal error');
-    legend('error(vinp,vout(shifted))');
-    ylim([-MAXX MAXX]);
-
-% Compare input/output waveforms [-AMP..AMP] scale
-figure(5);
-    plot( t, x,'r.-',  t, y,'b.-' );  xlabel('t,sec');  ylabel('y');
-    title('-AMP..+AMP quantizied signal');
-    legend('x','y(shifted)');
-    ylim([-AMP AMP]);
-
-figure(6);
-    plot( t, x - y,'r.-' );  xlabel('t,sec');  ylabel('y');
-    title('-AMP..+AMP quantizied signal error');
-    legend('error(x,y(shifted))');
-    ylim([-AMP AMP]);
-
-
+% Show compand/expand functions tables
 if CODEC_VERSION==2
-    % Show compand/expand functions tables
-    figure(7);
+    figure(3);
 
     subplot(4,2,1);
     hist(enc.table0,100);
@@ -406,6 +346,19 @@ if CODEC_VERSION==2
     hist(dec.table3,100);
 end
 
+% Compare input/output waveforms [-MAXX..MAXX] scale
+figure(4);
+    plot( t, x,'r.-',  t, y,'b.-' );  xlabel('t,sec');  ylabel('y');
+    title('-MAXX..+MAXX quantizied signal');
+    legend('x','y(shifted)');
+    ylim([-MAXX MAXX]);
+
+figure(5);
+    plot( t, x - y,'r.-' );  xlabel('t,sec');  ylabel('y');
+    title('-MAXX..+MAXX quantizied signal error');
+    legend('error(x,y(shifted))');
+    ylim([-MAXX MAXX]);
+
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -414,11 +367,11 @@ end
 
 switch CODEC_VERSION
 case 0
-    wavwrite( (y/AMP).', FS, bits_voice, OUTPUT_FILENAME_0 );
+    wavwrite( (y/MAXX).', FS, bits_voice, OUTPUT_FILENAME_0 );
 case 1
-    wavwrite( (y/AMP).', FS, bits_voice, OUTPUT_FILENAME_1 );
+    wavwrite( (y/MAXX).', FS, bits_voice, OUTPUT_FILENAME_1 );
 case 2
-    wavwrite( (y/AMP).', FS, bits_voice, OUTPUT_FILENAME_2 );
+    wavwrite( (y/MAXX).', FS, bits_voice, OUTPUT_FILENAME_2 );
 end
 
 fprintf(1,'test finished! %d samples processed!\n', N);
