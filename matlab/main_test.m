@@ -13,6 +13,7 @@ disp('started!');
 
 RESULTS_FILENAME = 'out/results.txt';
 fid = fopen(RESULTS_FILENAME,'w');
+%fid = 1;
 if fid==-1
     fid = 1;
     fprintf(fid,'Error: could not create results file: %s\n', RESULTS_FILENAME);
@@ -52,29 +53,57 @@ OUTPUT_FILENAME_2 = 'out/out2.wav';  % Name of file for output signal for codec 
 % Codec settings
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%SAMPLES_PER_FRAME = 10; %42400 bit/s
+%BITS_PER_SAMPLE   = 4;
+
 %SAMPLES_PER_FRAME = 13; %40000 bit/s
 %BITS_PER_SAMPLE   = 4;
 
-%SAMPLES_PER_FRAME = 6; %42666.(6) bit/s
+%SAMPLES_PER_FRAME = 26; %36000 bit/s
+%BITS_PER_SAMPLE   = 4;
+
+%SAMPLES_PER_FRAME = 6; %42666 bit/s
 %BITS_PER_SAMPLE   = 3;
 
-%SAMPLES_PER_FRAME = 7; %40000 bit/s
+%SAMPLES_PER_FRAME = 7; %40000 bit/s      (*)
 %BITS_PER_SAMPLE   = 3;
 
 %SAMPLES_PER_FRAME = 8; %38000 bit/s
 %BITS_PER_SAMPLE   = 3;
 
-%SAMPLES_PER_FRAME = 10; %35200 bit/s
+SAMPLES_PER_FRAME = 14; %32000 bit/s     (*)
+BITS_PER_SAMPLE   = 3;
+
+%SAMPLES_PER_FRAME = 32; %27500 bit/s
 %BITS_PER_SAMPLE   = 3;
 
-SAMPLES_PER_FRAME = 14; %32000 bit/s
-BITS_PER_SAMPLE   = 3;
+%SAMPLES_PER_FRAME = 5; %40000 bit/s
+%BITS_PER_SAMPLE   = 2;
+
+%SAMPLES_PER_FRAME = 6; %36000 bit/s
+%BITS_PER_SAMPLE   = 2;
+
+%SAMPLES_PER_FRAME = 7; %33142 bit/s
+%BITS_PER_SAMPLE   = 2;
+
+%SAMPLES_PER_FRAME = 8; %31000 bit/s
+%BITS_PER_SAMPLE   = 2;
+
+%SAMPLES_PER_FRAME = 10; %28000 bit/s
+%BITS_PER_SAMPLE   = 2;
+
+%SAMPLES_PER_FRAME = 12; %26000 bit/s
+%BITS_PER_SAMPLE   = 2;
 
 %SAMPLES_PER_FRAME = 15; %24000 bit/s
 %BITS_PER_SAMPLE   = 2;
 
 %SAMPLES_PER_FRAME = 20; %22000 bit/s
 %BITS_PER_SAMPLE   = 2;
+
+%SAMPLES_PER_FRAME = 30; %20000 bit/s
+%BITS_PER_SAMPLE   = 2;
+
 
 FACTOR = 2^BITS_PER_SAMPLE;
 FIXP = 32768*2;
@@ -101,6 +130,7 @@ fprintf(fid,'factor           : %d\n', FACTOR);
 fprintf(fid,'compression      : %f\n', COMPRESSION);
 fprintf(fid,'bitrate, bit/s   : %d\n', BITRATE);
 fprintf(fid,'-----------------------\n');
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load input (voice,noise) signals from wave-files, generate signal to process
@@ -436,6 +466,9 @@ case 2
 end
 
 fprintf(fid,'test finished! %d samples processed!\n', N);
-fclose(fid);
+
+if fid~=1
+    fclose(fid);
+end
 
 disp('finished!');
