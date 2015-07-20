@@ -8,7 +8,16 @@
 clc;
 clear all;
 close all;
-disp('MSE compare test started...');
+
+disp('started!');
+
+RESULTS_FILENAME = 'out/results.txt';
+fid = fopen(RESULTS_FILENAME,'w');
+%fid = 1;
+if fid==-1
+    fid = 1;
+    fprintf(fid,'Error: could not create results file: %s\n', RESULTS_FILENAME);
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Test settings
@@ -114,37 +123,37 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Compare test settings
-fprintf(1,'compare test:\n');
-fprintf(1,'-----------------------\n');
-fprintf(1,'original file     : %s\n', ORIGINAL_FILENAME);
-fprintf(1,'  sample freq, Hz : %8d\n', ffs0);
-fprintf(1,'  bits            : %8d\n', bits0);
-fprintf(1,'  length,samples  : %8d\n', N0);
-fprintf(1,'  length,sec      : %8.3f\n', N0/ffs0);
-fprintf(1,'-----------------------\n');
-fprintf(1,'codec-1 file      : %s\n', CODEC1_FILENAME);
-fprintf(1,'  sample freq, Hz : %8d\n', ffs1);
-fprintf(1,'  bits            : %8d\n', bits1);
-fprintf(1,'  length,samples  : %8d\n', N1);
-fprintf(1,'  length,sec      : %8.3f\n', N1/ffs1);
-fprintf(1,'  test samples    : %8d\n', N);
-fprintf(1,'  max error       : %10d\n', maxerr1);
-fprintf(1,'  mse             : %10d\n', mse1);
-fprintf(1,'  max error (norm): %10.6f\n', nmaxerr1);
-fprintf(1,'  mse       (norm): %10.6f\n', nmse1);
-fprintf(1,'-----------------------\n');
+fprintf(fid,'compare test:\n');
+fprintf(fid,'-----------------------\n');
+fprintf(fid,'original file     : %s\n', ORIGINAL_FILENAME);
+fprintf(fid,'  sample freq, Hz : %8d\n', ffs0);
+fprintf(fid,'  bits            : %8d\n', bits0);
+fprintf(fid,'  length,samples  : %8d\n', N0);
+fprintf(fid,'  length,sec      : %8.3f\n', N0/ffs0);
+fprintf(fid,'-----------------------\n');
+fprintf(fid,'codec-1 file      : %s\n', CODEC1_FILENAME);
+fprintf(fid,'  sample freq, Hz : %8d\n', ffs1);
+fprintf(fid,'  bits            : %8d\n', bits1);
+fprintf(fid,'  length,samples  : %8d\n', N1);
+fprintf(fid,'  length,sec      : %8.3f\n', N1/ffs1);
+fprintf(fid,'  test samples    : %8d\n', N);
+fprintf(fid,'  max error       : %10d\n', maxerr1);
+fprintf(fid,'  mse             : %10d\n', mse1);
+fprintf(fid,'  max error (norm): %10.6f\n', nmaxerr1);
+fprintf(fid,'  mse       (norm): %10.6f\n', nmse1);
+fprintf(fid,'-----------------------\n');
 if length(CODEC2_FILENAME)>0
-fprintf(1,'codec-2 file      : %s\n', CODEC2_FILENAME);
-fprintf(1,'  sample freq, Hz : %8d\n', ffs2);
-fprintf(1,'  bits            : %8d\n', bits2);
-fprintf(1,'  length,samples  : %8d\n', N2);
-fprintf(1,'  length,sec      : %8.3f\n', N2/ffs2);
-fprintf(1,'  test samples    : %8d\n', N);
-fprintf(1,'  max error       : %10d\n', maxerr2);
-fprintf(1,'  mse             : %10d\n', mse2);
-fprintf(1,'  max error (norm): %10.6f\n', nmaxerr2);
-fprintf(1,'  mse       (norm): %10.6f\n', nmse2);
-fprintf(1,'-----------------------\n');
+fprintf(fid,'codec-2 file      : %s\n', CODEC2_FILENAME);
+fprintf(fid,'  sample freq, Hz : %8d\n', ffs2);
+fprintf(fid,'  bits            : %8d\n', bits2);
+fprintf(fid,'  length,samples  : %8d\n', N2);
+fprintf(fid,'  length,sec      : %8.3f\n', N2/ffs2);
+fprintf(fid,'  test samples    : %8d\n', N);
+fprintf(fid,'  max error       : %10d\n', maxerr2);
+fprintf(fid,'  mse             : %10d\n', mse2);
+fprintf(fid,'  max error (norm): %10.6f\n', nmaxerr2);
+fprintf(fid,'  mse       (norm): %10.6f\n', nmse2);
+fprintf(fid,'-----------------------\n');
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -168,7 +177,7 @@ subplot(3,1,3);
     ylabel('freq,Hz');
     %colorbar;
     title('difference of spectrogramms');
-print('-dpng','compare_codec1_spectrogramm.png');
+print('-dpng','out/compare_codec1_spectrogramm.png');
 
 figure(2);
 subplot(3,1,1);
@@ -186,7 +195,7 @@ subplot(3,1,3);
     %ylabel('freq,Hz');
     %colorbar;
     title('difference of spectrogramms');
-print('-dpng','compare_codec2_spectrogramm.png');
+print('-dpng','out/compare_codec2_spectrogramm.png');
 
 % Compare input/output waveforms
 figure(3);
@@ -200,7 +209,7 @@ figure(3);
     ylim([-32768 32768]);
     legend('original x','codec-2 x');
 
-    print('-dpng','compare_waveforms.png');
+    print('-dpng','out/compare_waveforms.png');
 
 figure(4);
     subplot(2,1,1);
@@ -213,6 +222,12 @@ figure(4);
     ylim([-32768 32768]);
     legend('x2-x0');
 
-    print('-dpng','compare_errors.png');
+    print('-dpng','out/compare_errors.png');
 
-fprintf(1,'test finished!\n');
+fprintf(fid,'test finished!\n');
+
+if fid~=1
+    fclose(fid);
+end
+
+disp('finished!');
