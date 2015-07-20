@@ -57,6 +57,9 @@ void usage(void)
     "    <samples> = number of samples to compare (0-compare N samples - see above).\n"
     "    If <samples> is bigger than N, N samples will be compared.\n"
     "\n"
+    "  test --g711error\n"
+    "    Demonstrate error of current G.711 codec implementation in DAHDI.\n"
+    "\n"
     "  test --help\n"
     "    Show this help message.\n"
     "\n";
@@ -72,6 +75,7 @@ void usage(void)
 #define ACTION_G711_ENCODE   4
 #define ACTION_G711_DECODE   5
 #define ACTION_MSE           6
+#define ACTION_G711_ERROR    7
 
 #define G711_ALAW            0
 #define G711_ULAW            1
@@ -167,7 +171,7 @@ int main( int argc, char **argv )
     int          compare_samples;
 
     unsigned long long t_ms;
-
+    int          i;
 
     if(argc<=0) {
         printf("error: unexpected error\n");
@@ -175,7 +179,7 @@ int main( int argc, char **argv )
     }
 
     /**** Get and process command options ****/
-    if(argc<=2 || argc>8) {
+    if(argc<2 || argc>8) {
         printf("error: invalid number of arguments\n");
         usage();
         exit(EXIT_SUCCESS);
@@ -249,6 +253,10 @@ int main( int argc, char **argv )
         compare_samples = atoi(argv[2]);
         inp_wave_filename    = argv[3]; //<sound1.wav>
         out_wave_filename    = argv[4]; //<sound2.wav>
+        //go-go-go
+    }
+    else if(argc==2 && 0==strcmp(argv[1],"--g711error")) {
+        action = ACTION_G711_ERROR;
         //go-go-go
     }
     else {
@@ -779,6 +787,21 @@ int main( int argc, char **argv )
 
         printf("samples: %10u, maxerr: %6d, maxrelerr: %8.6f, relMSE: %8.6f for \"%s\" vs \"%s\"\n",
                 processed, diffxmax, diffxnmax, mse, inp_wave_filename, out_wave_filename );
+        break;
+
+    case ACTION_G711_ERROR:
+    
+        printf("DAHDI G.711 codec error demo:\n");
+        printf("A-law:\n");
+        for(i=-32768; i<-32763; i++) {
+            printf("x=%6d, linear2alaw(x)=%02X, alaw2linear(linear2alaw(x))=%6d\n",
+                    i, linear2alaw(i), alaw2linear(linear2alaw(i)) );
+        }
+        printf("mu-law:\n");
+        for(i=-32768; i<-32763; i++) {
+            printf("x=%6d, linear2mulaw(x)=%02X, mulaw2linear(linear2mulaw(x))=%6d\n",
+                    i, linear2mulaw(i), mulaw2linear(linear2mulaw(i)) );
+        }
         break;
 
     default:
