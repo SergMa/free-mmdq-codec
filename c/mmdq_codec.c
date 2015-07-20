@@ -286,6 +286,18 @@ exit_fail:
 }
 
 //------------------------------------------------------------------------------
+int  mmdq_framebytes ( struct mmdq_codec_s * codec )
+{
+    //Check input arguments
+    if(codec==NULL) {
+        MYLOG_ERROR("Invalid argument: codec=NULL");
+        return 0;
+    }
+
+    return codec->databytes;
+}
+
+//------------------------------------------------------------------------------
 int  mmdq_encode ( struct mmdq_codec_s * codec,
                    int16_t * voice, int samples,
                    uint8_t * data, int datasize, int * bytes )
@@ -492,10 +504,10 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     //bit-pack data[smin] into data[]
     pos = 0;
 
-    if(edata[smin][0] <= -32765)  //Note: current linear2alaw(x), linear2mulaw(x) give BIG errors for x<=32765
-        edata[smin][0] = -32764;
-    if(edata[smin][1] <= -32765)
-        edata[smin][1] = -32764;
+    if (edata[smin][0] <= -32765)  //Note: current linear2alaw(x), linear2mulaw(x) give BIG errors for x<=32765
+        edata[smin][0]  = -32764;
+    if (edata[smin][1] <= -32765)
+        edata[smin][1]  = -32764;
 
     data[pos++] = linear2alaw( edata[smin][0] );
     data[pos++] = linear2alaw( edata[smin][1] );
@@ -683,13 +695,15 @@ int  mmdq_decode ( struct mmdq_codec_s * codec,
         bitshift = (bitshift << 8) | data[pos++];
         bitcntr += 8;
         
-        while(bitcntr >= codec->bits_per_sample) {
+        while(bitcntr >= codec->bits_per_sample)
+        {
             bitcntr -= codec->bits_per_sample;
             dv[dvpos++] = (bitshift >> bitcntr) & codec->unpackmask;
 
             if( dvpos >= (codec->samples_per_frame-1) )
                 break;
         }
+        
         if( dvpos >= (codec->samples_per_frame-1) )
             break;
     }

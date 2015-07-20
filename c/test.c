@@ -364,7 +364,8 @@ int main( int argc, char **argv )
         start_time();
         while(1) {
 
-            bytes = (8+8+1+(spf-1)*bps) / 8;  //TODO: zero add bits to full bytes
+            //bytes = (8+8+1+(spf-1)*bps) / 8;  //TODO: zero add bits to full bytes
+            bytes = mmdq_framebytes( &codec );
             
             // read encode data from file
             err = fread( data, bytes, 1, df );

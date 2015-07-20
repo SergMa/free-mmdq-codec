@@ -32,7 +32,7 @@ struct mmdq_codec_s {
     int        bitrate;
     int        decoder_only;
     int32_t    h;
-    uint32_t   unpackmask;   //used in decoder for unpacking bits
+    uint32_t   unpackmask;      //used in decoder for unpacking bits
     int        databytes;       //size of encoded frame, bytes
     int        databytesnopack; //size of no-bit-packed encoded frame, bytes
 
@@ -50,6 +50,8 @@ int  mmdq_codec_init ( struct mmdq_codec_s * codec,
                        int bits_per_sample,
                        int smooth_on,
                        int decoder_only );
+
+int  mmdq_framebytes ( struct mmdq_codec_s * codec );
 
 int  mmdq_encode     ( struct mmdq_codec_s * codec,
                        int16_t * voice, int samples,
