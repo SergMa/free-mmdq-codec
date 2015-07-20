@@ -8,7 +8,17 @@
 clc;
 clear all;
 close all;
-disp('MMDQ-codec test started...');
+
+disp('started!');
+
+RESULTS_FILENAME = 'out/results.txt';
+fid = fopen(RESULTS_FILENAME,'w');
+if fid==-1
+    fid = 1;
+    fprintf(fid,'Error: could not create results file: %s\n', RESULTS_FILENAME);
+end
+
+fprintf(fid,'MMDQ-codec test started...\n');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Test settings
@@ -24,7 +34,7 @@ MAXX = 2^(BITS-1);    % Maximum amplitude of original input signal (for BITS=16:
 
 USE_AUTOSCALE = 1;    % 0 - disable autoscale of input signals, 1 - enable
 
-CODEC_VERSION = 1;    % 0-no encode/decode operations
+CODEC_VERSION = 2;    % 0-no encode/decode operations
                       % 1-matlab float point
                       % 2-c-adapted, code tables, div tables
 
@@ -33,10 +43,10 @@ SHOW_GRAPHICS = 1;    % 0 - disable plotting of graphics, 1 - enable it
 SPECTROGRAM_WIDTH = 256; % Parameters of spectrograms
 SPECTROGRAM_OVR   = 8;
 
-INPUT_FILENAME    = './input.wav'; % Name of file for input signal
-OUTPUT_FILENAME_0 = './out0.wav';  % Name of file for output signal for codec version 0
-OUTPUT_FILENAME_1 = './out1.wav';  % Name of file for output signal for codec version 1
-OUTPUT_FILENAME_2 = './out2.wav';  % Name of file for output signal for codec version 2
+INPUT_FILENAME    = 'out/input.wav'; % Name of file for input signal
+OUTPUT_FILENAME_0 = 'out/out0.wav';  % Name of file for output signal for codec version 0
+OUTPUT_FILENAME_1 = 'out/out1.wav';  % Name of file for output signal for codec version 1
+OUTPUT_FILENAME_2 = 'out/out2.wav';  % Name of file for output signal for codec version 2
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Codec settings
@@ -79,18 +89,18 @@ COMPRESSION = (SAMPLES_PER_FRAME * 8) / ( 8 + 8 + 1 + (SAMPLES_PER_FRAME-1)*BITS
 BITRATE = 64000 / COMPRESSION;
 
 % Print codec settings
-fprintf(1,'test of mycodec started...\n');
-fprintf(1,'-----------------------\n');
-fprintf(1,'bits             : %d\n', BITS);
-fprintf(1,'maxx             : %d\n', MAXX);
-fprintf(1,'-----------------------\n');
-fprintf(1,'codec version    : %d\n', CODEC_VERSION);
-fprintf(1,'samles per frame : %d\n', SAMPLES_PER_FRAME);
-fprintf(1,'bits per sample  : %d\n', BITS_PER_SAMPLE);
-fprintf(1,'factor           : %d\n', FACTOR);
-fprintf(1,'compression      : %f\n', COMPRESSION);
-fprintf(1,'bitrate, bit/s   : %d\n', BITRATE);
-fprintf(1,'-----------------------\n');
+fprintf(fid,'test of mycodec started...\n');
+fprintf(fid,'-----------------------\n');
+fprintf(fid,'bits             : %d\n', BITS);
+fprintf(fid,'maxx             : %d\n', MAXX);
+fprintf(fid,'-----------------------\n');
+fprintf(fid,'codec version    : %d\n', CODEC_VERSION);
+fprintf(fid,'samles per frame : %d\n', SAMPLES_PER_FRAME);
+fprintf(fid,'bits per sample  : %d\n', BITS_PER_SAMPLE);
+fprintf(fid,'factor           : %d\n', FACTOR);
+fprintf(fid,'compression      : %f\n', COMPRESSION);
+fprintf(fid,'bitrate, bit/s   : %d\n', BITRATE);
+fprintf(fid,'-----------------------\n');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load input (voice,noise) signals from wave-files, generate signal to process
@@ -254,7 +264,7 @@ while i<=N-SAMPLES_PER_FRAME+1
     i = i + SAMPLES_PER_FRAME;
 end
 
-fprintf(1,'smooth_N:  0=%6d  1=%6d  2=%6d  3=%6d\n', smooth0_N, smooth1_N, smooth2_N, smooth3_N);
+fprintf(fid,'smooth_N:  0=%6d  1=%6d  2=%6d  3=%6d\n', smooth0_N, smooth1_N, smooth2_N, smooth3_N);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Make error estimates
@@ -273,18 +283,18 @@ max_nerry = max( abs(nerry) );
 std_nerry = std( abs(nerry) );
 mse_nerry = mean(nerry.^2);
 
-fprintf(1,'\n');
-fprintf(1,'x,y errors:\n');
-fprintf(1,'  avg errory=%6d\n',avg_erry);
-fprintf(1,'  max errory=%6d\n',max_erry);
-fprintf(1,'  std errory=%6d\n',std_erry);
-fprintf(1,'  mse errory=%12.8f\n',mse_erry);
+fprintf(fid,'\n');
+fprintf(fid,'x,y errors:\n');
+fprintf(fid,'  avg errory=%12.8f\n',avg_erry);
+fprintf(fid,'  max errory=%12.8f\n',max_erry);
+fprintf(fid,'  std errory=%12.8f\n',std_erry);
+fprintf(fid,'  mse errory=%12.8f\n',mse_erry);
 
-fprintf(1,'x,y normalized errors:\n');
-fprintf(1,'  avg nerrory=%6d\n',avg_nerry);
-fprintf(1,'  max nerrory=%6d\n',max_nerry);
-fprintf(1,'  std nerrory=%6d\n',std_nerry);
-fprintf(1,'  mse nerrory=%12.8f\n',mse_nerry);
+fprintf(fid,'x,y normalized errors:\n');
+fprintf(fid,'  avg nerrory=%12.8f\n',avg_nerry);
+fprintf(fid,'  max nerrory=%12.8f\n',max_nerry);
+fprintf(fid,'  std nerrory=%12.8f\n',std_nerry);
+fprintf(fid,'  mse nerrory=%12.8f\n',mse_nerry);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plot graphics
@@ -296,14 +306,19 @@ if SHOW_GRAPHICS==1
 figure(1);
 subplot(2,1,1);
     plot(t,x);
-    title('original signal');  xlabel('t,sec');  ylabel('x');
+    title('original signal');
+    xlabel('t,sec');
+    ylabel('x');
     ylim([-MAXX, +MAXX]);
     grid on;
 subplot(2,1,2);
     plot(t,y);
-    title('encoded/decoded signal');  xlabel('t,sec');  ylabel('y');
+    title('encoded/decoded signal');
+    xlabel('t,sec');
+    ylabel('y');
     ylim([-MAXX, +MAXX]);
     grid on;
+print('-dpng','out/test_waveforms.png');
 
 % Build and plot spectrogramms of signals
 figure(2);
@@ -319,9 +334,9 @@ subplot(3,1,3);
     imagesc(time,freq,abs(sx - sy) );
     axis xy;
     xlabel('time,sec');
-    ylabel('freq,Hz');
     %colorbar;
     title('difference of spectrogramms');
+print('-dpng','out/test_spectrogramms.png');
 
 % Show compand/expand functions tables
 if CODEC_VERSION==2
@@ -329,6 +344,7 @@ if CODEC_VERSION==2
 
     subplot(4,2,1);
     hist(enc.table0,100);
+    title('compand');
     subplot(4,2,3);
     hist(enc.table1,100);
     subplot(4,2,5);
@@ -338,26 +354,71 @@ if CODEC_VERSION==2
 
     subplot(4,2,2);
     hist(dec.table0,100);
+    title('expand');
     subplot(4,2,4);
     hist(dec.table1,100);
     subplot(4,2,6);
     hist(dec.table2,100);
     subplot(4,2,8);
     hist(dec.table3,100);
+
+    print('-dpng','out/test_expandcompand.png');
 end
 
 % Compare input/output waveforms [-MAXX..MAXX] scale
 figure(4);
+    subplot(2,1,1);
     plot( t, x,'r.-',  t, y,'b.-' );  xlabel('t,sec');  ylabel('y');
-    title('-MAXX..+MAXX quantizied signal');
-    legend('x','y(shifted)');
+    title('quantizied signal');
+    legend('x','y');
     ylim([-MAXX MAXX]);
 
-figure(5);
+    subplot(2,1,2);
     plot( t, x - y,'r.-' );  xlabel('t,sec');  ylabel('y');
-    title('-MAXX..+MAXX quantizied signal error');
-    legend('error(x,y(shifted))');
+    title('quantizied signal error');
+    legend('error(x,y)');
     ylim([-MAXX MAXX]);
+    print('-dpng','out/test_restored_signal.png');
+
+figure(5);
+
+    %plot graphics near the first max(error)/2
+    if length(t) <= 600
+        tz = t;
+        xz = x;
+        yz = y;
+    else
+        iz = 0;
+        errz = abs(x-y);
+        maxerrz = max(errz);
+        Nz = length(t);
+        for i=200:Nz-200
+            if errz(i) >= maxerrz/2
+                iz = i;
+            end
+        end
+        if iz>0
+            iz = iz-100 : iz+100;
+        else
+            iz = 1:200;
+        end
+        tz = t(iz);
+        xz = x(iz);
+        yz = y(iz);
+    end
+
+    subplot(2,1,1);
+    plot( tz, xz,'r.-',  tz, yz,'b.-' );  xlabel('t,sec');  ylabel('y');
+    title('quantizied signal (zoom)');
+    legend('x','y');
+    ylim([-MAXX MAXX]);
+
+    subplot(2,1,2);
+    plot( tz, xz - yz,'r.-' );  xlabel('t,sec');  ylabel('y');
+    title('quantizied signal error (zoom)');
+    legend('error(x,y)');
+    ylim([-MAXX MAXX]);
+    print('-dpng','out/test_restored_signal_zoom.png');
 
 end
 
@@ -374,4 +435,7 @@ case 2
     wavwrite( (y/MAXX).', FS, bits_voice, OUTPUT_FILENAME_2 );
 end
 
-fprintf(1,'test finished! %d samples processed!\n', N);
+fprintf(fid,'test finished! %d samples processed!\n', N);
+fclose(fid);
+
+disp('finished!');

@@ -29,9 +29,9 @@ CODEC1_FILENAME    = '../c/out/g726-32kbps.wav';
 %CODEC2_FILENAME   = 'out2.wav';
 
 % Name of file for signal which has been encoded/decoded by codec 2
-CODEC2_FILENAME    = '../c/out/mmdq-32kbps.wav';
+%CODEC2_FILENAME    = '../c/out/mmdq-32kbps.wav';
 %CODEC2_FILENAME   = '../c/out/mmdq-42kbps.wav';
-%CODEC2_FILENAME   = 'out1.wav';
+CODEC2_FILENAME   = 'out1.wav';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load input (voice,noise) signals from wave-files, generate signal to process
@@ -168,6 +168,7 @@ subplot(3,1,3);
     ylabel('freq,Hz');
     %colorbar;
     title('difference of spectrogramms');
+print('-dpng','compare_codec1_spectrogramm.png');
 
 figure(2);
 subplot(3,1,1);
@@ -182,9 +183,10 @@ subplot(3,1,3);
     imagesc(time,freq,abs(s2 - s0) );
     axis xy;
     xlabel('time,sec');
-    ylabel('freq,Hz');
+    %ylabel('freq,Hz');
     %colorbar;
     title('difference of spectrogramms');
+print('-dpng','compare_codec2_spectrogramm.png');
 
 % Compare input/output waveforms
 figure(3);
@@ -198,6 +200,8 @@ figure(3);
     ylim([-32768 32768]);
     legend('original x','codec-2 x');
 
+    print('-dpng','compare_waveforms.png');
+
 figure(4);
     subplot(2,1,1);
     plot( t, diff1,'r.-');  xlabel('t,sec');  ylabel('diff');
@@ -208,5 +212,7 @@ figure(4);
     plot( t, diff2,'r.-');  xlabel('t,sec');  ylabel('diff');
     ylim([-32768 32768]);
     legend('x2-x0');
+
+    print('-dpng','compare_errors.png');
 
 fprintf(1,'test finished!\n');

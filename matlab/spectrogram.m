@@ -64,7 +64,7 @@ function [s] = spectrogram( x, width, fs, ovr )
 
     imagesc(time,freq,s);
     axis xy;
-    xlabel('time,sec');
+    %xlabel('time,sec');
     ylabel('freq,Hz');
     %colorbar;
 
