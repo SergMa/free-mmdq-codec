@@ -96,31 +96,31 @@ fprintf(1,'-----------------------\n');
 % Load input (voice,noise) signals from wave-files, generate signal to process
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%voice_filename  = '../samples/cmu/sample1_8000.wav';         VOICE_AMP_DB = 0;
-%voice_filename  = '../samples/cmu/sample2_8000.wav';         VOICE_AMP_DB = 0;
-voice_filename   = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = 0;  %female
-%voice_filename  = '../samples/cmu/sample4_8000.wav';         VOICE_AMP_DB = 0;
-%voice_filename  = '../samples/cmu/sample5_8000.wav';         VOICE_AMP_DB = -6;
-%voice_filename  = '../samples/cmu/sample6_8000.wav';         VOICE_AMP_DB = 0;
-%voice_filename  = '../samples/cmu/sample7_8000.wav';         VOICE_AMP_DB = 0;
-%voice_filename  = '../samples/modems/v92-mohdenied.wav';     VOICE_AMP_DB = 0;
-%voice_filename  = '../samples/modems/v90-rockwellconex.wav'; VOICE_AMP_DB = 0;
-%voice_filename  = '../samples/modems/v34-33600bps.wav';      VOICE_AMP_DB = 0;
-%voice_filename  = '../samples/modems/v32b-14400bps.wav';     VOICE_AMP_DB = 0;
-%voice_filename  = '../samples/modems/v22b-2400bps.wav';      VOICE_AMP_DB = 0;
-%voice_filename  = '../samples/modems/v21-300bps.wav';        VOICE_AMP_DB = 0;
-%voice_filename  = '../samples/modems/v17-14400bpsfax.wav';   VOICE_AMP_DB = 0;
-%voice_filename  = '../samples/modems/ttytdd.wav';            VOICE_AMP_DB = 0;
+%voice_filename  = '../samples/cmu/sample1_8000.wav';         VOICE_AMP_DB = -3;
+%voice_filename  = '../samples/cmu/sample2_8000.wav';         VOICE_AMP_DB = -3;
+voice_filename   = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = -3;  %female
+%voice_filename  = '../samples/cmu/sample4_8000.wav';         VOICE_AMP_DB = -3;
+%voice_filename  = '../samples/cmu/sample5_8000.wav';         VOICE_AMP_DB = -3;
+%voice_filename  = '../samples/cmu/sample6_8000.wav';         VOICE_AMP_DB = -3;
+%voice_filename  = '../samples/cmu/sample7_8000.wav';         VOICE_AMP_DB = -3;
+%voice_filename  = '../samples/modems/v92-mohdenied.wav';     VOICE_AMP_DB = -3;
+%voice_filename  = '../samples/modems/v90-rockwellconex.wav'; VOICE_AMP_DB = -3;
+%voice_filename  = '../samples/modems/v34-33600bps.wav';      VOICE_AMP_DB = -3;
+%voice_filename  = '../samples/modems/v32b-14400bps.wav';     VOICE_AMP_DB = -3;
+%voice_filename  = '../samples/modems/v22b-2400bps.wav';      VOICE_AMP_DB = -3;
+%voice_filename  = '../samples/modems/v21-300bps.wav';        VOICE_AMP_DB = -3;
+%voice_filename  = '../samples/modems/v17-14400bpsfax.wav';   VOICE_AMP_DB = -3;
+%voice_filename  = '../samples/modems/ttytdd.wav';            VOICE_AMP_DB = -3;
 
-%noise_filename  = '../samples/noise/noise_white.wav';        NOISE_AMP_DB = -12;
-%noise_filename  = '../samples/noise/noise_pink.wav';         NOISE_AMP_DB = -12;
-%noise_filename  = '../samples/noise/noise_brown.wav';        NOISE_AMP_DB = -12;
+%noise_filename  = '../samples/noise/noise_white.wav';        NOISE_AMP_DB = -99;
+%noise_filename  = '../samples/noise/noise_pink.wav';         NOISE_AMP_DB = -99;
+%noise_filename  = '../samples/noise/noise_brown.wav';        NOISE_AMP_DB = -99;
 noise_filename   = '../samples/noise/noise_badbearing.wav';   NOISE_AMP_DB = -99;
 %noise_filename  = '../samples/noise/noise_diesel.wav';       NOISE_AMP_DB = -99;  %
-%noise_filename  = '../samples/noise/noise_lacetti.wav';      NOISE_AMP_DB = -12;
-%noise_filename  = '../samples/noise/noise_lacetti2.wav';     NOISE_AMP_DB = -12;
-%noise_filename  = '../samples/noise/noise_tractor.wav';      NOISE_AMP_DB = -12;
-%noise_filename  = '../samples/noise/noise_yamzdiesel.wav';   NOISE_AMP_DB = -12;
+%noise_filename  = '../samples/noise/noise_lacetti.wav';      NOISE_AMP_DB = -99;
+%noise_filename  = '../samples/noise/noise_lacetti2.wav';     NOISE_AMP_DB = -99;
+%noise_filename  = '../samples/noise/noise_tractor.wav';      NOISE_AMP_DB = -99;
+%noise_filename  = '../samples/noise/noise_yamzdiesel.wav';   NOISE_AMP_DB = -99;
 
 [x_voice,ffs_voice,bits_voice] = wavread(voice_filename);
 if ffs_voice~=FS
