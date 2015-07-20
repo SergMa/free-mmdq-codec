@@ -5,9 +5,12 @@
 /******************************************************************************/
 
 #include  "mmdq_codec.h"
+
+#define MYLOGDEVICE 0 //0=MYLOGDEVICE_NOLOGS
+#include <mylog.h>
+
 #include  <math.h>
 #include  <stdio.h>
-#include  <wave/mylog.h>
 #include  <wave/g711super.h>
 
 /*****************************************************************************/
