@@ -25,7 +25,7 @@ HEADERS = mmdq_codec.h \
     private.h
 
 #CFLAGS  = -O0 -Wall -Werror
-CFLAGS  = -O0
+CFLAGS  = -O3
 DEFS    =
 
 CFLAGS += -I.\
