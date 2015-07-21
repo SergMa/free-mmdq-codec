@@ -134,7 +134,7 @@ unsigned char ALawCompressTable[16384];
 unsigned char MuLawALawRecompressTable[256];
 unsigned char ALawMuLawRecompressTable[256];
 
-
+#if 0 //not-dahdi version
 //------------------------------------------------------------
 inline uint8_t  linear2mulaw2(int16_t sample)
 {
@@ -150,8 +150,54 @@ inline uint8_t  linear2mulaw2(int16_t sample)
 
      return (unsigned char)compressedByte;
 }
+#else //dahdi version
+
+#define ZEROTRAP    /* turn on the trap as per the MIL-STD */
+#define BIAS 0x84   /* define the add-in bias for 16 bit samples */
+#define CLIP 32635
+
+inline uint8_t  linear2mulaw2(int16_t sample)
+{
+  static int exp_lut[256] = {0,0,1,1,2,2,2,2,3,3,3,3,3,3,3,3,
+                             4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+                             5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
+                             5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
+                             6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+                             6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+                             6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+                             6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+                             7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+                             7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+                             7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+                             7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+                             7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+                             7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+                             7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+                             7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7};
+  int sign, exponent, mantissa;
+  unsigned char ulawbyte;
+
+  /* Get the sample into sign-magnitude. */
+  sign = (sample >> 8) & 0x80;          /* set aside the sign */
+  if (sign != 0) sample = -sample;      /* get magnitude */
+  if (sample > CLIP) sample = CLIP;     /* clip the magnitude */
+
+  /* Convert from 16 bit linear to ulaw. */
+  sample = sample + BIAS;
+  exponent = exp_lut[(sample >> 7) & 0xFF];
+  mantissa = (sample >> (exponent + 3)) & 0x0F;
+  ulawbyte = ~(sign | (exponent << 4) | mantissa);
+#ifdef ZEROTRAP
+  if (ulawbyte == 0) ulawbyte = 0x02;      /* optional CCITT trap */
+#endif
+  if (ulawbyte == 0xff) ulawbyte = 0x7f;   /* never return 0xff */
+  return(ulawbyte);
+}
+
+#endif
 
 
+#if 0 //not-dahdi version
 //------------------------------------------------------------
 inline uint8_t  linear2alaw2(int16_t sample)
 {
@@ -178,7 +224,42 @@ inline uint8_t  linear2alaw2(int16_t sample)
      compressedByte ^= (sign ^ 0x55);
      return compressedByte;
 } 
+#else //dahdi version
 
+#define AMI_MASK 0x55
+inline uint8_t  linear2alaw2(int16_t sample)
+{
+    int mask;
+    int seg;
+    int pcm_val;
+    static int seg_end[8] =
+    {
+         0xFF, 0x1FF, 0x3FF, 0x7FF, 0xFFF, 0x1FFF, 0x3FFF, 0x7FFF
+    };
+
+    pcm_val = sample;
+    if (pcm_val >= 0)
+    {
+        /* Sign (7th) bit = 1 */
+        mask = AMI_MASK | 0x80;
+    }
+    else
+    {
+        /* Sign bit = 0 */
+        mask = AMI_MASK;
+        pcm_val = -pcm_val;
+    }
+
+    /* Convert the scaled magnitude to segment number. */
+    for (seg = 0;  seg < 8;  seg++)
+    {
+        if (pcm_val <= seg_end[seg])
+	    break;
+    }
+    /* Combine the sign, segment, and quantization bits. */
+    return  ((seg << 4) | ((pcm_val >> ((seg)  ?  (seg + 3)  :  4)) & 0x0F)) ^ mask;
+}
+#endif
 
 
 static char needinitg711 = 1;
