@@ -1,0 +1,40 @@
+Free-MMDQ-codec files
+
+./c/                              - C-language source code of MMDQ codec and test utilites
+                                  
+./c/g726lib/                      - source code of G.726 codec implementation
+./c/out/                          - compilation stage files
+./c/out/test                      - result executable test utility
+./c/wave/                         - library to work with wave-files
+./c/wave/gsmlib/                  - source code of GSM-0610 codec implementation
+./c/wave/g711super.[c|h]          - source code of G.711 codec implementation
+./c/mmdq_codec.[c|h]              - source code of MMDQ codec implementation
+./c/test                          - source code of test utility
+
+./matlab                          - MATLAB/FreeMat/Octave-language source code of MMDQ codec and test utilites
+./matlab/female                   - directory for output files of quality tests for female voice
+./matlab/male                     - directory for output files of quality tests for male voice
+./matlab/modem                    - directory for output files of quality tests for modems sound
+./matlab/out                      - directory for output files of some other tests
+./matlab/encoder.m                - MMDQ-encoder (floating point version)
+./matlab/decoder.m                - MMDQ-decoder (floating point version)
+./matlab/encoder_init.m           - MMDQ-encoder (floating point version) initialization
+./matlab/decoder_init.m           - MMDQ-decoder (floating point version) initialization
+./matlab/encoder2.m               - MMDQ-encoder (fixed point version)
+./matlab/decoder2.m               - MMDQ-decoder (fixed point version)
+./matlab/encoder2_init.m          - MMDQ-encoder (fixed point version) initialization
+./matlab/decoder2_init.m          - MMDQ-decoder (fixed point version) initialization
+
+./matlab/main_test.m              - executable script to check if MMDQ-codec works well
+./matlab/main_compand_expand.m    - executable script to test and plot compand/expand functions
+./matlab/main_compare.m           - executable script to compare original and restored wave-files
+./matlab/main_female.m            - executable script to estimate codecs quality for female voice
+./matlab/main_male.m              - executable script to estimate codecs quality for male voice
+./matlab/main_modem_generate.m    - executable script to estimate codecs quality for modems sounds
+./matlab/main_modem_demodulate.m  - executable script to estimate codecs quality for modems sounds
+
+./samples/                        - set of samples to test quality of codecs
+./samples/cmu/                    - set of male/female voice speech samples
+./samples/noise/                  - set of noise samples
+
+
