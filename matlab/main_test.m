@@ -35,7 +35,7 @@ MAXX = 2^(BITS-1);    % Maximum amplitude of original input signal (for BITS=16:
 
 USE_AUTOSCALE = 1;    % 0 - disable autoscale of input signals, 1 - enable
 
-CODEC_VERSION = 2;    % 0-no encode/decode operations
+CODEC_VERSION = 1;    % 0-no encode/decode operations
                       % 1-matlab float point
                       % 2-c-adapted, code tables, div tables
 
@@ -138,19 +138,18 @@ fprintf(fid,'-----------------------\n');
 
 %voice_filename  = '../samples/cmu/sample1_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/cmu/sample2_8000.wav';         VOICE_AMP_DB = -3;
-voice_filename   = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = -3;  %female
+%voice_filename  = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = -3;  %female
 %voice_filename  = '../samples/cmu/sample4_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/cmu/sample5_8000.wav';         VOICE_AMP_DB = -3;
-%voice_filename  = '../samples/cmu/sample6_8000.wav';         VOICE_AMP_DB = -3;
+%voice_filename  = '../samples/cmu/sample6_8000.wav';         VOICE_AMP_DB = -3;  %male
 %voice_filename  = '../samples/cmu/sample7_8000.wav';         VOICE_AMP_DB = -3;
-%voice_filename  = '../samples/modems/v92-mohdenied.wav';     VOICE_AMP_DB = -3;
-%voice_filename  = '../samples/modems/v90-rockwellconex.wav'; VOICE_AMP_DB = -3;
-%voice_filename  = '../samples/modems/v34-33600bps.wav';      VOICE_AMP_DB = -3;
-%voice_filename  = '../samples/modems/v32b-14400bps.wav';     VOICE_AMP_DB = -3;
-%voice_filename  = '../samples/modems/v22b-2400bps.wav';      VOICE_AMP_DB = -3;
-%voice_filename  = '../samples/modems/v21-300bps.wav';        VOICE_AMP_DB = -3;
-%voice_filename  = '../samples/modems/v17-14400bpsfax.wav';   VOICE_AMP_DB = -3;
-%voice_filename  = '../samples/modems/ttytdd.wav';            VOICE_AMP_DB = -3;
+%voice_filename  = '../samples/modems_matlab/ask2.wav';       VOICE_AMP_DB = -3;
+%voice_filename  = '../samples/modems_matlab/fsk2.wav';       VOICE_AMP_DB = -3;
+%voice_filename  = '../samples/modems_matlab/psk4.wav';       VOICE_AMP_DB = -3;
+%voice_filename  = '../samples/modems_matlab/psk8.wav';       VOICE_AMP_DB = -3;  
+voice_filename   = '../samples/modems_matlab/qask16.wav';     VOICE_AMP_DB = -3;  %modem
+%voice_filename  = '../samples/modems_matlab/qask32.wav';     VOICE_AMP_DB = -3;
+%voice_filename  = '../samples/modems_matlab/qask64.wav';     VOICE_AMP_DB = -3;
 
 %noise_filename  = '../samples/noise/noise_white.wav';        NOISE_AMP_DB = -99;
 %noise_filename  = '../samples/noise/noise_pink.wav';         NOISE_AMP_DB = -99;
