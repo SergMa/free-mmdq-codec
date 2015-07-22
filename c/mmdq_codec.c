@@ -504,11 +504,6 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     //bit-pack data[smin] into data[]
     pos = 0;
 
-    if (edata[smin][0] <= -32765)  //Note: current linear2alaw(x), linear2mulaw(x) give BIG errors for x<=32765
-        edata[smin][0]  = -32764;
-    if (edata[smin][1] <= -32765)
-        edata[smin][1]  = -32764;
-
     data[pos++] = linear2alaw( edata[smin][0] );
     data[pos++] = linear2alaw( edata[smin][1] );
 
