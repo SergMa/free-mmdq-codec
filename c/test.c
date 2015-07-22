@@ -57,8 +57,8 @@ void usage(void)
     "    <samples> = number of samples to compare (0-compare N samples - see above).\n"
     "    If <samples> is bigger than N, N samples will be compared.\n"
     "\n"
-    "  test --g711error\n"
-    "    Demonstrate error of current G.711 codec implementation in DAHDI.\n"
+    "  test --speed\n"
+    "    Speed test of MMDQ, G.726, G.711 codecs.\n"
     "\n"
     "  test --help\n"
     "    Show this help message.\n"
@@ -75,7 +75,7 @@ void usage(void)
 #define ACTION_G711_ENCODE   4
 #define ACTION_G711_DECODE   5
 #define ACTION_MSE           6
-#define ACTION_G711_ERROR    7
+#define ACTION_SPEED_TEST    7
 
 #define G711_ALAW            0
 #define G711_ULAW            1
@@ -132,6 +132,10 @@ void print_waveinfo( wavefile_t * wf )
     return;
 }
 
+#define VOICE_BUFF_SAMPLES  (1*8000) //voicebuf[] is used for speed testing
+#define VOICE_BUFF_AMP      32000
+#define SPEED_TEST_SAMPLES  (3600*8000) //length of speed test voice, samples
+
 //------------------------------------------------------------------------------
 int main( int argc, char **argv )
 {
@@ -171,7 +175,12 @@ int main( int argc, char **argv )
     int          compare_samples;
 
     unsigned long long t_ms;
+
     int          i;
+    int          xi;
+    int          voicebufi;
+    int16_t      voicebuf[VOICE_BUFF_SAMPLES];
+
 
     if(argc<=0) {
         printf("error: unexpected error\n");
@@ -255,8 +264,8 @@ int main( int argc, char **argv )
         out_wave_filename    = argv[4]; //<sound2.wav>
         //go-go-go
     }
-    else if(argc==2 && 0==strcmp(argv[1],"--g711error")) {
-        action = ACTION_G711_ERROR;
+    else if(argc==2 && 0==strcmp(argv[1],"--speed")) {
+        action = ACTION_SPEED_TEST;
         //go-go-go
     }
     else {
@@ -789,19 +798,485 @@ int main( int argc, char **argv )
                 processed, diffxmax, diffxnmax, mse, inp_wave_filename, out_wave_filename );
         break;
 
-    case ACTION_G711_ERROR:
+    case ACTION_SPEED_TEST:
     
-        printf("DAHDI G.711 codec error demo:\n");
-        printf("A-law:\n");
-        for(i=-32768; i<-32763; i++) {
-            printf("x=%6d, linear2alaw(x)=%02X, alaw2linear(linear2alaw(x))=%6d\n",
-                    i, linear2alaw(i), alaw2linear(linear2alaw(i)) );
+        printf("Measure speed of G.711, G.726, MMDQ encoders/decoders\n");
+
+        //Fill voicebuf with random numbers
+        for(i=0; i<VOICE_BUFF_SAMPLES; i++) {
+            voicebuf[i] = (short)VOICE_BUFF_AMP*(float)rand()/RAND_MAX;
         }
-        printf("mu-law:\n");
-        for(i=-32768; i<-32763; i++) {
-            printf("x=%6d, linear2mulaw(x)=%02X, mulaw2linear(linear2mulaw(x))=%6d\n",
-                    i, linear2mulaw(i), mulaw2linear(linear2mulaw(i)) );
+
+        //=======================================
+        printf("MMDQ-32 encode (spf=14,bps=3,smon=1)\n");
+        spf      = 14;
+        bps      = 3;
+        smoothon = 1;
+        (void) mmdq_codec_init( &codec, spf, bps, smoothon, 0 ); //decoder_only=0
+
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input sample
+            x[xi++] = voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= spf) {
+                (void) mmdq_encode( &codec, x, spf, data, sizeof(data), &bytes );
+                xi = 0;
+                i += spf;
+            }
         }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("MMDQ-32 decode (spf=14,bps=3,smon=1)\n");
+        spf      = 14;
+        bps      = 3;
+        smoothon = 1;
+        (void) mmdq_codec_init( &codec, spf, bps, smoothon, 0 ); //decoder_only=0
+        bytes = mmdq_framebytes( &codec );
+        
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input bytes
+            data[xi++] = (uint8_t)voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= bytes) {
+                (void) mmdq_decode( &codec, data, bytes, x, sizeof(x), &wrsamples );
+                xi = 0;
+                i += spf;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("MMDQ-32nosm encode (spf=14,bps=3,smon=0)\n");
+        spf      = 14;
+        bps      = 3;
+        smoothon = 0;
+        (void) mmdq_codec_init( &codec, spf, bps, smoothon, 0 ); //decoder_only=0
+        
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input sample
+            x[xi++] = voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= spf) {
+                (void) mmdq_encode( &codec, x, spf, data, sizeof(data), &bytes );
+                xi = 0;
+                i += spf;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("MMDQ-32nosm decode (spf=14,bps=3,smon=0)\n");
+        spf      = 14;
+        bps      = 3;
+        smoothon = 0;
+        (void) mmdq_codec_init( &codec, spf, bps, smoothon, 0 ); //decoder_only=0
+        bytes = mmdq_framebytes( &codec );
+        
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input bytes
+            data[xi++] = (uint8_t)voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= bytes) {
+                (void) mmdq_decode( &codec, data, bytes, x, sizeof(x), &wrsamples );
+                xi = 0;
+                i += spf;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("MMDQ-40 encode (spf=13,bps=4,smon=1)\n");
+        spf      = 13;
+        bps      = 4;
+        smoothon = 1;
+        (void) mmdq_codec_init( &codec, spf, bps, smoothon, 0 ); //decoder_only=0
+        
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input sample
+            x[xi++] = voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= spf) {
+                (void) mmdq_encode( &codec, x, spf, data, sizeof(data), &bytes );
+                xi = 0;
+                i += spf;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("MMDQ-40 decode (spf=13,bps=4,smon=1)\n");
+        spf      = 13;
+        bps      = 4;
+        smoothon = 1;
+        (void) mmdq_codec_init( &codec, spf, bps, smoothon, 0 ); //decoder_only=0
+        bytes = mmdq_framebytes( &codec );
+        
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input bytes
+            data[xi++] = (uint8_t)voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= bytes) {
+                (void) mmdq_decode( &codec, data, bytes, x, sizeof(x), &wrsamples );
+                xi = 0;
+                i += spf;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("MMDQ-40nosm encode (spf=13,bps=4,smon=0)\n");
+        spf      = 13;
+        bps      = 4;
+        smoothon = 0;
+        (void) mmdq_codec_init( &codec, spf, bps, smoothon, 0 ); //decoder_only=0
+        
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input sample
+            x[xi++] = voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= spf) {
+                (void) mmdq_encode( &codec, x, spf, data, sizeof(data), &bytes );
+                xi = 0;
+                i += spf;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("MMDQ-40nosm decode (spf=13,bps=4,smon=0)\n");
+        spf      = 13;
+        bps      = 4;
+        smoothon = 0;
+        (void) mmdq_codec_init( &codec, spf, bps, smoothon, 0 ); //decoder_only=0
+        bytes = mmdq_framebytes( &codec );
+        
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input bytes
+            data[xi++] = (uint8_t)voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= bytes) {
+                (void) mmdq_decode( &codec, data, bytes, x, sizeof(x), &wrsamples );
+                xi = 0;
+                i += spf;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("MMDQ-40x encode (spf=7,bps=3,smon=1)\n");
+        spf      = 7;
+        bps      = 3;
+        smoothon = 1;
+        (void) mmdq_codec_init( &codec, spf, bps, smoothon, 0 ); //decoder_only=0
+        
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input sample
+            x[xi++] = voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= spf) {
+                (void) mmdq_encode( &codec, x, spf, data, sizeof(data), &bytes );
+                xi = 0;
+                i += spf;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("MMDQ-40x decode (spf=7,bps=3,smon=1)\n");
+        spf      = 7;
+        bps      = 3;
+        smoothon = 1;
+        (void) mmdq_codec_init( &codec, spf, bps, smoothon, 0 ); //decoder_only=0
+        bytes = mmdq_framebytes( &codec );
+        
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input bytes
+            data[xi++] = (uint8_t)voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= bytes) {
+                (void) mmdq_decode( &codec, data, bytes, x, sizeof(x), &wrsamples );
+                xi = 0;
+                i += spf;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("MMDQ-40xnosm encode (spf=7,bps=3,smon=0)\n");
+        spf      = 7;
+        bps      = 3;
+        smoothon = 0;
+        (void) mmdq_codec_init( &codec, spf, bps, smoothon, 0 ); //decoder_only=0
+        
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input sample
+            x[xi++] = voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= spf) {
+                (void) mmdq_encode( &codec, x, spf, data, sizeof(data), &bytes );
+                xi = 0;
+                i += spf;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("MMDQ-40xnosm decode (spf=7,bps=3,smon=0)\n");
+        spf      = 7;
+        bps      = 3;
+        smoothon = 0;
+        (void) mmdq_codec_init( &codec, spf, bps, smoothon, 0 ); //decoder_only=0
+        bytes = mmdq_framebytes( &codec );
+        
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input bytes
+            data[xi++] = (uint8_t)voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= bytes) {
+                (void) mmdq_decode( &codec, data, bytes, x, sizeof(x), &wrsamples );
+                xi = 0;
+                i += spf;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("G726-32 encode\n");
+        g726_init_state( &g726 );
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input sample
+            x[xi++] = voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= 1) {
+                data[0] = g726_32_encoder( x[0], &g726 );
+                xi = 0;
+                i += 1;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("G726-32 decode\n");
+        g726_init_state( &g726 );
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input bytes
+            data[xi++] = (uint8_t)voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= 1) {
+                x[0] = g726_32_decoder( data[0], &g726 );
+                xi = 0;
+                i += 1;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("G726-40 encode\n");
+        g726_init_state( &g726 );
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input sample
+            x[xi++] = voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= 1) {
+                data[0] = g726_40_encoder( x[0], &g726 );
+                xi = 0;
+                i += 1;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("G726-40 decode\n");
+        g726_init_state( &g726 );
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input bytes
+            data[xi++] = (uint8_t)voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= 1) {
+                x[0] = g726_40_decoder( data[0], &g726 );
+                xi = 0;
+                i += 1;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("G711-alaw encode\n");
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input sample
+            x[xi++] = voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= 1) {
+                data[0] = linear2alaw( x[0] );
+                xi = 0;
+                i += 1;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("G711-alaw decode\n");
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input bytes
+            data[xi++] = (uint8_t)voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= 1) {
+                x[0] = alaw2linear( data[0] );
+                xi = 0;
+                i += 1;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("G711-mulaw encode\n");
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input sample
+            x[xi++] = voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= 1) {
+                data[0] = linear2mulaw( x[0] );
+                xi = 0;
+                i += 1;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("G711-mulaw decode\n");
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input bytes
+            data[xi++] = (uint8_t)voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= 1) {
+                x[0] = mulaw2linear( data[0] );
+                xi = 0;
+                i += 1;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+        printf("speed test finished!\n");
         break;
 
     default:
