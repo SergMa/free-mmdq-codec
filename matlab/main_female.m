@@ -11,23 +11,30 @@ close all;
 
 disp('started!');
 
-FILENAME_PREFIX = {'mmdq-40_'     ;
-                   'mmdq-40nosm_' ;
-                   'mmdq-40x_'    ;
-                   'mmdq-40xnosm_';
-                   'mmdq-32_'     ;
-                   'mmdq-32nosm_' ;
-                   'g726-40_'     ;
-                   'g726-32_'     ;
-                   'g711-alaw_'   ;
-                   'g711-ulaw_'   };
+FILENAME_PREFIX = {
+'mmdq-40-1_';
+'mmdq-40-2_';
+'mmdq-40-3_';
+'mmdq-40-4_';
+'mmdq-40x-1_';
+'mmdq-40x-2_';
+'mmdq-40x-3_';
+'mmdq-40x-4_';
+'mmdq-32-1_';
+'mmdq-32-2_';
+'mmdq-32-3_';
+'mmdq-32-4_';
+'g726-40_';
+'g726-32_';
+'g711-alaw_';
+'g711-ulaw_' };
 
-FILES = size(FILENAME_PREFIX,1);
+FILES = length(FILENAME_PREFIX);
 
 NAME = 'female.wav';
 DIR  = 'female';
 
-LOGFILENAME = [DIR,filesep,NAME,'_voice.log'];
+LOGFILENAME = [DIR,filesep,'female.log'];
 fid = fopen(LOGFILENAME,'w');
 
 FILENAME = [DIR,filesep,NAME];
