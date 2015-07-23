@@ -11,32 +11,42 @@ clc;
 clear all;
 close all;
 
-FILENAME_PREFIX = 'mmdq-40_';
-FILENAME_PREFIX = 'mmdq-40nosm_';
-FILENAME_PREFIX = 'mmdq-40x_';
-FILENAME_PREFIX = 'mmdq-40xnosm_';
-FILENAME_PREFIX = 'mmdq-32_';
-FILENAME_PREFIX = 'mmdq-32nosm_';
-FILENAME_PREFIX = 'g726-40_';
-FILENAME_PREFIX = 'g726-32_';
-FILENAME_PREFIX = 'g711-alaw_';
-FILENAME_PREFIX = 'g711-ulaw_';
+FILENAME_PREFIX = {
+'mmdq-40-1_';
+'mmdq-40-2_';
+'mmdq-40-3_';
+'mmdq-40-4_';
+'mmdq-40x-1_';
+'mmdq-40x-2_';
+'mmdq-40x-3_';
+'mmdq-40x-4_';
+'mmdq-32-1_';
+'mmdq-32-2_';
+'mmdq-32-3_';
+'mmdq-32-4_';
+'g726-40_';
+'g726-32_';
+'g711-alaw_';
+'g711-ulaw_' };
 
 DIR = 'modem';
-LOGFILENAME = [DIR,filesep,FILENAME_PREFIX,'demodulation.log'];
-
 disp('started!');
 
+LOGFILENAME = [DIR,filesep,'demodulation.log'];
 fid = fopen(LOGFILENAME,'w');
 fprintf(fid,'modems signals demodulation started!');
-fprintf(fid,'filename prefix: %s\n\n', FILENAME_PREFIX);
+
+for f=1:length(FILENAME_PREFIX)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+fprintf(fid,'-----------------------------------------\n');
+fprintf(fid,'filename prefix: %s\n\n', FILENAME_PREFIX{f});
 
 FS = 8000; %Sample rate, Hz
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %ASK modem
 FILENAME   = 'modem/ask2.wav';
-FILENAME2  = [DIR,filesep,FILENAME_PREFIX,'ask2.wav'];
+FILENAME2  = [DIR,filesep,FILENAME_PREFIX{f},'ask2.wav'];
 MODULATION = 'ask';
 M  = 2;           %Use M-ary modulation
 FC = 1600;        %Carrier frequency, Hz
@@ -65,7 +75,7 @@ fprintf(fid,'MSE: %8.6f\n\n', mean( (y-y2).^2 ) );
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %FSK modem (appr. V.23)
 FILENAME   = 'modem/fsk2.wav';
-FILENAME2  = [DIR,filesep,FILENAME_PREFIX,'fsk2.wav'];
+FILENAME2  = [DIR,filesep,FILENAME_PREFIX{f},'fsk2.wav'];
 MODULATION = 'fsk';
 M  = 2;           %Use M-ary modulation
 FC = 1600;        %Carrier frequency, Hz
@@ -94,7 +104,7 @@ fprintf(fid,'MSE: %8.6f\n\n', mean( (y-y2).^2 ) );
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %PSK-4 modem (appr. V.26)
 FILENAME   = 'modem/psk4.wav';
-FILENAME2  = [DIR,filesep,FILENAME_PREFIX,'psk4.wav'];
+FILENAME2  = [DIR,filesep,FILENAME_PREFIX{f},'psk4.wav'];
 MODULATION = 'psk';
 M  = 4;           %Use M-ary modulation
 FC = 1600;        %Carrier frequency, Hz
@@ -123,7 +133,7 @@ fprintf(fid,'MSE: %8.6f\n\n', mean( (y-y2).^2 ) );
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %PSK-8 modem (appr. V.27ter)
 FILENAME   = 'modem/psk8.wav';
-FILENAME2  = [DIR,filesep,FILENAME_PREFIX,'psk8.wav'];
+FILENAME2  = [DIR,filesep,FILENAME_PREFIX{f},'psk8.wav'];
 MODULATION = 'psk';
 M  = 8;           %Use M-ary modulation
 FC = 1600;        %Carrier frequency, Hz
@@ -152,7 +162,7 @@ fprintf(fid,'MSE: %8.6f\n\n', mean( (y-y2).^2 ) );
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %QASK-16 modem (appr. V.29 and V.32)
 FILENAME   = 'modem/qask16.wav';
-FILENAME2  = [DIR,filesep,FILENAME_PREFIX,'qask16.wav'];
+FILENAME2  = [DIR,filesep,FILENAME_PREFIX{f},'qask16.wav'];
 MODULATION = 'qask';
 M  = 16;          %Use M-ary modulation
 FC = 1600;        %Carrier frequency, Hz
@@ -185,7 +195,7 @@ fprintf(fid,'MSE: %8.6f\n\n', mean( (y-y2).^2 ) );
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %QASK-32 modem (appr. V.33)
 FILENAME   = 'modem/qask32.wav';
-FILENAME2  = [DIR,filesep,FILENAME_PREFIX,'qask32.wav'];
+FILENAME2  = [DIR,filesep,FILENAME_PREFIX{f},'qask32.wav'];
 MODULATION = 'qask';
 M  = 32;          %Use M-ary modulation
 FC = 1600;        %Carrier frequency, Hz
@@ -218,7 +228,7 @@ fprintf(fid,'MSE: %8.6f\n\n', mean( (y-y2).^2 ) );
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %QASK-64 modem (appr.V.34)
 FILENAME   = 'modem/qask64.wav';
-FILENAME2  = [DIR,filesep,FILENAME_PREFIX,'qask64.wav'];
+FILENAME2  = [DIR,filesep,FILENAME_PREFIX{f},'qask64.wav'];
 MODULATION = 'qask';
 M  = 64;          %Use M-ary modulation
 FC = 1600;        %Carrier frequency, Hz
@@ -250,6 +260,7 @@ fprintf(fid,'MSE: %8.6f\n\n', mean( (y-y2).^2 ) );
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+end
 
 fprintf(fid,'finished!\n');
 fclose(fid);
