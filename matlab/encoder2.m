@@ -147,27 +147,23 @@ function [data,enc] = encoder2( voice, enc, dec, FIXP )
         [voice2,dec] = decoder(data2,dec);
         [voice3,dec] = decoder(data3,dec);
 
-        err0 = 0;
-        err1 = 0;
-        err2 = 0;
-        err3 = 0;
-        for i=1:N
-            err = abs( voice0(i) - voice(i) );
-            if err > err0
-                err0 = err;
-            end
-            err = abs( voice1(i) - voice(i) );
-            if err > err1
-                err1 = err;
-            end
-            err = abs( voice2(i) - voice(i) );
-            if err > err2
-                err2 = err;
-            end
-            err = abs( voice3(i) - voice(i) );
-            if err > err3
-                err3 = err;
-            end
+        v = 1;
+        switch v
+        case 0
+            err0 = max( abs(voice0-voice) ); 
+            err1 = max( abs(voice1-voice) ); 
+            err2 = max( abs(voice2-voice) ); 
+            err3 = max( abs(voice3-voice) ); 
+        case 1
+            err0 = sum( abs(voice0-voice) ); 
+            err1 = sum( abs(voice1-voice) ); 
+            err2 = sum( abs(voice2-voice) ); 
+            err3 = sum( abs(voice3-voice) ); 
+        case 2
+            err0 = mean((voice0-voice).^2); 
+            err1 = mean((voice1-voice).^2); 
+            err2 = mean((voice2-voice).^2); 
+            err3 = mean((voice3-voice).^2); 
         end
 
         if err0<=err1 && err0<=err2 && err0<=err3
