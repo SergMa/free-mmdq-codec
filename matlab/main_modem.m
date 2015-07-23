@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Test script to demodulate modems wave-files                                  %
-% main_modem_demodulate.m                                                      %
+% main_modem.m                                                      %
 %                                                                              %
 % This code needs MATLAB Communication Toolbox                                 %
 %                                                                              %

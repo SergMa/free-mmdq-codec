@@ -30,20 +30,27 @@ SPECTROGRAM_WIDTH = 256; % Parameters of spectrograms
 SPECTROGRAM_OVR   = 8;
 
 % Name of file for original signal
-%ORIGINAL_FILENAME = '../c/out/input.wav';  
 ORIGINAL_FILENAME = 'female/female.wav';  
 
 % Name of file for signal which has been encoded/decoded by codec 1
-%CODEC1_FILENAME    = '../c/out/g726-32kbps.wav';   
-%CODEC1_FILENAME   = '../c/out/g726-40kbps.wav';   
-%CODEC2_FILENAME   = 'out2.wav';
-CODEC1_FILENAME    = 'female/g726-32_female.wav';   
+%CODEC1_FILENAME     = 'female/g726-32_female.wav';   
+CODEC1_FILENAME    = 'female/g726-40_female.wav';   
 
 % Name of file for signal which has been encoded/decoded by codec 2
-%CODEC2_FILENAME    = '../c/out/mmdq-32kbps.wav';
-%CODEC2_FILENAME   = '../c/out/mmdq-40kbps.wav';
-%CODEC2_FILENAME   = 'out1.wav';
-CODEC2_FILENAME    = 'female/mmdq-32_female.wav';   
+%CODEC2_FILENAME    = 'female/mmdq-32-1_female.wav';   
+%CODEC2_FILENAME    = 'female/mmdq-32-2_female.wav';   
+%CODEC2_FILENAME    = 'female/mmdq-32-3_female.wav';   
+%CODEC2_FILENAME    = 'female/mmdq-32-4_female.wav';   
+
+%CODEC2_FILENAME    = 'female/mmdq-40-1_female.wav';   
+%CODEC2_FILENAME    = 'female/mmdq-40-2_female.wav';   
+%CODEC2_FILENAME    = 'female/mmdq-40-3_female.wav';   
+%CODEC2_FILENAME    = 'female/mmdq-40-4_female.wav';   
+
+%CODEC2_FILENAME    = 'female/mmdq-40x-1_female.wav';   
+%CODEC2_FILENAME    = 'female/mmdq-40x-2_female.wav';   
+%CODEC2_FILENAME    = 'female/mmdq-40x-3_female.wav';   
+CODEC2_FILENAME    = 'female/mmdq-40x-4_female.wav';   
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load input (voice,noise) signals from wave-files, generate signal to process
