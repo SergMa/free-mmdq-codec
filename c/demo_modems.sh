@@ -6,7 +6,13 @@
 # (c) Sergei Mashkin, 2015                                                     #
 ################################################################################
 
-echo "Demonstration of test program"
+echo "Compare MMDQ with G.726, G.711 codecs for modems signals"
+
+echo "Build test utilite"
+make
+
+echo "Copy modem wave-files from \"../samples/modems_matlab\" to \"../matlab/modem\""
+cp ../samples/modems_matlab/* ../matlab/modem
 
 echo "Encode/decode modem sound with MMDQ-40-1:"
 out/test --mmdq-encode 13 4 1 ../matlab/modem/ask2.wav             ../matlab/modem/mmdq-40-1_ask2.bin

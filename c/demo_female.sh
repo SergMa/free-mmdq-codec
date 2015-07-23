@@ -6,11 +6,15 @@
 # (c) Sergei Mashkin, 2015                                                     #
 ################################################################################
 
-echo "Demonstration of test program"
+echo "Compare MMDQ with G.726, G.711 codecs for female voice"
 
 DIR=../matlab/female
 NAME=female
 
+echo "Build test utilite"
+make
+
+echo "Copy \"../samples/cmu/sample3_8000.wav\" to \"../matlab/female.wav\""
 cp "../samples/cmu/sample3_8000.wav" $DIR/$NAME.wav
 
 echo "Encode/decode female voice with MMDQ-40-1:"

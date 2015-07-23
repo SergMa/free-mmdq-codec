@@ -8,6 +8,12 @@
 
 echo "Demonstration of test program"
 
+echo "Build test utilite"
+make
+
+echo "Copy \"../samples/cmu/sample3_8000.wav\" to \"out/input.wav\""
+cp "../samples/cmu/sample3_8000.wav" out/input.wav
+
 echo "Encode sample sound with MMDQ-codec:"
 echo "mmdq-32-1"
 out/test --mmdq-encode 14 3 1 out/input.wav out/mmdq-32-1.bin

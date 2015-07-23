@@ -6,12 +6,16 @@
 # (c) Sergei Mashkin, 2015                                                     #
 ################################################################################
 
-echo "Demonstration of test program"
+echo "Compare MMDQ with G.726, G.711 codecs for male voice"
 
 DIR=../matlab/male
 NAME=male
 
-cp "../samples/cmu/sample3_8000.wav" $DIR/$NAME.wav
+echo "Build test utilite"
+make
+
+echo "Copy \"../samples/cmu/sample6_8000.wav\" to \"../matlab/male.wav\""
+cp "../samples/cmu/sample6_8000.wav" $DIR/$NAME.wav
 
 echo "Encode/decode male voice with MMDQ-40-1:"
 out/test --mmdq-encode 13 4 1  $DIR/$NAME.wav               $DIR/mmdq-40-1_$NAME.bin
