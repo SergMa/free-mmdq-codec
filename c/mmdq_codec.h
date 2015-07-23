@@ -14,8 +14,8 @@
 /* DEFINITIONS                                                                */
 /******************************************************************************/
 
-//#define BEST_SMOOTH_VER      0  //0 - ver.0: calculate error[s]=max(abs(voice[i]-voice[s][i]))
-#define BEST_SMOOTH_VER        1  //1 - ver.1: calculate error[s]=sum(abs(voice[i]-voice[s][i]))
+#define BEST_SMOOTH_VER        0  //0 - ver.0: calculate error[s]=max(abs(voice[i]-voice[s][i]))
+//#define BEST_SMOOTH_VER      1  //1 - ver.1: calculate error[s]=sum(abs(voice[i]-voice[s][i]))
 
 
 #define FIXP                   (2*32768)
