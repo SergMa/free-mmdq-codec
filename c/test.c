@@ -794,7 +794,7 @@ int main( int argc, char **argv )
         }
         mse = mse / (double)processed;
 
-        printf("samples: %10u, maxerr: %6d, maxrelerr: %8.6f, relMSE: %8.6f for \"%s\" vs \"%s\"\n",
+        printf("samples: %10u, maxerr: %6d, maxrelerr: %10.8f, relMSE: %10.8f for \"%s\" vs \"%s\"\n",
                 processed, diffxmax, diffxnmax, mse, inp_wave_filename, out_wave_filename );
         break;
 
