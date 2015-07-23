@@ -302,38 +302,47 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
                    int16_t * voice, int samples,
                    uint8_t * data, int datasize, int * bytes )
 {
-    int16_t   minx;
-    int16_t   maxx;
-    //int32_t  diffx;
+    int32_t   minv;
+    int32_t   maxv;
+    int32_t   diffv;
     int       i;
-    int32_t   dv [SAMPLES_PER_FRAME_MAX-1];
+    int       minvi;
+    int       maxvi;
+    int32_t   dv[SAMPLES_PER_FRAME_MAX-1];
     int32_t   mindv;
     int32_t   maxdv;
-    int32_t   diffdv;
 
     int32_t   a;
     int32_t   b;
     int32_t   ampdv;
     int       smin;
-    int16_t   errmin;
+    int32_t   errmin;
     int       smooth1;
-    uint32_t  div;
+    int32_t   div;
     int       s;
-    int16_t   edata [SMOOTH_N] [DATA_SIZE_MAX];
+    int16_t   edata[SMOOTH_N][DATA_SIZE_MAX];
     int32_t   sss;
-    int16_t   voice2 [SMOOTH_N] [SAMPLES_PER_FRAME_MAX];
+    int16_t   voice2[SMOOTH_N][SAMPLES_PER_FRAME_MAX];
     int       samples2;
-    int16_t   error [SMOOTH_N];
-    int16_t   verr;
+
+    int32_t   div2[SMOOTH_N];
+    int32_t   voicemin[SMOOTH_N];
+    int32_t   voicemax[SMOOTH_N];
+    int32_t   voicediff[SMOOTH_N];
+
+    int32_t   voice_n;
+    int32_t   voice_a;
+
+    int32_t   maxerror[SMOOTH_N];
+    int32_t   error;
 
     int       err;
     int       pos;
     uint32_t  bitshift;
     int       bitcntr;
-    
-    int       smn;
 
     //Check input arguments
+    /* commented for speed
     if(codec==NULL) {
         MYLOG_ERROR("Invalid argument: codec=NULL");
         return -1;
@@ -363,142 +372,273 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
         MYLOG_ERROR("Invalid argument: bytes=NULL");
         return -1;
     }
+    */
 
-    //==========================================================================
-
-    //Calculate minx,maxx,diffx
-    minx = maxx = voice[0];
-    for(i=1; i<codec->samples_per_frame; i++) {
-        if (voice[i]<minx)
-            minx = voice[i];
-        else if (voice[i]>maxx)
-            maxx = voice[i];
-    }
-    //diffx = maxx - minx;
-
-    //get differencies of voice samples, mindv,maxdv,diffdv
-    dv[0] = voice[1] - voice[0];
-    mindv = maxdv = dv[0];
-    for(i=1; i<codec->samples_per_frame-1; i++) {
-        dv[i] = voice[i+1] - voice[i];
-        if (dv[i] < mindv)
-            mindv = dv[i];
-        else if (dv[i] > maxdv)
-            maxdv = dv[i];
-    }
-    diffdv = maxdv - mindv;
-
-    //calculate ampdv
-    a = abs(mindv);
-    b = abs(maxdv);
-    if (a>=b)
-        ampdv = a;
-    else
-        ampdv = b;
-
-    //==========================================================================
-    //quantize dv[i]
-    if (diffdv==0)
+    if(!codec->smooth_on)
     {
-        //===== dv[i]==const =======================
-        smin    = 0;
-        errmin  = 0;
-        smooth1 = 0;
-        edata[smin][0] = minx;
-        edata[smin][1] = maxx;
-        edata[smin][2] = smooth1;
-        if (maxdv==0) {
-            // We suppose, that codec->factor is even. So there is no enc.factor for dv=0
-            for (i=0; i<codec->samples_per_frame-1; i+=2)
-                edata[smin][3+i] = codec->factor/2;
-            for (i=1; i<codec->samples_per_frame-1; i+=2)
-                edata[smin][3+i] = codec->factor/2 - 1;
-            //for (i=0; i<codec->samples_per_frame-1; i++)
-            //    edata[smin][3+i] = codec->factor/2;
+        //======================================================================
+        //DISABLED SMOOTHING
+        smin = 0;
+    
+        //Calculate minv,maxv,diffv
+        minv = maxv = voice[0];
+        for (i=1; i<codec->samples_per_frame; i++) {
+            if (voice[i]<minv)
+                minv  = voice[i];
+            else if (voice[i]>maxv)
+                maxv = voice[i];
         }
-        else if (maxdv>0) {
-            for (i=0; i<codec->samples_per_frame-1; i++)
-                edata[smin][3+i] = codec->factor-1;
-        }
-        else { //maxdv<0
-            for (i=0; i<codec->samples_per_frame-1; i++)
-                edata[smin][3+i] = 0;
-        }
-        //go-go-go
-    }
-    else
-    {
-        //===== really quantize dv[i] ==============
-        
-        // ampdv=[0..2*maxx]
-        // div=[0..FIXP]
-        div = codec->divtable[ ampdv ];
 
-        if(codec->smooth_on)
-            smn = SMOOTH_N;
-        else
-            smn = 1;
+        edata[0][0] = minv;
+        edata[0][1] = maxv;
+        edata[0][2] = 0; //smooth1
 
-        for(s=0; s<smn; s++) {
-            //encode with selected smooth
-            if(s&1) {
-                edata[s][0] = maxx; //smooth(bit0)==1
-                edata[s][1] = minx;
-            }
-            else {
-                edata[s][0] = minx; //smooth(bit0)==0
-                edata[s][1] = maxx;
-            }
-            edata[s][2] = (s>>1)&1; //smooth(bit1)
+        //get differencies of voice samples, mindv,maxdv,diffdv
+        dv[0] = voice[1] - voice[0];
+        mindv = maxdv = dv[0];
+        for (i=1; i<codec->samples_per_frame-1; i++) {
+            dv[i] = voice[i+1] - voice[i];
             
+            if (dv[i] < mindv)
+                mindv = dv[i];
+            else if (dv[i] > maxdv)
+                maxdv = dv[i];
+        }
+        //diffdv = maxdv - mindv;
+
+        //calculate ampdv
+        a = abs(mindv);
+        b = abs(maxdv);
+        if (a>=b)
+            ampdv = a;
+        else
+            ampdv = b;
+
+        //quantize dv[i]
+        if ( mindv==maxdv /*diffdv==0*/)
+        {
+            //===== dv[i]==const =======================
+            if (maxdv==0) {
+                // We suppose, that codec->factor is even. So there is no enc.factor for dv=0
+                for (i=0; i<codec->samples_per_frame-1; i+=2)
+                    edata[0][3+i] = codec->factor/2;
+                for (i=1; i<codec->samples_per_frame-1; i+=2)
+                    edata[0][3+i] = codec->factor/2 - 1;
+            }
+            else if (maxdv>0) {
+                for (i=0; i<codec->samples_per_frame-1; i++)
+                    edata[0][3+i] = codec->factor-1;
+            }
+            else { //maxdv<0
+                for (i=0; i<codec->samples_per_frame-1; i++)
+                    edata[0][3+i] = 0;
+            }
+            //go-go-go
+        }
+        else
+        {
+            //===== quantize dv[i] =====================
+            // ampdv=[0..2*maxx]
+            // div=[0..FIXP]
+            div = codec->divtable[ ampdv ];
+    
+            //encode
             if(ampdv < 2*MAXX/256) {
                 //K = 1
                 for(i=0; i<codec->samples_per_frame-1; i++) {
-                    // dvoice(i)=[-2*maxx..+2*maxx]
+                    // dv[i]=[-2*maxx..+2*maxx]
                     // div=[0..FIXP]
                     sss = dv[i] * div;  // sss=[-FIXP..+FIXP]
-                    edata[s][3+i] = codec->enctable[s][sss + FIXP];
+                    edata[0][3+i] = codec->enctable[0][sss + FIXP];
                 }
             }
             else {
                 //K = 256
                 for(i=0; i<codec->samples_per_frame-1; i++) {
-                    // dvoice(i)=[-2*maxx..+2*maxx]
+                    // dv[i]=[-2*maxx..+2*maxx]
                     // div=[0..FIXP]
-                    sss = (dv[i] * (int)div) >> 8;  // sss=[-FIXP..+FIXP]
-                    edata[s][3+i] = codec->enctable[s][sss + FIXP];
+                    sss = (dv[i] * (int32_t)div) >> 8;  // sss=[-FIXP..+FIXP]
+                    edata[0][3+i] = codec->enctable[0][sss + FIXP];
+                }
+            }
+        }
+    }
+    else
+    {
+        //======================================================================
+        //ENABLED SMOOTHING
+    
+        //Calculate minv,maxv,diffv
+        minv = maxv = voice[0];
+        for(i=1; i<codec->samples_per_frame; i++) {
+            if (voice[i]<minv) {
+                minv  = voice[i];
+                minvi = i;
+            }
+            else if (voice[i]>maxv) {
+                maxv = voice[i];
+                maxvi = i;
+            }
+        }
+        diffv = maxv - minv;
+    
+        //get differencies of voice samples, mindv,maxdv
+        mindv = maxdv = dv[0] = voice[1] - voice[0];
+        for(i=1; i<codec->samples_per_frame-1; i++) {
+            dv[i] = voice[i+1] - voice[i];
+            
+            if (dv[i] < mindv)
+                mindv = dv[i];
+            else if (dv[i] > maxdv)
+                maxdv = dv[i];
+        }
+    
+        //calculate ampdv
+        a = abs(mindv);
+        b = abs(maxdv);
+        if (a>=b)
+            ampdv = a;
+        else
+            ampdv = b;
+    
+        //quantize dv[i]
+        if (mindv==maxdv)
+        {
+            //===== dv[i]==const =======================
+            smin = 0;
+            edata[0][0] = minv;
+            edata[0][1] = maxv;
+            edata[0][2] = 0; //smooth1
+            if (maxdv==0) {
+                // We suppose, that codec->factor is even. So there is no enc->factor for dv=0
+                for (i=0; i<codec->samples_per_frame-1; i+=2)
+                    edata[0][3+i] = codec->factor/2;
+                for (i=1; i<codec->samples_per_frame-1; i+=2)
+                    edata[0][3+i] = codec->factor/2 - 1;
+            }
+            else if (maxdv>0) {
+                for (i=0; i<codec->samples_per_frame-1; i++)
+                    edata[0][3+i] = codec->factor-1;
+            }
+            else { //maxdv<0
+                for (i=0; i<codec->samples_per_frame-1; i++)
+                    edata[0][3+i] = 0;
+            }
+            //go-go-go
+        }
+        else
+        {
+            //===== quantize dv[i] ======================
+            
+            // ampdv=[0..2*maxx]
+            // div=[0..FIXP]
+            div = codec->divtable[ ampdv ];
+    
+            //encode voice over all smooth-es,
+            //reconstruct voice in relative coordinates,
+            //find voicemin, voicemax, voicediff
+            if(ampdv < 2*MAXX/256) {
+                //K = 1
+                for(s=0; s<SMOOTH_N; s++) {
+                    voicemin[s] = voicemax[s] = voice2[s][0] = 0;
+                    for(i=0; i<codec->samples_per_frame-1; i++) {
+                        // dv[i]=[-2*maxx..+2*maxx]
+                        // div=[0..FIXP]
+                        sss = dv[i] * div;  // sss=[-FIXP..+FIXP]
+                        edata[s][3+i] = codec->enctable[s][sss + FIXP];
+                        //reconstruct voice in relative coordinates
+                        voice2[s][i+1] = voice2[s][i] + codec->dectable[s][ edata[s][3+i] ];
+                        
+                        if(voice2[s][i+1]<voicemin[s])
+                            voicemin[s] = voice2[s][i+1];
+                        else if(voice2[s][i+1]>voicemax[s])
+                            voicemax[s] = voice2[s][i+1];
+                    }
+                }
+            }
+            else {
+                //K = 256
+                for(s=0; s<SMOOTH_N; s++) {
+                    voicemin[s] = voicemax[s] = voice2[s][0] = 0;
+                    for(i=0; i<codec->samples_per_frame-1; i++) {
+                        // dv[i]=[-2*maxx..+2*maxx]
+                        // div=[0..FIXP]
+                        sss = (dv[i] * (int32_t)div) >> 8;  // sss=[-FIXP..+FIXP]
+                        edata[s][3+i] = codec->enctable[s][sss + FIXP];
+                        //reconstruct voice in relative coordinates
+                        voice2[s][i+1] = voice2[s][i] + codec->dectable[s][ edata[s][3+i] ];
+
+                        if(voice2[s][i+1] < voicemin[s])
+                            voicemin[s] = voice2[s][i+1];
+                        else if(voice2[s][i+1] > voicemax[s])
+                            voicemax[s] = voice2[s][i+1];
+                    }
                 }
             }
             
-            //decode for selected smooth
-            err = mmdq_decode_nounpack( codec,
-                                        edata[s], codec->databytesnopack,
-                                        voice2[s], sizeof(voice2[s]), &samples2 );
-            if(err) {
-                MYLOG_ERROR("mmdq_decoder() failed for s=%d",s);
-                return -1;
+            for(s=0; s<SMOOTH_N; s++) {
+                //find voicemin,voicemax
+                //voicemin [s] = voice2[s][minvi];
+                //voicemax [s] = voice2[s][maxvi];
+                voicediff[s] = ((voicemax[s] - voicemin[s]) * codec->h) / FIXP; //voicediff_n
+                voicemin [s] = (voicemin[s] * codec->h) / FIXP;                 //voicemin_n
+                div2[s] = codec->divtable[ voicediff[s] ];
+
+                //reconstruct voice in absolute coordinates
+                //find max errors over all smooth-es
+                maxerror[s] = 0;
+                for(i=0; i<codec->samples_per_frame; i++) {
+                    if(voicediff[s] < 2*MAXX/256) {
+                        //K=1
+                        voice_n = ((int64_t)voice2[s][i] * codec->h) / FIXP;
+                        voice_a = minv + (int64_t)diffv * (voice_n - voicemin[s]) * div2[s] / FIXP;
+                    }
+                    else {
+                        //K=256
+                        voice_n = ((int64_t)voice2[0][i] * codec->h) / FIXP;
+                        voice_a = minv + (int64_t)diffv * (voice_n - voicemin[s]) * div2[s] / (FIXP*256);
+                    }
+                    error = abs( voice[i] - voice_a );
+                    
+                    //ver.1
+                    //if (error > maxerror[s])
+                    //    maxerror[s] = error;
+
+                    //ver.2
+                    maxerror[s] += error;
+
+                    //ver.3
+                    //maxerror[s] += error*error/codec->samples_per_frame;
+                }
             }
             
-            //calculate error[s]=max(abs(voice[i]-voice[s][i]))
-            error[s] = abs(voice[0] - voice2[s][0]);
-            for (i=1; i<codec->samples_per_frame; i++) {
-                verr = abs(voice[i] - voice2[s][i]);
-                if (verr > error[s])
-                    error[s] = verr;
+            //find s with minimal error
+            smin = 0;
+            errmin = maxerror[0];
+            for (s=1; s<SMOOTH_N; s++) {
+                if (maxerror[s] < errmin) {
+                    errmin = maxerror[s];
+                    smin = s;
+                }
             }
+            
+            //go-go-go
         }
-        
-        //find s0=s with minimal error
-        smin   = 0;
-        errmin = error[0];
-        for (s=1; s<smn; s++) {
-            if (error[s] < errmin) {
-                errmin = error[s];
-                smin = s;
-            }
+    
+        if(smin & 1) { //smooth0
+            edata[smin][0] = maxv;
+            edata[smin][1] = minv;
         }
-        //go-go-go
+        else {
+            edata[smin][0] = minv;
+            edata[smin][1] = maxv;
+        }
+        if(smin & 2) //smooth1
+            edata[smin][2] = 1;
+        else
+            edata[smin][2] = 0;
     }
+
 
     //==========================================================================
     //bit-pack data[smin] into data[]
@@ -527,7 +667,6 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     }
 
     //MYLOG_DEBUG("encoded data has been packed into %d bytes", pos);
-
     *bytes = pos;
     return 0;
 }
