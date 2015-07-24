@@ -320,7 +320,6 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     int32_t   ampdv;
     int       smin;
     int16_t   errmin;
-    int       smooth1;
     uint32_t  div;
     int       s;
     int16_t   edata [SMOOTH_MAX] [DATA_SIZE_MAX];
