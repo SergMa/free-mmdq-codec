@@ -160,7 +160,6 @@ int mmdq_codec_init ( struct mmdq_codec_s * codec,
     uint8_t  dv;
     uint8_t  s;
     int32_t  a;
-    int32_t  b;
     double   sss;
     int32_t  ddd;
     int      databits;

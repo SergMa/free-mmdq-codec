@@ -159,7 +159,6 @@ int main( int argc, char **argv )
     int16_t      x[SAMPLES_PER_FRAME_MAX];
     //int16_t      y[SAMPLES_PER_FRAME_MAX];
     uint8_t      data[DATA_SIZE_MAX];
-    uint32_t     samples;
     int          wrsamples;
     int          bytes;
     uint32_t     processed;
