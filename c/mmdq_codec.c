@@ -67,7 +67,10 @@ int32_t div_round( int32_t a, int32_t b )
     return res;
 }
 
-#define PWR2  (1.35)
+#define PWR0  (1.235)
+#define PWR1  (1.183)
+#define PWR2  (1.235)
+#define PWR3  (1.253)
 
 //------------------------------------------------------------------------------
 //INPUTS:  x=[-1.0..+1.0]
@@ -77,29 +80,36 @@ double compand( double x, int law )
     switch(law)
     {
     case 0:
-        return x;
+        if (x>=0)
+            return  pow(  x, 1/PWR0 );
+        else
+            return -pow( -x, 1/PWR0 );
 
     case 1:
-        if (x>=0)
-            return  pow(  x, 1/1.25 );
+        if (x>=0 && x<=0.5)
+            return (     0.5 * pow( 2*(  x) , 1/PWR1 ));
+        else if (x>0.5)
+            return ( 1 - 0.5 * pow( 2*(1-x) , 1/PWR1 ));
+        else if (x>=-0.5)
+            return (   - 0.5 * pow( 2*( -x) , 1/PWR1 ));
         else
-            return -pow( -x, 1/1.25 );
+            return (-1 + 0.5 * pow( 2*(1+x) , 1/PWR1 ));
 
     case 2:
-        if (x>=0 && x<=0.5)
-            return (     0.5 * pow( 2*(  x) , 1/PWR2 ));
-        else if (x>0.5)
-            return ( 1 - 0.5 * pow( 2*(1-x) , 1/PWR2 ));
-        else if (x>=-0.5)
-            return (   - 0.5 * pow( 2*( -x) , 1/PWR2 ));
+        if (x>=0)
+            return  (1 - pow( 1-x , 1/PWR2 ) );
         else
-            return (-1 + 0.5 * pow( 2*(1+x) , 1/PWR2 ));
+            return -(1 - pow( 1+x , 1/PWR2 ) );
         
     case 3:
-        if (x>=0)
-            return  (1 - pow( 1-x , 1/1.2 ) );
+        if (x>=0 && x<=0.5)
+            return (     0.5 * pow( 2*(  x) , PWR3 ));
+        else if (x>0.5)
+            return ( 1 - 0.5 * pow( 2*(1-x) , PWR3 ));
+        else if (x>=-0.5)
+            return (   - 0.5 * pow( 2*( -x) , PWR3 ));
         else
-            return -(1 - pow( 1+x , 1/1.2 ) );
+            return (-1 + 0.5 * pow( 2*(1+x) , PWR3 ));
 
     default:
         MYLOG_ERROR("Unexpected value: law=%d", law);
@@ -115,29 +125,36 @@ double expand( double x, int law )
     switch(law)
     {
     case 0:
-        return x;
+        if (x>=0)
+            return  pow(  x, PWR0 );
+        else
+            return -pow( -x, PWR0 );
 
     case 1:
-        if (x>=0)
-            return  pow(  x, 1.25 );
+        if (x>=0 && x<=0.5)
+            return (     0.5 * pow( 2*(  x) , PWR1 ));
+        else if (x>0.5)
+            return ( 1 - 0.5 * pow( 2*(1-x) , PWR1 ));
+        else if (x>=-0.5)
+            return (   - 0.5 * pow( 2*( -x) , PWR1 ));
         else
-            return -pow( -x, 1.25 );
+            return (-1 + 0.5 * pow( 2*(1+x) , PWR1 ));
 
     case 2:
-        if (x>=0 && x<=0.5)
-            return (     0.5 * pow( 2*(  x) , PWR2 ));
-        else if (x>0.5)
-            return ( 1 - 0.5 * pow( 2*(1-x) , PWR2 ));
-        else if (x>=-0.5)
-            return (   - 0.5 * pow( 2*( -x) , PWR2 ));
-        else
-            return (-1 + 0.5 * pow( 2*(1+x) , PWR2 ));
-
-    case 3:
         if (x>=0)
-            return  (1 - pow( 1-x , 1.2 ) );
+            return  (1 - pow( 1-x , PWR2 ) );
         else
-            return -(1 - pow( 1+x , 1.2 ) );
+            return -(1 - pow( 1+x , PWR2 ) );
+        
+    case 3:
+        if (x>=0 && x<=0.5)
+            return (     0.5 * pow( 2*(  x) , 1/PWR3 ));
+        else if (x>0.5)
+            return ( 1 - 0.5 * pow( 2*(1-x) , 1/PWR3 ));
+        else if (x>=-0.5)
+            return (   - 0.5 * pow( 2*( -x) , 1/PWR3 ));
+        else
+            return (-1 + 0.5 * pow( 2*(1+x) , 1/PWR3 ));
 
     default:
         MYLOG_ERROR("Unexpected value: law=%d", law);
@@ -260,8 +277,8 @@ int mmdq_codec_init ( struct mmdq_codec_s * codec,
         }
         //fill
         for(dv=0; dv < codec->factor; dv++) {
-            sss = expand( (dv+0.5)/codec->factor - 0.5 , s );
-            codec->dectable[s][dv] = round( sss * FIXP );
+            sss = expand( 2.0*((dv+0.5)/codec->factor - 0.5) , s );
+            codec->dectable[s][dv] = round( 0.5 * sss * FIXP );
         }
     }
     

@@ -12,8 +12,8 @@ close all;
 disp('started!');
 
 RESULTS_FILENAME = 'out/results.txt';
-fid = fopen(RESULTS_FILENAME,'w');
-%fid = 1;
+%fid = fopen(RESULTS_FILENAME,'w');
+fid = 1;
 if fid==-1
     fid = 1;
     fprintf(fid,'Error: could not create results file: %s\n', RESULTS_FILENAME);
@@ -33,14 +33,14 @@ SPECTROGRAM_OVR   = 8;
 ORIGINAL_FILENAME = 'female/female.wav';  
 
 % Name of file for signal which has been encoded/decoded by codec 1
-%CODEC1_FILENAME     = 'female/g726-32_female.wav';   
-CODEC1_FILENAME    = 'female/g726-40_female.wav';   
+CODEC1_FILENAME     = 'female/g726-32_female.wav';   
+%CODEC1_FILENAME    = 'female/g726-40_female.wav';   
 
 % Name of file for signal which has been encoded/decoded by codec 2
 %CODEC2_FILENAME    = 'female/mmdq-32-1_female.wav';   
 %CODEC2_FILENAME    = 'female/mmdq-32-2_female.wav';   
 %CODEC2_FILENAME    = 'female/mmdq-32-3_female.wav';   
-%CODEC2_FILENAME    = 'female/mmdq-32-4_female.wav';   
+CODEC2_FILENAME     = 'female/mmdq-32-4_female.wav';   
 
 %CODEC2_FILENAME    = 'female/mmdq-40-1_female.wav';   
 %CODEC2_FILENAME    = 'female/mmdq-40-2_female.wav';   
@@ -50,7 +50,7 @@ CODEC1_FILENAME    = 'female/g726-40_female.wav';
 %CODEC2_FILENAME    = 'female/mmdq-40x-1_female.wav';   
 %CODEC2_FILENAME    = 'female/mmdq-40x-2_female.wav';   
 %CODEC2_FILENAME    = 'female/mmdq-40x-3_female.wav';   
-CODEC2_FILENAME    = 'female/mmdq-40x-4_female.wav';   
+%CODEC2_FILENAME    = 'female/mmdq-40x-4_female.wav';   
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load input (voice,noise) signals from wave-files, generate signal to process
@@ -149,8 +149,8 @@ fprintf(fid,'  length,sec      : %8.3f\n', N1/ffs1);
 fprintf(fid,'  test samples    : %8d\n', N);
 fprintf(fid,'  max error       : %10d\n', maxerr1);
 fprintf(fid,'  mse             : %10d\n', mse1);
-fprintf(fid,'  max error (norm): %10.6f\n', nmaxerr1);
-fprintf(fid,'  mse       (norm): %10.6f\n', nmse1);
+fprintf(fid,'  max error (norm): %10.8f\n', nmaxerr1);
+fprintf(fid,'  mse       (norm): %10.8f\n', nmse1);
 fprintf(fid,'-----------------------\n');
 if length(CODEC2_FILENAME)>0
 fprintf(fid,'codec-2 file      : %s\n', CODEC2_FILENAME);
@@ -161,8 +161,8 @@ fprintf(fid,'  length,sec      : %8.3f\n', N2/ffs2);
 fprintf(fid,'  test samples    : %8d\n', N);
 fprintf(fid,'  max error       : %10d\n', maxerr2);
 fprintf(fid,'  mse             : %10d\n', mse2);
-fprintf(fid,'  max error (norm): %10.6f\n', nmaxerr2);
-fprintf(fid,'  mse       (norm): %10.6f\n', nmse2);
+fprintf(fid,'  max error (norm): %10.8f\n', nmaxerr2);
+fprintf(fid,'  mse       (norm): %10.8f\n', nmse2);
 fprintf(fid,'-----------------------\n');
 end
 
