@@ -5,24 +5,10 @@ function y = expand( x , ver )
 
     switch ver
     case 0
-        % VER0: linear table
-        y = x;
+        y = sign(x) .* abs(x) .^ (1.28);
 
     case 1
-        % VER1: power 1.2 table
-        %y = sign(x) .* abs(x) .^ (1.2);
-
-        % VER1: power 1.5 table
-        y = sign(x) .* abs(x) .^ (1.25);
-
-    case 2
-        % VER2: power 0.85 table
-        %y = sign(x) .* (1 - (1 - abs(x)) .^ (0.85));
-
-        % VER2: power 1.4 table
-        %y = sign(x) .* abs(x) .^ (1.4);
-
-        PWR = 1.35;
+        PWR = 1.182;
         N = length(x);
         y = zeros(1,N);
         for i=1:N
@@ -37,11 +23,24 @@ function y = expand( x , ver )
             end
         end
 
-    case 3
-        % VER2: power 1.8 table
-        %y = sign(x) .* abs(x) .^ (1.8);
+    case 2
+        y = sign(x) .* (1 - (1 - abs(x)) .^ (1.215));
 
-        % VER3: power 1.5 table
-        y = sign(x) .* (1 - (1 - abs(x)) .^ (1.2));
+    case 3
+        PWR = 1/1.26;
+        N = length(x);
+        y = zeros(1,N);
+        for i=1:N
+            if x(i)>=0 && x(i)<=0.5
+                y(i) = 0.5*(2*x(i))^(PWR);
+            elseif x(i)>0.5
+                y(i) = 1-0.5*(2*(1-x(i)))^(PWR);
+            elseif x(i)>=-0.5
+                y(i) = -0.5*(2*(-x(i)))^(PWR);
+            else
+                y(i) = -1+0.5*(2*(1+x(i)))^(PWR);
+            end
+        end
+
     end
 return
