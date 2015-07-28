@@ -36,25 +36,25 @@ function [dec] = decoder2_init( samples_per_frame, bits_per_sample, maxx, FIXP )
     % returns=[-FIXP..+FIXP]
     dec.table0 = zeros(1,dec.factor);
     for dv=0:(dec.factor-1)
-        sss = expand( (dv+0.5)/dec.factor - 0.5 , 0 );
+        sss = expand( 2*((dv+0.5)/dec.factor - 0.5) , 0 );
         dec.table0(dv+1) = round(sss * FIXP);
     end
 
     dec.table1 = zeros(1,dec.factor);
     for dv=0:(dec.factor-1)
-        sss = expand( (dv+0.5)/dec.factor - 0.5 , 1 );
+        sss = expand( 2*((dv+0.5)/dec.factor - 0.5) , 1 );
         dec.table1(dv+1) = round(sss * FIXP);
     end
 
     dec.table2 = zeros(1,dec.factor);
     for dv=0:(dec.factor-1)
-        sss = expand( (dv+0.5)/dec.factor - 0.5 , 2 );
+        sss = expand( 2*((dv+0.5)/dec.factor - 0.5) , 2 );
         dec.table2(dv+1) = round(sss * FIXP);
     end
 
     dec.table3 = zeros(1,dec.factor);
     for dv=0:(dec.factor-1)
-        sss = expand( (dv+0.5)/dec.factor - 0.5 , 3 );
+        sss = expand( 2*((dv+0.5)/dec.factor - 0.5) , 3 );
         dec.table3(dv+1) = round(sss * FIXP);
     end
 
