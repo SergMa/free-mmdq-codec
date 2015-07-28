@@ -12,8 +12,8 @@ close all;
 disp('started!');
 
 RESULTS_FILENAME = 'out/results.txt';
-fid = fopen(RESULTS_FILENAME,'w');
-%fid = 1;
+%fid = fopen(RESULTS_FILENAME,'w');
+fid = 1;
 if fid==-1
     fid = 1;
     fprintf(fid,'Error: could not create results file: %s\n', RESULTS_FILENAME);
@@ -35,7 +35,7 @@ MAXX = 2^(BITS-1);    % Maximum amplitude of original input signal (for BITS=16:
 
 USE_AUTOSCALE = 1;    % 0 - disable autoscale of input signals, 1 - enable
 
-CODEC_VERSION = 1;    % 0-no encode/decode operations
+CODEC_VERSION = 2;    % 0-no encode/decode operations
                       % 1-matlab float point
                       % 2-c-adapted, code tables, div tables
 
@@ -141,13 +141,13 @@ fprintf(fid,'-----------------------\n');
 %voice_filename  = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = -3;  %female
 %voice_filename  = '../samples/cmu/sample4_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/cmu/sample5_8000.wav';         VOICE_AMP_DB = -3;
-%voice_filename  = '../samples/cmu/sample6_8000.wav';         VOICE_AMP_DB = -3;  %male
+voice_filename  = '../samples/cmu/sample6_8000.wav';          VOICE_AMP_DB = -3;  %male
 %voice_filename  = '../samples/cmu/sample7_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/ask2.wav';       VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/fsk2.wav';       VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/psk4.wav';       VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/psk8.wav';       VOICE_AMP_DB = -3;  
-voice_filename   = '../samples/modems_matlab/qask16.wav';     VOICE_AMP_DB = -3;  %modem
+%voice_filename   = '../samples/modems_matlab/qask16.wav';     VOICE_AMP_DB = -3;  %modem
 %voice_filename  = '../samples/modems_matlab/qask32.wav';     VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/qask64.wav';     VOICE_AMP_DB = -3;
 
