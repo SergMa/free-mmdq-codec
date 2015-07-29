@@ -668,11 +668,12 @@ int  mmdq_decode_nounpack ( struct mmdq_codec_s * codec,
     int32_t    voicemin;
     int32_t    voicemax;
     int32_t    voicediff;
-    int32_t    voicemin_n;
+    //int32_t    voicemin_n;
     int32_t    voicediff_n;
     int32_t    div;
-    int32_t    voice_n;
+    //int32_t    voice_n;
     int32_t    voice2[SAMPLES_PER_FRAME_MAX];
+    int64_t    diffv_xh;
 
     minv = edata[0];
     maxv = edata[1];
@@ -705,23 +706,26 @@ int  mmdq_decode_nounpack ( struct mmdq_codec_s * codec,
     //}
     voicediff = voicemax - voicemin;
 
-    voicemin_n  = (voicemin  * codec->h) / FIXP;
+    //voicemin_n  = (voicemin  * codec->h) / FIXP;
     voicediff_n = (voicediff * codec->h) / FIXP;
+    diffv_xh    = ((int64_t)diffv * codec->h) / FIXP;
 
     div = codec->divtable[ voicediff_n ];  //div=[0..2*FIXP]
 
     if (voicediff_n < 2*MAXX/256 ) {
         //K=1
         for (i=0; i<codec->samples_per_frame; i++) {
-            voice_n = ((int64_t)voice2[i] * codec->h) / FIXP;
-            voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / FIXP;
+            //voice_n = ((int64_t)voice2[i] * codec->h) / FIXP;
+            //voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / FIXP;
+            voice[i] = minv + diffv_xh * (voice2[i] - voicemin) * div / FIXP;
         }
     }
     else {
         //K=256
         for (i=0; i<codec->samples_per_frame; i++) {
-            voice_n = ((int64_t)voice2[i] * codec->h) / FIXP;
-            voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / (FIXP * 256);
+            //voice_n = ((int64_t)voice2[i] * codec->h) / FIXP;
+            //voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / (FIXP * 256);
+            voice[i] = minv + diffv_xh * (voice2[i] - voicemin) * div / (FIXP * 256);
         }
     }
     return 0;
