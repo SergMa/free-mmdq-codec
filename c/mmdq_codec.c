@@ -336,7 +336,7 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     int32_t   ampdv;
     int       smin;
     int16_t   errmin;
-    uint32_t  div;
+    int32_t   div;
     int       s;
     int16_t   edata [SMOOTH_MAX] [DATA_SIZE_MAX];
     int32_t   sss;
@@ -471,7 +471,7 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
                 for(i=0; i<codec->samples_per_frame-1; i++) {
                     // dvoice(i)=[-2*maxx..+2*maxx]
                     // div=[0..FIXP]
-                    sss = (dv[i] * (int)div) >> 8;  // sss=[-FIXP..+FIXP]
+                    sss = (dv[i] * div) >> 8;  // sss=[-FIXP..+FIXP]
                     edata[smin][3+i] = codec->enctable[smin][sss + FIXP];
                 }
             }
