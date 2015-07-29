@@ -19,7 +19,8 @@
 
 int32_t  mmdq_decode_nounpack ( struct mmdq_codec_s * dec,
                                 int16_t * voice,
-                                int16_t * data, int bytes );
+                                int16_t * data, int bytes,
+                                int32_t errmin );
 
 
 /******************************************************************************/
@@ -662,7 +663,7 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
                 }
                 
                 //decode for selected smooth, returns error
-                error = mmdq_decode_nounpack( codec, voice, edata[s], codec->databytesnopack );
+                error = mmdq_decode_nounpack( codec, voice, edata[s], codec->databytesnopack, errmin );
                 if (error < errmin) {
                     errmin = error;
                     smin = s;
@@ -713,10 +714,14 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
 
 //------------------------------------------------------------------------------
 //mmdq_decode version without bit-unpacking (for use in mmdq_encoder)
+//inputs:  voice[] - true voice samples
+//         edata[], bytes - encoded voice
+//         errmin - current min error
 //returns: error estimation
 int32_t  mmdq_decode_nounpack ( struct mmdq_codec_s * codec,
                                 int16_t * voice,
-                                int16_t * edata, int bytes )
+                                int16_t * edata, int bytes,
+                                int32_t errmin )
 {
     int        s;
     int32_t    minv;
@@ -777,8 +782,13 @@ int32_t  mmdq_decode_nounpack ( struct mmdq_codec_s * codec,
             //voice_n = ((int64_t)voice2[i] * codec->h) / FIXP;
             //voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / FIXP;
             error = abs( voice[i] - (minv + (int32_t)(diffv_xh * (voice2[i] - voicemin) * div / FIXP)) );
-            if(error>maxerror)
+            if(error>maxerror) {
                 maxerror = error;
+#if defined(SKIP_BAD_SMOOTH)
+                if(maxerror > errmin)
+                    break; //stop error estimation!
+#endif
+            }
         }
     }
     else {
@@ -788,8 +798,13 @@ int32_t  mmdq_decode_nounpack ( struct mmdq_codec_s * codec,
             //voice_n = ((int64_t)voice2[i] * codec->h) / FIXP;
             //voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / (FIXP * 256);
             error = abs( voice[i] - (minv + (int32_t)(diffv_xh * (voice2[i] - voicemin) * div / (FIXP * 256))) );
-            if(error>maxerror)
+            if(error>maxerror) {
                 maxerror = error;
+#if defined(SKIP_BAD_SMOOTH)
+                if(maxerror > errmin)
+                    break; //stop error estimation!
+#endif
+            }
         }
     }
     return maxerror;
@@ -803,6 +818,10 @@ int32_t  mmdq_decode_nounpack ( struct mmdq_codec_s * codec,
             //voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / FIXP;
             error = abs( voice[i] - (minv + (int32_t)(diffv_xh * (voice2[i] - voicemin) * div / FIXP)) );
             maxerror += error;
+#if defined(SKIP_BAD_SMOOTH)
+            if(maxerror > errmin)
+                break; //stop error estimation!
+#endif
         }
     }
     else {
@@ -813,6 +832,10 @@ int32_t  mmdq_decode_nounpack ( struct mmdq_codec_s * codec,
             //voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / (FIXP * 256);
             error = abs( voice[i] - (minv + (int32_t)(diffv_xh * (voice2[i] - voicemin) * div / (FIXP * 256))) );
             maxerror += error;
+#if defined(SKIP_BAD_SMOOTH)
+            if(maxerror > errmin)
+                break; //stop error estimation!
+#endif
         }
     }
     return maxerror;
