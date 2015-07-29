@@ -19,9 +19,9 @@ e2 = expand(x,2);
 e3 = expand(x,3);
 
 z0 = expand(compand(x,0),0);
-z1 = expand(compand(x,0),0);
-z2 = expand(compand(x,0),0);
-z3 = expand(compand(x,0),0);
+z1 = expand(compand(x,1),1);
+z2 = expand(compand(x,2),2);
+z3 = expand(compand(x,3),3);
 
 figure(1);
 plot(x,c0,'r.-', x,c1,'g.-', x,c2,'b.-', x,c3,'k.-');
