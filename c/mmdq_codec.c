@@ -67,6 +67,7 @@ int32_t div_round( int32_t a, int32_t b )
     return res;
 }
 
+/*
 #define PWR0  (1.235)
 #define PWR1  (1.183)
 #define PWR2  (1.235)
@@ -155,6 +156,94 @@ double expand( double x, int law )
             return (   - 0.5 * pow( 2*( -x) , 1/PWR3 ));
         else
             return (-1 + 0.5 * pow( 2*(1+x) , 1/PWR3 ));
+
+    default:
+        MYLOG_ERROR("Unexpected value: law=%d", law);
+        return 0;
+    }
+}
+*/
+
+#define PWR0  (1.000)
+#define PWR1  (1.250)
+#define PWR2  (1.350)
+#define PWR3  (1.200)
+
+//------------------------------------------------------------------------------
+//INPUTS:  x=[-1.0..+1.0]
+//OUTPUTS: y=[-1.0..+1.0]
+double compand( double x, int law )
+{
+    switch(law)
+    {
+    case 0:
+        if (x>=0)
+            return  pow(  x, PWR0 );
+        else
+            return -pow( -x, PWR0 );
+
+    case 1:
+        if (x>=0)
+            return  pow(  x, 1/PWR1 );
+        else
+            return -pow( -x, 1/PWR1 );
+
+    case 2:
+        if (x>=0 && x<=0.5)
+            return (     0.5 * pow( 2*(  x) , 1/PWR2 ));
+        else if (x>0.5)
+            return ( 1 - 0.5 * pow( 2*(1-x) , 1/PWR2 ));
+        else if (x>=-0.5)
+            return (   - 0.5 * pow( 2*( -x) , 1/PWR2 ));
+        else
+            return (-1 + 0.5 * pow( 2*(1+x) , 1/PWR2 ));
+
+    case 3:
+        if (x>=0)
+            return  (1 - pow( 1-x , 1/PWR3 ) );
+        else
+            return -(1 - pow( 1+x , 1/PWR3 ) );
+
+    default:
+        MYLOG_ERROR("Unexpected value: law=%d", law);
+        return 0;
+    }
+}
+
+//------------------------------------------------------------------------------
+//INPUTS:  x=[-1.0..+1.0]
+//OUTPUTS: y=[-1.0..+1.0]
+double expand( double x, int law )
+{
+    switch(law)
+    {
+    case 0:
+        if (x>=0)
+            return  pow(  x, 1/PWR0 );
+        else
+            return -pow( -x, 1/PWR0 );
+
+    case 1:
+        if (x>=0)
+            return  pow(  x, PWR1 );
+        else
+            return -pow( -x, PWR1 );
+
+    case 2:
+        if (x>=0 && x<=0.5)
+            return (     0.5 * pow( 2*(  x) , PWR2 ));
+        else if (x>0.5)
+            return ( 1 - 0.5 * pow( 2*(1-x) , PWR2 ));
+        else if (x>=-0.5)
+            return (   - 0.5 * pow( 2*( -x) , PWR2 ));
+        else
+            return (-1 + 0.5 * pow( 2*(1+x) , PWR2 ));
+
+    case 3:
+        if (x>=0)
+            return  (1 - pow( 1-x , PWR3 ) );
+        else
+            return -(1 - pow( 1+x , PWR3 ) );
 
     default:
         MYLOG_ERROR("Unexpected value: law=%d", law);
