@@ -134,7 +134,7 @@ function [data,enc] = encoder(voice,enc,dec)
         [voice2,dec] = decoder(data2,dec);
         [voice3,dec] = decoder(data3,dec);
 
-        v = 1;
+        v = 0;
         switch v
         case 0
             err0 = max( abs(voice0-voice) ); 
