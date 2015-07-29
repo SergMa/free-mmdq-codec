@@ -559,7 +559,7 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
                 if(ampdv < 2*MAXX/256) {
                     //K = 1
                     for(i=0; i<codec->samples_per_frame-1; i++) {
-                        // dvoice(i)=[-2*maxx..+2*maxx]
+                        // dv(i)=[-2*maxx..+2*maxx]
                         // div=[0..FIXP]
                         sss = dv[i] * div;  // sss=[-FIXP..+FIXP]
                         edata[s][3+i] = codec->enctable[s][sss + FIXP];
@@ -568,7 +568,7 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
                 else {
                     //K = 256
                     for(i=0; i<codec->samples_per_frame-1; i++) {
-                        // dvoice(i)=[-2*maxx..+2*maxx]
+                        // dv(i)=[-2*maxx..+2*maxx]
                         // div=[0..FIXP]
                         sss = (dv[i] * (int)div) >> 8;  // sss=[-FIXP..+FIXP]
                         edata[s][3+i] = codec->enctable[s][sss + FIXP];
