@@ -594,7 +594,7 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
 #else
                 //ver.1: calculate error[s]=sum(abs(voice[i]-voice[s][i]))
                 error[s] = 0;
-                for (i=1; i<codec->samples_per_frame; i++) {
+                for (i=0; i<codec->samples_per_frame; i++) {
                     verr = abs(voice[i] - voice2[s][i]);
                     error[s] += verr;
                 }
