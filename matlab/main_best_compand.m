@@ -146,7 +146,7 @@ fprintf(fid,'-----------------------\n');
 %voice_filename  = '../samples/modems_matlab/ask2.wav';       VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/fsk2.wav';       VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/psk4.wav';       VOICE_AMP_DB = -3;
-%voice_filename  = '../samples/modems_matlab/psk8.wav';       VOICE_AMP_DB = -3;  
+%voice_filename  = '../samples/modems_matlab/psk8.wav';       VOICE_AMP_DB = -3;
 %voice_filename   = '../samples/modems_matlab/qask16.wav';     VOICE_AMP_DB = -3;  %modem
 %voice_filename  = '../samples/modems_matlab/qask32.wav';     VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/qask64.wav';     VOICE_AMP_DB = -3;
@@ -208,7 +208,7 @@ wavwrite( (x/MAXX).', FS, bits_voice, INPUT_FILENAME );
 % BIG ITERATION LOOP INITIALIZATION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-BIG_ITERATIONS = 100;
+ITERATIONS = 100;
 
 MIN_COM_PWR0 = 0.1;
 MIN_COM_PWR1 = 0.1;
@@ -263,44 +263,44 @@ while bigiter <= BIG_ITERATIONS
     COM_PWR1 = my_rand( MIN_COM_PWR1, MAX_COM_PWR1 );
     COM_PWR2 = my_rand( MIN_COM_PWR2, MAX_COM_PWR2 );
     COM_PWR3 = my_rand( MIN_COM_PWR3, MAX_COM_PWR3 );
-    
+
     EXP_PWR0 = my_rand( MIN_EXP_PWR0, MAX_EXP_PWR0 );
     EXP_PWR1 = my_rand( MIN_EXP_PWR1, MAX_EXP_PWR1 );
     EXP_PWR2 = my_rand( MIN_EXP_PWR2, MAX_EXP_PWR2 );
     EXP_PWR3 = my_rand( MIN_EXP_PWR3, MAX_EXP_PWR3 );
-    
+
     mse_nerry = 0;
-    
+
     BEST_COM_PWR0 = COM_PWR0;
     BEST_COM_PWR1 = COM_PWR1;
     BEST_COM_PWR2 = COM_PWR2;
     BEST_COM_PWR3 = COM_PWR3;
-    
+
     BEST_EXP_PWR0 = EXP_PWR0;
     BEST_EXP_PWR1 = EXP_PWR1;
     BEST_EXP_PWR2 = EXP_PWR2;
     BEST_EXP_PWR3 = EXP_PWR3;
-    
+
     best_max_nerry = 0;
     best_mse_nerry = 0;
-    
+
     ITERATIONS = 300;
-    
+
     step_cntr     = 0;
     STEP_CNTR_MAX = 10;   %if no changes on STEP_CNTR_MAX - decrease STEPSIZE
     STEPSIZE      = 3;    %set initial (biggest) value of stepsize here
     STEPSIZE_DEC  = 0.5;  %stepsize decrement coefficient: 0..1
 
     iter = 1;
-    
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % SMALL ITERATION LOOP (BEGIN)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     while iter <= ITERATIONS
-    
+
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Initialization
-            
+
             % Create decoder and encoder structures
             switch CODEC_VERSION
             case 0
@@ -313,25 +313,25 @@ while bigiter <= BIG_ITERATIONS
                 enc = encoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX, FIXP );
                 dec = decoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX, FIXP );
             end
-            
+
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Main processing loop
-            
+
             % now we have x,t
-            
+
             frame_pos = 1;
             frame_vinp = zeros(1,SAMPLES_PER_FRAME);
             frame_vout = zeros(1,SAMPLES_PER_FRAME);
-            
+
             y = zeros(1,N); %output voice
-            
+
             i = 1;
             while i<=N-SAMPLES_PER_FRAME+1
-            
+
                 % scale input, get enc_voice[] buffer
                 enc_voice = x(i:i+SAMPLES_PER_FRAME-1);
                 enc_voice = my_clip( enc_voice, MAXX );
-            
+
                 % encode frame
                 switch CODEC_VERSION
                 case 0
@@ -341,7 +341,7 @@ while bigiter <= BIG_ITERATIONS
                 case 2
                     [enc_data,enc] = encoder2(enc_voice,enc,dec,FIXP);
                 end
-                
+
                 % decode data frame to voice
                 switch CODEC_VERSION
                 case 0
@@ -351,45 +351,45 @@ while bigiter <= BIG_ITERATIONS
                 case 2
                     [dec_voice,dec] = decoder2(enc_data,dec,FIXP);
                 end
-            
+
                 %scale back, output voice
                 y(i:i+SAMPLES_PER_FRAME-1) = fix( dec_voice );
-            
+
                 i = i + SAMPLES_PER_FRAME;
             end
-            
+
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Make error estimates
-            
+
             % Calculate and print errors values
             nerry = (x - y)/MAXX;
             max_nerry = max( abs(nerry) );
             mse_nerry = mean(nerry.^2);
-            
+
             fprintf(fid,'\n');
             fprintf(fid,'iter=%d\n', iter);
             fprintf(fid,'x,y normalized errors:\n');
             fprintf(fid,'  max nerrory=%12.8f\n',max_nerry);
             fprintf(fid,'  mse nerrory=%12.8f\n',mse_nerry);
-    
-    
+
+
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+
         if (iter > 1) && (mse_nerry < best_mse_nerry) && isfinite(mse_nerry)
             %previous step had better params
             best_mse_nerry = mse_nerry;
             best_max_nerry = max_nerry;
-    
+
             BEST_COM_PWR0 = COM_PWR0;
             BEST_COM_PWR1 = COM_PWR1;
             BEST_COM_PWR2 = COM_PWR2;
             BEST_COM_PWR3 = COM_PWR3;
-    
+
             BEST_EXP_PWR0 = EXP_PWR0;
             BEST_EXP_PWR1 = EXP_PWR1;
             BEST_EXP_PWR2 = EXP_PWR2;
             BEST_EXP_PWR3 = EXP_PWR3;
-    
+
             step_cntr = 0;
             fprintf(fid,'refresh best_mse_nerry=%12.8f\n',best_mse_nerry);
         else
@@ -406,20 +406,20 @@ while bigiter <= BIG_ITERATIONS
                 end
             end
         end
-    
+
         %make little changes of params
         COM_PWR0 = abs( BEST_COM_PWR0 + STEPSIZE*randn(1) );
         COM_PWR1 = abs( BEST_COM_PWR1 + STEPSIZE*randn(1) );
         COM_PWR2 = abs( BEST_COM_PWR2 + STEPSIZE*randn(1) );
         COM_PWR3 = abs( BEST_COM_PWR3 + STEPSIZE*randn(1) );
-    
+
         EXP_PWR0 = COM_PWR0; %abs( BEST_EXP_PWR0 + STEPSIZE*randn(1) );
         EXP_PWR1 = COM_PWR1; %abs( BEST_EXP_PWR1 + STEPSIZE*randn(1) );
         EXP_PWR2 = COM_PWR2; %abs( BEST_EXP_PWR2 + STEPSIZE*randn(1) );
         EXP_PWR3 = COM_PWR3; %abs( BEST_EXP_PWR3 + STEPSIZE*randn(1) );
-    
+
         iter = iter + 1;
-    
+
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % SMALL ITERATION LOOP (END)

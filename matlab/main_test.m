@@ -22,11 +22,24 @@ end
 fprintf(fid,'MMDQ-codec test started...\n');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% List of global variables
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+global MAXX;
+global FACTOR;
+global SAMPLES_PER_FRAME;
+global BITS_PER_SAMPLE;
+global SMOOTH_N;
+global SMOOTH_ERROR_VER;
+global COMPAND_TABLE;
+global EXPAND_TABLE;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Test settings
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
-%SAMPLES = 1000:5000;
+SAMPLES = 1000:1100;
 
 FS = 8000;            % Sample (discretization) frequency, Hz
 TS = 1/FS;            % Sample (discretization) period, sec
@@ -39,7 +52,7 @@ CODEC_VERSION = 1;    % 0-no encode/decode operations
                       % 1-matlab float point
                       % 2-c-adapted, code tables, div tables
 
-SHOW_GRAPHICS = 1;    % 0 - disable plotting of graphics, 1 - enable it
+SHOW_GRAPHICS = 0;    % 0 - disable plotting of graphics, 1 - enable it
 
 SPECTROGRAM_WIDTH = 256; % Parameters of spectrograms
 SPECTROGRAM_OVR   = 8;
@@ -104,6 +117,8 @@ BITS_PER_SAMPLE   = 3;
 %SAMPLES_PER_FRAME = 30; %20000 bit/s
 %BITS_PER_SAMPLE   = 2;
 
+SMOOTH_N = 4;
+SMOOTH_ERROR_VER = 0;
 
 FACTOR = 2^BITS_PER_SAMPLE;
 FIXP = 32768*2;
@@ -131,6 +146,16 @@ fprintf(fid,'compression      : %f\n', COMPRESSION);
 fprintf(fid,'bitrate, bit/s   : %d\n', BITRATE);
 fprintf(fid,'-----------------------\n');
 
+    COMPAND_TABLE = [ -0.8 -0.5 -0.2 0.0 +0.2 +0.5 +0.8 ;
+                      -0.8 -0.5 -0.2 0.0 +0.2 +0.5 +0.8 ;
+                      -0.8 -0.5 -0.2 0.0 +0.2 +0.5 +0.8 ;
+                      -0.8 -0.5 -0.2 0.0 +0.2 +0.5 +0.8 ];
+
+    EXPAND_TABLE  = [ -0.9 -0.6 -0.3 -0.1 +0.1 +0.3 +0.6 +0.9 ;
+                      -0.9 -0.6 -0.3 -0.1 +0.1 +0.3 +0.6 +0.9 ;
+                      -0.9 -0.6 -0.3 -0.1 +0.1 +0.3 +0.6 +0.9 ;
+                      -0.9 -0.6 -0.3 -0.1 +0.1 +0.3 +0.6 +0.9 ];
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load input (voice,noise) signals from wave-files, generate signal to process
@@ -146,7 +171,7 @@ voice_filename  = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = -3; 
 %voice_filename  = '../samples/modems_matlab/ask2.wav';       VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/fsk2.wav';       VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/psk4.wav';       VOICE_AMP_DB = -3;
-%voice_filename  = '../samples/modems_matlab/psk8.wav';       VOICE_AMP_DB = -3;  
+%voice_filename  = '../samples/modems_matlab/psk8.wav';       VOICE_AMP_DB = -3;
 %voice_filename   = '../samples/modems_matlab/qask16.wav';     VOICE_AMP_DB = -3;  %modem
 %voice_filename  = '../samples/modems_matlab/qask32.wav';     VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/qask64.wav';     VOICE_AMP_DB = -3;
@@ -213,8 +238,17 @@ case 0
     enc = [];
     dec = [];
 case 1
-    enc = encoder_init ( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
-    dec = decoder_init ( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
+    enc = [];
+    dec = [];
+
+    COMPAND_TABLE = [ -0.8 -0.5 -0.2 0.0 +0.2 +0.5 +0.8 ;
+                      -0.8 -0.5 -0.2 0.0 +0.2 +0.5 +0.8 ;
+                      -0.8 -0.5 -0.2 0.0 +0.2 +0.5 +0.8 ;
+                      -0.8 -0.5 -0.2 0.0 +0.2 +0.5 +0.8 ];
+    EXPAND_TABLE  = [ -0.9 -0.6 -0.3 -0.1 +0.1 +0.3 +0.6 +0.9 ;
+                      -0.9 -0.6 -0.3 -0.1 +0.1 +0.3 +0.6 +0.9 ;
+                      -0.9 -0.6 -0.3 -0.1 +0.1 +0.3 +0.6 +0.9 ;
+                      -0.9 -0.6 -0.3 -0.1 +0.1 +0.3 +0.6 +0.9 ];
 case 2
     enc = encoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX, FIXP );
     dec = decoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX, FIXP );
@@ -251,7 +285,7 @@ while i<=N-SAMPLES_PER_FRAME+1
     case 0
         enc_data = [ 0, 0, 0, enc_voice ];
     case 1
-        [enc_data,enc] = encoder(enc_voice,enc,dec);
+        [enc_data] = encoder(enc_voice);
     case 2
         [enc_data,enc] = encoder2(enc_voice,enc,dec,FIXP);
     end
@@ -273,13 +307,13 @@ while i<=N-SAMPLES_PER_FRAME+1
     else
         smooth3_N = smooth3_N + 1;
     end
-    
+
     % decode data frame to voice
     switch CODEC_VERSION
     case 0
         dec_voice = enc_data(4:end);
     case 1
-        [dec_voice,dec] = decoder(enc_data,dec);
+        [dec_voice] = decoder(enc_data);
     case 2
         [dec_voice,dec] = decoder2(enc_data,dec,FIXP);
     end
