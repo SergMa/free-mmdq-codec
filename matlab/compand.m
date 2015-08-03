@@ -1,17 +1,17 @@
 %Compand dvoice, outputs code
 %INPUTS:  x = [-1..+1]
-%         smooth = 0..(SMOOTH_N-1)
+%         smooth = 1..SMOOTH_N
 %OUTPUTS: code = [0..(FACTOR-1)]
 function code = compand( dx , smooth )
 
     global FACTOR;
     global SMOOTH_N;
-    global COMPAND_TABLE; %contains FACTOR-1 elements
+    global COMPAND_TABLE; %contains SMOOTH_N*(FACTOR-1) elements
 
     %FACTOR = 8;
     %SMOOTH_N = 4;
     
-    %example (for FACTOR==8):
+    %example (for FACTOR==8, SMOOTH_N==1):
     %COMPAND_TABLE=[  -0.8 -0.6 -0.4 0.0 +0.4 +0.6 +0.8   ]
     %codes:          0    1    2    3   4    5    6    7
    
@@ -20,7 +20,7 @@ function code = compand( dx , smooth )
     %dx = min(dx, 1);
     %dx = max(dx,-1);
 
-    if smooth<0 || smooth>SMOOTH_N
+    if smooth<1 || smooth>SMOOTH_N
         error('invalid smooth');
     end
 

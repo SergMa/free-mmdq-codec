@@ -22,11 +22,24 @@ end
 fprintf(fid,'MMDQ-codec test started...\n');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% List of global variables
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+global MAXX;
+global FACTOR;
+global SAMPLES_PER_FRAME;
+global BITS_PER_SAMPLE;
+global SMOOTH_N;
+global SMOOTH_ERROR_VER;
+global COMPAND_TABLE;
+global EXPAND_TABLE;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Test settings
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
-SAMPLES = 1:5000;
+SAMPLES = 5000:10000;
 
 FS = 8000;            % Sample (discretization) frequency, Hz
 TS = 1/FS;            % Sample (discretization) period, sec
@@ -105,6 +118,9 @@ BITS_PER_SAMPLE   = 3;
 %BITS_PER_SAMPLE   = 2;
 
 
+SMOOTH_N = 4;
+SMOOTH_ERROR_VER = 0;
+
 FACTOR = 2^BITS_PER_SAMPLE;
 FIXP = 32768*2;
 
@@ -138,19 +154,19 @@ fprintf(fid,'-----------------------\n');
 
 %voice_filename  = '../samples/cmu/sample1_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/cmu/sample2_8000.wav';         VOICE_AMP_DB = -3;
-%voice_filename  = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = -3;  %female
+voice_filename   = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = -3;  %female
 %voice_filename  = '../samples/cmu/sample4_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/cmu/sample5_8000.wav';         VOICE_AMP_DB = -3;
-%voice_filename  = '../samples/cmu/sample6_8000.wav';          VOICE_AMP_DB = -3;  %male
+%voice_filename  = '../samples/cmu/sample6_8000.wav';         VOICE_AMP_DB = -3;  %male
 %voice_filename  = '../samples/cmu/sample7_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/ask2.wav';       VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/fsk2.wav';       VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/psk4.wav';       VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/psk8.wav';       VOICE_AMP_DB = -3;
-%voice_filename   = '../samples/modems_matlab/qask16.wav';     VOICE_AMP_DB = -3;  %modem
+%voice_filename  = '../samples/modems_matlab/qask16.wav';     VOICE_AMP_DB = -3;  %modem
 %voice_filename  = '../samples/modems_matlab/qask32.wav';     VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/qask64.wav';     VOICE_AMP_DB = -3;
-voice_filename  = '../samples/various.wav';                   VOICE_AMP_DB = -3;  %male+female+modem
+%voice_filename   = '../samples/various.wav';                  VOICE_AMP_DB = -3;  %male+female+modem
 
 %noise_filename  = '../samples/noise/noise_white.wav';        NOISE_AMP_DB = -99;
 %noise_filename  = '../samples/noise/noise_pink.wav';         NOISE_AMP_DB = -99;
@@ -204,99 +220,53 @@ t = (1:N)/FS;
 % Save input signal into input wavefile
 wavwrite( (x/MAXX).', FS, bits_voice, INPUT_FILENAME );
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% BIG ITERATION LOOP INITIALIZATION
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-ITERATIONS = 100;
-
-MIN_COM_PWR0 = 0.1;
-MIN_COM_PWR1 = 0.1;
-MIN_COM_PWR2 = 0.1;
-MIN_COM_PWR3 = 0.1;
-
-MAX_COM_PWR0 = 10;
-MAX_COM_PWR1 = 10;
-MAX_COM_PWR2 = 10;
-MAX_COM_PWR3 = 10;
-
-MIN_EXP_PWR0 = 0.1;
-MIN_EXP_PWR1 = 0.1;
-MIN_EXP_PWR2 = 0.1;
-MIN_EXP_PWR3 = 0.1;
-
-MAX_EXP_PWR0 = 10;
-MAX_EXP_PWR1 = 10;
-MAX_EXP_PWR2 = 10;
-MAX_EXP_PWR3 = 10;
-
-global COM_PWR0 COM_PWR1 COM_PWR2 COM_PWR3;
-global EXP_PWR0 EXP_PWR1 EXP_PWR2 EXP_PWR3;
-
-super_best_max_nerry = 0;
-super_best_mse_nerry = 0;
-
-SUPER_BEST_COM_PWR0 = 0;
-SUPER_BEST_COM_PWR1 = 0;
-SUPER_BEST_COM_PWR2 = 0;
-SUPER_BEST_COM_PWR3 = 0;
-
-SUPER_BEST_COM_PWR0 = 0;
-SUPER_BEST_COM_PWR1 = 0;
-SUPER_BEST_COM_PWR2 = 0;
-SUPER_BEST_COM_PWR3 = 0;
-
-
-bigiter = 1;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% BIG ITERATION LOOP (BEGIN)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-while bigiter <= BIG_ITERATIONS
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % INTRO ITERATION LOOP INITIALIZATION
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    % Initial values
-    COM_PWR0 = my_rand( MIN_COM_PWR0, MAX_COM_PWR0 );
-    COM_PWR1 = my_rand( MIN_COM_PWR1, MAX_COM_PWR1 );
-    COM_PWR2 = my_rand( MIN_COM_PWR2, MAX_COM_PWR2 );
-    COM_PWR3 = my_rand( MIN_COM_PWR3, MAX_COM_PWR3 );
+    ITERATIONS_INIT = 3000;                   % 1st stage: monte-carlo method (0 - disable this stage)
+    ITERATIONS_MAX  = ITERATIONS_INIT + 500;  % 2nd stage: gradient method
 
-    EXP_PWR0 = my_rand( MIN_EXP_PWR0, MAX_EXP_PWR0 );
-    EXP_PWR1 = my_rand( MIN_EXP_PWR1, MAX_EXP_PWR1 );
-    EXP_PWR2 = my_rand( MIN_EXP_PWR2, MAX_EXP_PWR2 );
-    EXP_PWR3 = my_rand( MIN_EXP_PWR3, MAX_EXP_PWR3 );
+    STEPSIZE       = 0.5;  %set initial (biggest) value of stepsize here
+    STEPSIZE_DEC   = 0.7;  %stepsize decrement coefficient: 0..1
+    STEP_CNTR_MAX  = 10;   %if no changes on STEP_CNTR_MAX - decrease STEPSIZE
 
-    mse_nerry = 0;
+    % Initial values (for FACTOR==8)
 
-    BEST_COM_PWR0 = COM_PWR0;
-    BEST_COM_PWR1 = COM_PWR1;
-    BEST_COM_PWR2 = COM_PWR2;
-    BEST_COM_PWR3 = COM_PWR3;
+%     COMPAND_TAB = [ 0.10  0.40  0.80 ;
+%                     0.20  0.60  0.90 ;
+%                     0.10  0.75  0.90 ;
+%                     0.10  0.25  0.90 ];
 
-    BEST_EXP_PWR0 = EXP_PWR0;
-    BEST_EXP_PWR1 = EXP_PWR1;
-    BEST_EXP_PWR2 = EXP_PWR2;
-    BEST_EXP_PWR3 = EXP_PWR3;
+    COMPAND_TAB = zeros(4,3);
+
+%     EXPAND_TAB =  [ 0.10  0.30  0.50  0.90 ; 
+%                     0.15  0.40  0.70  0.95 ; 
+%                     0.20  0.60  0.80  0.90 ; 
+%                     0.10  0.20  0.40  0.80 ];
+
+    EXPAND_TAB = zeros(4,4);
+
+    COMPAND_TABLE = [ -fliplr(COMPAND_TAB), zeros(SMOOTH_N,1), COMPAND_TAB ];
+    EXPAND_TABLE  = [ -fliplr(EXPAND_TAB), EXPAND_TAB ];
+
+    BEST_COMPAND_TAB = COMPAND_TAB;
+    BEST_EXPAND_TAB  = EXPAND_TAB;
 
     best_max_nerry = 0;
     best_mse_nerry = 0;
 
-    ITERATIONS = 300;
+    mse_nerry = 0;
+    max_nerry = 0;
 
-    step_cntr     = 0;
-    STEP_CNTR_MAX = 10;   %if no changes on STEP_CNTR_MAX - decrease STEPSIZE
-    STEPSIZE      = 3;    %set initial (biggest) value of stepsize here
-    STEPSIZE_DEC  = 0.5;  %stepsize decrement coefficient: 0..1
-
+    step_cntr = 0;
     iter = 1;
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % SMALL ITERATION LOOP (BEGIN)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    while iter <= ITERATIONS
+    while iter <= ITERATIONS_MAX
 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Initialization
@@ -307,8 +277,8 @@ while bigiter <= BIG_ITERATIONS
                 enc = [];
                 dec = [];
             case 1
-                enc = encoder_init ( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
-                dec = decoder_init ( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
+                enc = []; 
+                dec = []; 
             case 2
                 enc = encoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX, FIXP );
                 dec = decoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX, FIXP );
@@ -337,7 +307,7 @@ while bigiter <= BIG_ITERATIONS
                 case 0
                     enc_data = [ 0, 0, 0, enc_voice ];
                 case 1
-                    [enc_data,enc] = encoder(enc_voice,enc,dec);
+                    [enc_data] = encoder(enc_voice);
                 case 2
                     [enc_data,enc] = encoder2(enc_voice,enc,dec,FIXP);
                 end
@@ -347,7 +317,7 @@ while bigiter <= BIG_ITERATIONS
                 case 0
                     dec_voice = enc_data(4:end);
                 case 1
-                    [dec_voice,dec] = decoder(enc_data,dec);
+                    [dec_voice] = decoder(enc_data);
                 case 2
                     [dec_voice,dec] = decoder2(enc_data,dec,FIXP);
                 end
@@ -366,73 +336,67 @@ while bigiter <= BIG_ITERATIONS
             max_nerry = max( abs(nerry) );
             mse_nerry = mean(nerry.^2);
 
-            fprintf(fid,'\n');
-            fprintf(fid,'iter=%d\n', iter);
-            fprintf(fid,'x,y normalized errors:\n');
-            fprintf(fid,'  max nerrory=%12.8f\n',max_nerry);
-            fprintf(fid,'  mse nerrory=%12.8f\n',mse_nerry);
-
-
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
         if (iter > 1) && (mse_nerry < best_mse_nerry) && isfinite(mse_nerry)
-            %previous step had better params
+            %current step has better params
             best_mse_nerry = mse_nerry;
             best_max_nerry = max_nerry;
 
-            BEST_COM_PWR0 = COM_PWR0;
-            BEST_COM_PWR1 = COM_PWR1;
-            BEST_COM_PWR2 = COM_PWR2;
-            BEST_COM_PWR3 = COM_PWR3;
-
-            BEST_EXP_PWR0 = EXP_PWR0;
-            BEST_EXP_PWR1 = EXP_PWR1;
-            BEST_EXP_PWR2 = EXP_PWR2;
-            BEST_EXP_PWR3 = EXP_PWR3;
+            BEST_COMPAND_TAB = COMPAND_TAB;
+            BEST_EXPAND_TAB  = EXPAND_TAB;
 
             step_cntr = 0;
-            fprintf(fid,'refresh best_mse_nerry=%12.8f\n',best_mse_nerry);
         else
             if (iter==1)
                 best_mse_nerry = mse_nerry;
                 best_max_nerry = max_nerry;
             else
-                %previous step had worse params
-                step_cntr = step_cntr + 1;
-                if step_cntr > STEP_CNTR_MAX
-                    step_cntr = 0;
-                    STEPSIZE = STEPSIZE * STEPSIZE_DEC;
-                    fprintf(fid,'decrement STEPSIZE to %12.8f\n',STEPSIZE);
+                if iter > ITERATIONS_INIT
+                    %current step has worse params
+                    step_cntr = step_cntr + 1;
+                    if step_cntr > STEP_CNTR_MAX
+                        step_cntr = 0;
+                        STEPSIZE = STEPSIZE * STEPSIZE_DEC;
+                        fprintf(fid,'decrement STEPSIZE to %12.8f\n',STEPSIZE);
+                    end
                 end
             end
         end
 
         %make little changes of params
-        COM_PWR0 = abs( BEST_COM_PWR0 + STEPSIZE*randn(1) );
-        COM_PWR1 = abs( BEST_COM_PWR1 + STEPSIZE*randn(1) );
-        COM_PWR2 = abs( BEST_COM_PWR2 + STEPSIZE*randn(1) );
-        COM_PWR3 = abs( BEST_COM_PWR3 + STEPSIZE*randn(1) );
+        if iter <= ITERATIONS_INIT
+            COMPAND_TAB = rand(size(COMPAND_TAB));
+            EXPAND_TAB  = rand(size(EXPAND_TAB ));
+        else
+            COMPAND_TAB = BEST_COMPAND_TAB + STEPSIZE*randn(size(COMPAND_TAB));
+            EXPAND_TAB  = BEST_EXPAND_TAB  + STEPSIZE*randn(size(EXPAND_TAB ));
+        end
 
-        EXP_PWR0 = COM_PWR0; %abs( BEST_EXP_PWR0 + STEPSIZE*randn(1) );
-        EXP_PWR1 = COM_PWR1; %abs( BEST_EXP_PWR1 + STEPSIZE*randn(1) );
-        EXP_PWR2 = COM_PWR2; %abs( BEST_EXP_PWR2 + STEPSIZE*randn(1) );
-        EXP_PWR3 = COM_PWR3; %abs( BEST_EXP_PWR3 + STEPSIZE*randn(1) );
+        %check validity of COMPAND_TAB, EXPAND_TAB
+        COMPAND_TAB = min( COMPAND_TAB, 1.0 );
+        COMPAND_TAB = max( COMPAND_TAB, 0.0 );
+        COMPAND_TAB = sort( COMPAND_TAB,2 );
+
+        EXPAND_TAB = min( EXPAND_TAB, 1.0 );
+        EXPAND_TAB = max( EXPAND_TAB, 0.0 );
+        EXPAND_TAB = sort( EXPAND_TAB,2 );
+
+        COMPAND_TABLE = [ -fliplr(COMPAND_TAB), zeros(SMOOTH_N,1), COMPAND_TAB ];
+        EXPAND_TABLE  = [ -fliplr(EXPAND_TAB), EXPAND_TAB ];
+
+        %print errors
+        fprintf(fid,'\n');
+        fprintf(fid,'iter=%d\n', iter);
+       %fprintf(fid,'      max nerrory=%12.8f\n',max_nerry);
+        fprintf(fid,'      mse nerrory=%12.8f\n',mse_nerry);
+        fprintf(fid,'best  mse nerrory=%12.8f\n',best_mse_nerry);
 
         iter = iter + 1;
-
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % SMALL ITERATION LOOP (END)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    if()
-
-    bigiter = bigiter + 1;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% BIG ITERATION LOOP (END)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 
 fprintf(fid,'process finished!\n');
 
@@ -440,14 +404,8 @@ fprintf(fid,'iterations=%d\n', iter-1);
 fprintf(fid,'x,y normalized errors:\n');
 fprintf(fid,'  best mse nerrory=%12.8f\n',best_mse_nerry);
 fprintf(fid,'       max nerrory=%12.8f\n',best_max_nerry);
-fprintf(fid,'          COM_PWR0=%12.8f\n',BEST_COM_PWR0);
-fprintf(fid,'          COM_PWR1=%12.8f\n',BEST_COM_PWR1);
-fprintf(fid,'          COM_PWR2=%12.8f\n',BEST_COM_PWR2);
-fprintf(fid,'          COM_PWR3=%12.8f\n',BEST_COM_PWR3);
-fprintf(fid,'          EXP_PWR0=%12.8f\n',BEST_EXP_PWR0);
-fprintf(fid,'          EXP_PWR1=%12.8f\n',BEST_EXP_PWR1);
-fprintf(fid,'          EXP_PWR2=%12.8f\n',BEST_EXP_PWR2);
-fprintf(fid,'          EXP_PWR3=%12.8f\n',BEST_EXP_PWR3);
+fprintf(fid,'       COMPAND_TAB=%6.4f\n',BEST_COMPAND_TAB);
+fprintf(fid,'        EXPAND_TAB=%6.4f\n', BEST_EXPAND_TAB);
 
 if fid~=1
     fclose(fid);

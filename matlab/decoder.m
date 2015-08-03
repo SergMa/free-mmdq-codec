@@ -39,7 +39,7 @@ function [voice] = decoder(data)
     maxdv = max(dvoice);
     diffdv = maxdv - mindv;
 
-    smooth = smooth1*2 + smooth0;
+    smooth = smooth1*2 + smooth0 + 1;
 
     voice(1) = 0;
     for i=1:N-1
