@@ -40,6 +40,7 @@ global EXPAND_TABLE;
 
 SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
 %SAMPLES = 5000:10000;
+%SAMPLES = 5000:5300;
 
 FS = 8000;            % Sample (discretization) frequency, Hz
 TS = 1/FS;            % Sample (discretization) period, sec

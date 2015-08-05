@@ -1,6 +1,13 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Mycodec encoder function
 % [data] = encode(voice)
+% GLOBALS:
+%   MAXX
+%   FACTOR
+%   SAMPLES_PER_FRAME
+%   BITS_PER_SAMPLE
+%   SMOOTH_N
+%   SMOOTH_ERROR_VER
 % INPUTS:
 %   voice = dim 1xN = voice samples to encode
 % OUTPUTS:
