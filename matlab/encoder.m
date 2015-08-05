@@ -97,23 +97,26 @@ function [data] = encoder(voice)
             end
 
             %get codes for dvoice values
-
             n_voice = 0; %true normalized voice
-            e_voice = 0; %companded/expanded normalized voice
+            r_voice = 0; %companded/expanded normalized voice
+            voice2(1) = r_voice;
             for i=1:N-1
                 %true normalized dvoice
                 n_dvoice = dvoice(i)/ampdv;
+
                 %true restored normalized voice
-                n_voice(i+1) = n_voice(i) + dvoice(i)/ampdv;
+                n_voice = n_voice + n_dvoice;
+
                 %get diff between true and companded/expanded normalized voices
-                e_dvoice = n_voice(i+1) - e_voice(i);
-                %get error estimation
+                r_dvoice = n_voice - r_voice;
 
                 %compand/expand voice
-                edata(s,3+i) = compand( e_dvoice , s);
-                ce_dvoice = expand(edata(s,3+i),s);
+                edata(s,3+i) = compand( r_dvoice , s );
+                ce_dvoice = expand( edata(s,3+i) , s );
+
                 %restore voice
-                e_voice(i+1) = e_voice(i) + ce_dvoice;
+                r_voice = r_voice + ce_dvoice;
+                voice2(i+1) = r_voice;
             end
 
             %find reconstruction errors
