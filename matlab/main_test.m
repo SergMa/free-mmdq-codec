@@ -53,7 +53,7 @@ CODEC_VERSION = 1;    % 0-no encode/decode operations
                       % 1-matlab float point
                       % 2-c-adapted, code tables, div tables
 
-SHOW_GRAPHICS = 1;    % 0 - disable plotting of graphics, 1 - enable it
+SHOW_GRAPHICS = 0;    % 0 - disable plotting of graphics, 1 - enable it
 
 SPECTROGRAM_WIDTH = 256; % Parameters of spectrograms
 SPECTROGRAM_OVR   = 8;
@@ -277,16 +277,24 @@ EXPAND_TAB =  [ 0.04  0.19  0.75  0.91 ;
 %                  0.11929666716071          0.319574851939871         0.564286435482543         0.879266599994234 ;
 %                  0.267824492584548         0.363528468616021         0.732193146422095         0.925429832999143 ];
 
-COMPAND_TAB = [  0.191184755784574         0.486243245656153         0.794673798641878 ;
-                 0.197417002303613         0.423217474219451         0.654518866888976 ;
-                 0.324893872456416         0.569824221609805         0.964152002107628 ;
-                 0.536994482421878         0.631602826113085         0.934442049315058 ];
+%COMPAND_TAB = [  0.191184755784574         0.486243245656153         0.794673798641878 ;
+%                 0.197417002303613         0.423217474219451         0.654518866888976 ;
+%                 0.324893872456416         0.569824221609805         0.964152002107628 ;
+%                 0.536994482421878         0.631602826113085         0.934442049315058 ];
 
-EXPAND_TAB = [   0.0920318624021621         0.281753539761463         0.524054377326534         0.820948123654954 ;
-                 0.0972375371484031         0.267992731166413         0.454449084013503         0.964957843901945 ;
-                 0.127518890053468         0.477631145865368         0.683930738091903         0.923470397200536  ;
-                 0.529872180983466         0.634664960516274         0.700131234893207         0.994873390439763  ];
+%EXPAND_TAB = [   0.0920318624021621         0.281753539761463         0.524054377326534         0.820948123654954 ;
+%                 0.0972375371484031         0.267992731166413         0.454449084013503         0.964957843901945 ;
+%                 0.127518890053468         0.477631145865368         0.683930738091903         0.923470397200536  ;
+%                 0.529872180983466         0.634664960516274         0.700131234893207         0.994873390439763  ];
 
+%COMPAND_TAB = [  0.485538   0.787296   0.861956 ;
+%                 0.225478   0.478825   0.798537 ;
+%                 0.131863   0.459980   0.473481 ;
+%                 0.027093   0.116304   0.944247 ];
+%EXPAND_TAB = [   0.0010566   0.1201805   0.1277728   0.7530114 ;
+%                 0.0945659   0.3690838   0.6635903   0.9591390 ;
+%                 0.2384846   0.7449469   0.8702568   0.8940504 ;
+%                 0.1323886   0.4840645   0.5270719   0.5981822 ];
 
 COMPAND_TABLE = [ -fliplr(COMPAND_TAB), zeros(SMOOTH_N,1), COMPAND_TAB ];
 EXPAND_TABLE  = [ -fliplr(EXPAND_TAB), EXPAND_TAB ];
@@ -297,10 +305,10 @@ EXPAND_TABLE  = [ -fliplr(EXPAND_TAB), EXPAND_TAB ];
 
 %voice_filename  = '../samples/cmu/sample1_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/cmu/sample2_8000.wav';         VOICE_AMP_DB = -3;
-%voice_filename  = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = -3;  %female
+voice_filename  = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = -3;  %female
 %voice_filename  = '../samples/cmu/sample4_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/cmu/sample5_8000.wav';         VOICE_AMP_DB = -3;
-voice_filename  = '../samples/cmu/sample6_8000.wav';          VOICE_AMP_DB = -3;  %male
+%voice_filename  = '../samples/cmu/sample6_8000.wav';          VOICE_AMP_DB = -3;  %male
 %voice_filename  = '../samples/cmu/sample7_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/ask2.wav';       VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/fsk2.wav';       VOICE_AMP_DB = -3;

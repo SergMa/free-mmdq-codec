@@ -38,8 +38,9 @@ global EXPAND_TABLE;
 % Test settings
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
-SAMPLES = 5000:10000;
+%SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
+%SAMPLES = 5000:10000;
+SAMPLES = 5000:5100;
 
 FS = 8000;            % Sample (discretization) frequency, Hz
 TS = 1/FS;            % Sample (discretization) period, sec
@@ -52,7 +53,7 @@ CODEC_VERSION = 1;    % 0-no encode/decode operations
                       % 1-matlab float point
                       % 2-c-adapted, code tables, div tables
 
-SHOW_GRAPHICS = 1;    % 0 - disable plotting of graphics, 1 - enable it
+SHOW_GRAPHICS = 0;    % 0 - disable plotting of graphics, 1 - enable it
 
 SPECTROGRAM_WIDTH = 256; % Parameters of spectrograms
 SPECTROGRAM_OVR   = 8;
@@ -146,7 +147,7 @@ fprintf(fid,'factor           : %d\n', FACTOR);
 fprintf(fid,'compression      : %f\n', COMPRESSION);
 fprintf(fid,'bitrate, bit/s   : %d\n', BITRATE);
 fprintf(fid,'-----------------------\n');
-
+fflush(fid);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load input (voice,noise) signals from wave-files, generate signal to process
@@ -391,7 +392,8 @@ wavwrite( (x/MAXX).', FS, bits_voice, INPUT_FILENAME );
        %fprintf(fid,'      max nerrory=%12.8f\n',max_nerry);
         fprintf(fid,'      mse nerrory=%12.8f\n',mse_nerry);
         fprintf(fid,'best  mse nerrory=%12.8f\n',best_mse_nerry);
-
+        fflush(fid);
+        
         iter = iter + 1;
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -406,6 +408,7 @@ fprintf(fid,'  best mse nerrory=%12.8f\n',best_mse_nerry);
 fprintf(fid,'       max nerrory=%12.8f\n',best_max_nerry);
 fprintf(fid,'       COMPAND_TAB=%6.4f\n',BEST_COMPAND_TAB);
 fprintf(fid,'        EXPAND_TAB=%6.4f\n', BEST_EXPAND_TAB);
+fflush(fid);
 
 if fid~=1
     fclose(fid);
