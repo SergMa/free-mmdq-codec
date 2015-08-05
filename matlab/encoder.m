@@ -25,8 +25,8 @@ function [data] = encoder(voice)
 
     N = SAMPLES_PER_FRAME;
 
-    minv = min(min(voice));
-    maxv = max(max(voice));
+    minv  = min(min(voice));
+    maxv  = max(max(voice));
     diffv = maxv - minv;
 
     data = zeros(1,3+N-1);
@@ -44,10 +44,10 @@ function [data] = encoder(voice)
     end
 
     % get min, max dvoice
-    mindv = min(dvoice);
-    maxdv = max(dvoice);
+    mindv  = min(dvoice);
+    maxdv  = max(dvoice);
     diffdv = maxdv - mindv;
-    ampdv = max( abs(mindv) , abs(maxdv) );
+    ampdv  = max( abs(mindv) , abs(maxdv) );
 
     % quantize dvoice
     if diffdv==0
@@ -97,8 +97,23 @@ function [data] = encoder(voice)
             end
 
             %get codes for dvoice values
+
+            n_voice = 0; %true normalized voice
+            e_voice = 0; %companded/expanded normalized voice
             for i=1:N-1
-                edata(s,3+i) = compand( dvoice(i)/ampdv , s );
+                %true normalized dvoice
+                n_dvoice = dvoice(i)/ampdv;
+                %true restored normalized voice
+                n_voice(i+1) = n_voice(i) + dvoice(i)/ampdv;
+                %get diff between true and companded/expanded normalized voices
+                e_dvoice = n_voice(i+1) - e_voice(i);
+                %get error estimation
+
+                %compand/expand voice
+                edata(s,3+i) = compand( e_dvoice , s);
+                ce_dvoice = expand(edata(s,3+i),s);
+                %restore voice
+                e_voice(i+1) = e_voice(i) + ce_dvoice;
             end
 
             %find reconstruction errors
