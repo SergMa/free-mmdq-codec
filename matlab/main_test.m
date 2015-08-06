@@ -38,8 +38,8 @@ global EXPAND_TABLE;
 % Test settings
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
-%SAMPLES = 5000:10000;
+%SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
+SAMPLES = 5000:10000;
 %SAMPLES = 5000:5300;
 
 FS = 8000;            % Sample (discretization) frequency, Hz
@@ -305,7 +305,7 @@ EXPAND_TABLE  = [ -fliplr(EXPAND_TAB), EXPAND_TAB ];
 
 %voice_filename  = '../samples/cmu/sample1_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/cmu/sample2_8000.wav';         VOICE_AMP_DB = -3;
-voice_filename  = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = -3;  %female
+%voice_filename  = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = -3;  %female
 %voice_filename  = '../samples/cmu/sample4_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/cmu/sample5_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/cmu/sample6_8000.wav';          VOICE_AMP_DB = -3;  %male
@@ -314,7 +314,7 @@ voice_filename  = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = -3; 
 %voice_filename  = '../samples/modems_matlab/fsk2.wav';       VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/psk4.wav';       VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/psk8.wav';       VOICE_AMP_DB = -3;
-%voice_filename   = '../samples/modems_matlab/qask16.wav';     VOICE_AMP_DB = -3;  %modem
+voice_filename   = '../samples/modems_matlab/qask16.wav';     VOICE_AMP_DB = -3;  %modem
 %voice_filename  = '../samples/modems_matlab/qask32.wav';     VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/qask64.wav';     VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/cmu/sample7_8000.wav';         VOICE_AMP_DB = -3;

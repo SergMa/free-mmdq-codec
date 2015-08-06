@@ -39,8 +39,8 @@ global EXPAND_TABLE;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
-%SAMPLES = 5000:10000;
-SAMPLES = 5000:5100;
+SAMPLES = 5000:7000;
+%SAMPLES = 5000:5100;
 
 FS = 8000;            % Sample (discretization) frequency, Hz
 TS = 1/FS;            % Sample (discretization) period, sec
@@ -226,8 +226,8 @@ wavwrite( (x/MAXX).', FS, bits_voice, INPUT_FILENAME );
     % INTRO ITERATION LOOP INITIALIZATION
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    ITERATIONS_INIT = 3000;                   % 1st stage: monte-carlo method (0 - disable this stage)
-    ITERATIONS_MAX  = ITERATIONS_INIT + 500;  % 2nd stage: gradient method
+    ITERATIONS_INIT = 1000;                   % 1st stage: monte-carlo method (0 - disable this stage)
+    ITERATIONS_MAX  = ITERATIONS_INIT + 300;  % 2nd stage: gradient method
 
     STEPSIZE       = 0.5;  %set initial (biggest) value of stepsize here
     STEPSIZE_DEC   = 0.7;  %stepsize decrement coefficient: 0..1
