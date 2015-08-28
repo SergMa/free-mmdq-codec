@@ -13,7 +13,7 @@ disp('finding best compand/expand started!');
 
 RESULTS_FILENAME = 'out/results.txt';
 %fid = fopen(RESULTS_FILENAME,'w');
-fid = 1;
+fid = 1; %stdout
 if fid==-1
     fid = 1;
     fprintf(fid,'Error: could not create results file: %s\n', RESULTS_FILENAME);
@@ -38,9 +38,9 @@ global EXPAND_TABLE;
 % Test settings
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
-SAMPLES = 5000:7000;
-%SAMPLES = 5000:5100;
+%SAMPLES = 0;          % Numbers of samples to process (if 0 - process all available samples)
+%SAMPLES = 5000:7000;
+SAMPLES = 5000:30000;
 
 FS = 8000;            % Sample (discretization) frequency, Hz
 TS = 1/FS;            % Sample (discretization) period, sec
@@ -147,7 +147,7 @@ fprintf(fid,'factor           : %d\n', FACTOR);
 fprintf(fid,'compression      : %f\n', COMPRESSION);
 fprintf(fid,'bitrate, bit/s   : %d\n', BITRATE);
 fprintf(fid,'-----------------------\n');
-fflush(fid);
+%fflush(fid);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load input (voice,noise) signals from wave-files, generate signal to process
@@ -167,7 +167,7 @@ voice_filename   = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/qask16.wav';     VOICE_AMP_DB = -3;  %modem
 %voice_filename  = '../samples/modems_matlab/qask32.wav';     VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/qask64.wav';     VOICE_AMP_DB = -3;
-%voice_filename   = '../samples/various.wav';                  VOICE_AMP_DB = -3;  %male+female+modem
+%voice_filename  = '../samples/various.wav';                  VOICE_AMP_DB = -3;  %male+female+modem
 
 %noise_filename  = '../samples/noise/noise_white.wav';        NOISE_AMP_DB = -99;
 %noise_filename  = '../samples/noise/noise_pink.wav';         NOISE_AMP_DB = -99;
@@ -226,7 +226,7 @@ wavwrite( (x/MAXX).', FS, bits_voice, INPUT_FILENAME );
     % INTRO ITERATION LOOP INITIALIZATION
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    ITERATIONS_INIT = 1000;                   % 1st stage: monte-carlo method (0 - disable this stage)
+    ITERATIONS_INIT = 10000;                  % 1st stage: monte-carlo method (0 - disable this stage)
     ITERATIONS_MAX  = ITERATIONS_INIT + 300;  % 2nd stage: gradient method
 
     STEPSIZE       = 0.5;  %set initial (biggest) value of stepsize here
@@ -392,7 +392,7 @@ wavwrite( (x/MAXX).', FS, bits_voice, INPUT_FILENAME );
        %fprintf(fid,'      max nerrory=%12.8f\n',max_nerry);
         fprintf(fid,'      mse nerrory=%12.8f\n',mse_nerry);
         fprintf(fid,'best  mse nerrory=%12.8f\n',best_mse_nerry);
-        fflush(fid);
+        %fflush(fid);
         
         iter = iter + 1;
     end
@@ -408,7 +408,7 @@ fprintf(fid,'  best mse nerrory=%12.8f\n',best_mse_nerry);
 fprintf(fid,'       max nerrory=%12.8f\n',best_max_nerry);
 fprintf(fid,'       COMPAND_TAB=%6.4f\n',BEST_COMPAND_TAB);
 fprintf(fid,'        EXPAND_TAB=%6.4f\n', BEST_EXPAND_TAB);
-fflush(fid);
+%fflush(fid);
 
 if fid~=1
     fclose(fid);

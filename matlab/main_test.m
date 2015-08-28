@@ -38,8 +38,8 @@ global EXPAND_TABLE;
 % Test settings
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
-SAMPLES = 5000:10000;
+SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
+%SAMPLES = 5000:10000;
 %SAMPLES = 5000:5300;
 
 FS = 8000;            % Sample (discretization) frequency, Hz
@@ -53,7 +53,7 @@ CODEC_VERSION = 1;    % 0-no encode/decode operations
                       % 1-matlab float point
                       % 2-c-adapted, code tables, div tables
 
-SHOW_GRAPHICS = 0;    % 0 - disable plotting of graphics, 1 - enable it
+SHOW_GRAPHICS = 1;    % 0 - disable plotting of graphics, 1 - enable it
 
 SPECTROGRAM_WIDTH = 256; % Parameters of spectrograms
 SPECTROGRAM_OVR   = 8;
@@ -295,6 +295,17 @@ EXPAND_TAB =  [ 0.15  0.39  0.57  0.83 ;
 %                 0.0945659   0.3690838   0.6635903   0.9591390 ;
 %                 0.2384846   0.7449469   0.8702568   0.8940504 ;
 %                 0.1323886   0.4840645   0.5270719   0.5981822 ];
+
+% COMPAND_TAB = [   0.199307921754928     0.495774310225107    0.784998684897682 ;
+%                   0.0197641829750384    0.559522710434548    0.964263293060209 ;
+%                   0.540054731543569     0.714789748571551    0.755077388509728 ;
+%                   0.0362543556488602    0.611470754370024    0.748588611365344 ];
+% 
+% EXPAND_TAB =  [   0.0970164503665673    0.322005486853794    0.649485964350444    0.970481495264401 ;
+%                   0.100565756844168     0.183057818341359    0.229318280586532    0.425727972485942 ;
+%                   0.283898768302807     0.365002016661494    0.540743343713733    0.701151934064757 ;
+%                   0.596530983204526     0.636215284968669    0.864282128300644    0.946283897951382 ];
+
 
 COMPAND_TABLE = [ -fliplr(COMPAND_TAB), zeros(SMOOTH_N,1), COMPAND_TAB ];
 EXPAND_TABLE  = [ -fliplr(EXPAND_TAB), EXPAND_TAB ];
