@@ -38,9 +38,9 @@ global EXPAND_TABLE;
 % Test settings
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%SAMPLES = 0;          % Numbers of samples to process (if 0 - process all available samples)
-%SAMPLES = 5000:7000;
-SAMPLES = 5000:30000;
+SAMPLES = 0;          % Numbers of samples to process (if 0 - process all available samples)
+%SAMPLES = 5000:10000;
+%SAMPLES = 5000:30000;
 
 FS = 8000;            % Sample (discretization) frequency, Hz
 TS = 1/FS;            % Sample (discretization) period, sec
@@ -155,7 +155,7 @@ fprintf(fid,'-----------------------\n');
 
 %voice_filename  = '../samples/cmu/sample1_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/cmu/sample2_8000.wav';         VOICE_AMP_DB = -3;
-voice_filename   = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = -3;  %female
+%voice_filename   = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = -3;  %female
 %voice_filename  = '../samples/cmu/sample4_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/cmu/sample5_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/cmu/sample6_8000.wav';         VOICE_AMP_DB = -3;  %male
@@ -167,7 +167,7 @@ voice_filename   = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/qask16.wav';     VOICE_AMP_DB = -3;  %modem
 %voice_filename  = '../samples/modems_matlab/qask32.wav';     VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/qask64.wav';     VOICE_AMP_DB = -3;
-%voice_filename  = '../samples/various.wav';                  VOICE_AMP_DB = -3;  %male+female+modem
+voice_filename  = '../samples/various.wav';                  VOICE_AMP_DB = -3;  %male+female+modem
 
 %noise_filename  = '../samples/noise/noise_white.wav';        NOISE_AMP_DB = -99;
 %noise_filename  = '../samples/noise/noise_pink.wav';         NOISE_AMP_DB = -99;
@@ -226,8 +226,8 @@ wavwrite( (x/MAXX).', FS, bits_voice, INPUT_FILENAME );
     % INTRO ITERATION LOOP INITIALIZATION
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    ITERATIONS_INIT = 10000;                  % 1st stage: monte-carlo method (0 - disable this stage)
-    ITERATIONS_MAX  = ITERATIONS_INIT + 300;  % 2nd stage: gradient method
+    ITERATIONS_INIT = 500;                    % 1st stage: monte-carlo method (0 - disable this stage)
+    ITERATIONS_MAX  = ITERATIONS_INIT + 200;  % 2nd stage: gradient method
 
     STEPSIZE       = 0.5;  %set initial (biggest) value of stepsize here
     STEPSIZE_DEC   = 0.7;  %stepsize decrement coefficient: 0..1
@@ -239,15 +239,25 @@ wavwrite( (x/MAXX).', FS, bits_voice, INPUT_FILENAME );
 %                     0.20  0.60  0.90 ;
 %                     0.10  0.75  0.90 ;
 %                     0.10  0.25  0.90 ];
-
-    COMPAND_TAB = zeros(4,3);
-
+%
 %     EXPAND_TAB =  [ 0.10  0.30  0.50  0.90 ; 
 %                     0.15  0.40  0.70  0.95 ; 
 %                     0.20  0.60  0.80  0.90 ; 
 %                     0.10  0.20  0.40  0.80 ];
 
-    EXPAND_TAB = zeros(4,4);
+%    COMPAND_TAB = zeros(SMOOTH_N,3);
+%    EXPAND_TAB = zeros(SMOOTH_N,4);
+
+COMPAND_TAB = [  0.35138462583469    0.606408050673778    0.89661664776492  ;
+                 0.231357816122273   0.388270082082767    0.649564753840096 ;
+                 0.286617358963593   0.544090895206425    0.806864652414241 ;
+                 0                   0                    0                ];
+
+EXPAND_TAB  = [  0.221034838973976   0.468542907322479    0.749920730279022    1.0000000         ;
+                 0.108790995717465   0.304083960418986    0.465577159224541    0.877154353400846 ;
+                 0.143535135647119   0.433183162058597    0.636426858521661    0.972580271564057 ;
+                 0                   0                    0                    0                ];
+
 
     COMPAND_TABLE = [ -fliplr(COMPAND_TAB), zeros(SMOOTH_N,1), COMPAND_TAB ];
     EXPAND_TABLE  = [ -fliplr(EXPAND_TAB), EXPAND_TAB ];
@@ -367,11 +377,11 @@ wavwrite( (x/MAXX).', FS, bits_voice, INPUT_FILENAME );
 
         %make little changes of params
         if iter <= ITERATIONS_INIT
-            COMPAND_TAB = rand(size(COMPAND_TAB));
-            EXPAND_TAB  = rand(size(EXPAND_TAB ));
+            COMPAND_TAB(4,:) = rand(size(COMPAND_TAB(4,:) ));
+            EXPAND_TAB (4,:) = rand(size(EXPAND_TAB (4,:) ));
         else
-            COMPAND_TAB = BEST_COMPAND_TAB + STEPSIZE*randn(size(COMPAND_TAB));
-            EXPAND_TAB  = BEST_EXPAND_TAB  + STEPSIZE*randn(size(EXPAND_TAB ));
+            COMPAND_TAB(4,:) = BEST_COMPAND_TAB(4,:) + STEPSIZE*randn(size(COMPAND_TAB(4,:) ));
+            EXPAND_TAB (4,:) = BEST_EXPAND_TAB (4,:) + STEPSIZE*randn(size(EXPAND_TAB (4,:) ));
         end
 
         %check validity of COMPAND_TAB, EXPAND_TAB

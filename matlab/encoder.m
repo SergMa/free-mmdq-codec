@@ -133,7 +133,7 @@ function [data] = encoder(voice)
 
         end
         %get data for smooth with min error
-        [errmin,smin] = min(errors);
+        [errmin,smin] = min(errors(1:SMOOTH_N));
         data = edata(smin,:);
     end
 
