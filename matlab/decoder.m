@@ -1,6 +1,13 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Mycodec decoder function
 % [data,dec] = decode(voice,dec)
+% GLOBALS:
+%   MAXX
+%   FACTOR
+%   SAMPLES_PER_FRAME
+%   BITS_PER_SAMPLE
+%   SMOOTH_N
+%   SMOOTH_ERROR_VER
 % INPUTS:
 %   data  = dim 1xM = data frame to decode
 %   dec   = decoder structure
@@ -10,6 +17,15 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function [voice,dec] = decoder(data,dec)
+
+    global MAXX;
+    global FACTOR;
+    global SAMPLES_PER_FRAME;
+    global BITS_PER_SAMPLE;
+    global SMOOTH_N;
+    global SMOOTH_ERROR_VER;
+
+    N = SAMPLES_PER_FRAME;
 
     minv    = data(1);
     maxv    = data(2);
@@ -26,7 +42,6 @@ function [voice,dec] = decoder(data,dec)
 
     dvoice = data(3+1:end);
 
-    N = dec.samples_per_frame;
     voice = zeros(1,N);
 
     % Get absolute voice
@@ -34,33 +49,12 @@ function [voice,dec] = decoder(data,dec)
     maxdv = max(dvoice);
     diffdv = maxdv - mindv;
 
-    if smooth0==0 && smooth1==0
-        voice(1) = 0;
-        for i=1:N-1
-            sss = expand( ((dvoice(i)+0.5)/dec.factor - 0.5)*1 , 0 );
-            voice(i+1) = voice(i) + sss;
-        end
-    elseif smooth0==1 && smooth1==0
-        %expand/compand smoothing
-        voice(1) = 0;
-        for i=1:N-1
-            sss = expand( ((dvoice(i)+0.5)/dec.factor - 0.5)*1 , 1 );
-            voice(i+1) = voice(i) + sss;
-        end
-    elseif smooth0==0 && smooth1==1
-        %expand/compand smoothing
-        voice(1) = 0;
-        for i=1:N-1
-            sss = expand( ((dvoice(i)+0.5)/dec.factor - 0.5)*1 , 2 );
-            voice(i+1) = voice(i) + sss;
-        end
-    else
-        %expand/compand smoothing
-        voice(1) = 0;
-        for i=1:N-1
-            sss = expand( ((dvoice(i)+0.5)/dec.factor - 0.5)*1 , 3 );
-            voice(i+1) = voice(i) + sss;
-        end
+    smooth_code = smooth1*2 + smooth0 + 1;
+
+    voice(1) = 0;
+    for i=1:N-1
+        sss = expand( ((dvoice(i)+0.5)/FACTOR - 0.5)*1 , smooth_code );
+        voice(i+1) = voice(i) + sss;
     end
 
     % Scale/shift absolute voice by minv,maxv reference points

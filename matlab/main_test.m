@@ -13,13 +13,27 @@ disp('started!');
 
 RESULTS_FILENAME = 'out/results.txt';
 %fid = fopen(RESULTS_FILENAME,'w');
-fid = 1;
+fid = 1; %uncomment this to use stdout instead of file
 if fid==-1
     fid = 1;
     fprintf(fid,'Error: could not create results file: %s\n', RESULTS_FILENAME);
 end
 
 fprintf(fid,'MMDQ-codec test started...\n');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% List of global variables
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+global FIXP;
+global MAXX;
+global FACTOR;
+global SAMPLES_PER_FRAME;
+global BITS_PER_SAMPLE;
+global SMOOTH_N;
+global SMOOTH_ERROR_VER;
+global COM_PWR;
+global EXP_PWR;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Test settings
@@ -56,7 +70,7 @@ OUTPUT_FILENAME_2 = 'out/out2.wav';  % Name of file for output signal for codec 
 %SAMPLES_PER_FRAME = 10; %42400 bit/s
 %BITS_PER_SAMPLE   = 4;
 
-%SAMPLES_PER_FRAME = 13; %40000 bit/s
+%SAMPLES_PER_FRAME = 13; %40000 bit/s     (*)
 %BITS_PER_SAMPLE   = 4;
 
 %SAMPLES_PER_FRAME = 26; %36000 bit/s
@@ -104,6 +118,11 @@ BITS_PER_SAMPLE   = 3;
 %SAMPLES_PER_FRAME = 30; %20000 bit/s
 %BITS_PER_SAMPLE   = 2;
 
+COM_PWR = [1.0  1.10  1.20  1.20];
+EXP_PWR = [1.0  1.10  1.20  1.20];
+
+SMOOTH_N = 4;
+SMOOTH_ERROR_VER = 0;
 
 FACTOR = 2^BITS_PER_SAMPLE;
 FIXP = 32768*2;
@@ -138,16 +157,16 @@ fprintf(fid,'-----------------------\n');
 
 %voice_filename  = '../samples/cmu/sample1_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/cmu/sample2_8000.wav';         VOICE_AMP_DB = -3;
-voice_filename  = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = -3;  %female
+voice_filename   = '../samples/cmu/sample3_8000.wav';         VOICE_AMP_DB = -3;  %female
 %voice_filename  = '../samples/cmu/sample4_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/cmu/sample5_8000.wav';         VOICE_AMP_DB = -3;
-%voice_filename  = '../samples/cmu/sample6_8000.wav';          VOICE_AMP_DB = -3;  %male
+%voice_filename  = '../samples/cmu/sample6_8000.wav';         VOICE_AMP_DB = -3;  %male
 %voice_filename  = '../samples/cmu/sample7_8000.wav';         VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/ask2.wav';       VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/fsk2.wav';       VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/psk4.wav';       VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/psk8.wav';       VOICE_AMP_DB = -3;  
-%voice_filename   = '../samples/modems_matlab/qask16.wav';     VOICE_AMP_DB = -3;  %modem
+%voice_filename  = '../samples/modems_matlab/qask16.wav';     VOICE_AMP_DB = -3;  %modem
 %voice_filename  = '../samples/modems_matlab/qask32.wav';     VOICE_AMP_DB = -3;
 %voice_filename  = '../samples/modems_matlab/qask64.wav';     VOICE_AMP_DB = -3;
 
@@ -213,11 +232,11 @@ case 0
     enc = [];
     dec = [];
 case 1
-    enc = encoder_init ( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
-    dec = decoder_init ( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX );
+    enc = [];
+    dec = [];
 case 2
-    enc = encoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX, FIXP );
-    dec = decoder2_init( SAMPLES_PER_FRAME, BITS_PER_SAMPLE, MAXX, FIXP );
+    enc = encoder2_init;
+    dec = decoder2_init;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -253,7 +272,7 @@ while i<=N-SAMPLES_PER_FRAME+1
     case 1
         [enc_data,enc] = encoder(enc_voice,enc,dec);
     case 2
-        [enc_data,enc] = encoder2(enc_voice,enc,dec,FIXP);
+        [enc_data,enc] = encoder2(enc_voice,enc,dec);
     end
 
     % count smooth-es
@@ -281,7 +300,7 @@ while i<=N-SAMPLES_PER_FRAME+1
     case 1
         [dec_voice,dec] = decoder(enc_data,dec);
     case 2
-        [dec_voice,dec] = decoder2(enc_data,dec,FIXP);
+        [dec_voice,dec] = decoder2(enc_data,dec);
     end
 
     %scale back, output voice
@@ -370,27 +389,14 @@ print('-dpng','out/test_spectrogramms.png');
 % Show compand/expand functions tables
 if CODEC_VERSION==2
     figure(3);
-
-    subplot(4,2,1);
-    hist(enc.table0,100);
-    title('compand');
-    subplot(4,2,3);
-    hist(enc.table1,100);
-    subplot(4,2,5);
-    hist(enc.table2,100);
-    subplot(4,2,7);
-    hist(enc.table3,100);
-
-    subplot(4,2,2);
-    hist(dec.table0,100);
-    title('expand');
-    subplot(4,2,4);
-    hist(dec.table1,100);
-    subplot(4,2,6);
-    hist(dec.table2,100);
-    subplot(4,2,8);
-    hist(dec.table3,100);
-
+    for s=1:SMOOTH_N
+        subplot(4,2,2*s-1);
+        hist(enc.table(s,:),100);
+        title('compand');
+        subplot(4,2,2*s);
+        hist(dec.table(s,:),100);
+        title('expand');
+    end
     print('-dpng','out/test_expandcompand.png');
 end
 
