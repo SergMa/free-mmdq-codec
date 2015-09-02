@@ -1,30 +1,42 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Mycodec decoder function initialization (table version)
-% [dec] = decoder_init( samples_per_frame, bits_per_sample )
+% [dec] = decoder_init( FIXP )
+% GLOBALS:
+%   MAXX
+%   FACTOR
+%   SAMPLES_PER_FRAME
+%   BITS_PER_SAMPLE
+%   SMOOTH_N
+%   SMOOTH_ERROR_VER
+%   COM_PWR
+%   EXP_PWR
 % INPUTS:
-%   samples_per_frame = number of voice samples per frame
-%   bits_per_sample   = number of bits per sample
-%   maxx              = amplitude of signal: signal=[-maxx...+maxx]
 %   FIXP  = constant of fixed-point arithmetics
 % OUTPUTS:
 %   dec   = decoder structure
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [dec] = decoder2_init( samples_per_frame, bits_per_sample, maxx, FIXP )
+function [dec] = decoder2_init()
+
+    global FIXP;
+    global MAXX;
+    global FACTOR;
+    global SAMPLES_PER_FRAME;
+    global BITS_PER_SAMPLE;
+    global SMOOTH_N;
+    global SMOOTH_ERROR_VER;
+    global COM_PWR;
+    global EXP_PWR;
 
     % set settings of decoder
-    dec.samples_per_frame = samples_per_frame;
-    dec.bits_per_sample   = bits_per_sample;
-    dec.factor            = 2^dec.bits_per_sample;
-    dec.maxx              = maxx;
 
-    % fill table for 1/voicediff_n, where voicediff_n=[0..2*maxx]
+    % fill table for 1/voicediff_n, where voicediff_n=[0..2*MAXX]
     % values=[0..FIXP],  0<=>0.0  FIXP<=>1.0
-    dec.divtable = zeros(1,2*maxx+1);
+    dec.divtable = zeros(1,2*MAXX+1);
     dec.divtable(1) = 0;
-    for div=1:1:2*maxx
+    for div=1:1:2*MAXX
         %this decrease error of integer division see decoder2():
-        if div <= (2*maxx)/256
+        if div <= (2*MAXX)/256
             dec.divtable(div+1) = fix( FIXP/div ); %K=1
         else
             dec.divtable(div+1) = fix( FIXP/(div/256) ); %K=256
@@ -32,30 +44,14 @@ function [dec] = decoder2_init( samples_per_frame, bits_per_sample, maxx, FIXP )
     end
 
     % fill tables
-    % inputs=[0..(dec.factor-1)]
+    % inputs=[0..(FACTOR-1)]
     % returns=[-FIXP..+FIXP]
-    dec.table0 = zeros(1,dec.factor);
-    for dv=0:(dec.factor-1)
-        sss = expand( 2*((dv+0.5)/dec.factor - 0.5) , 0 );
-        dec.table0(dv+1) = round(sss * FIXP);
-    end
-
-    dec.table1 = zeros(1,dec.factor);
-    for dv=0:(dec.factor-1)
-        sss = expand( 2*((dv+0.5)/dec.factor - 0.5) , 1 );
-        dec.table1(dv+1) = round(sss * FIXP);
-    end
-
-    dec.table2 = zeros(1,dec.factor);
-    for dv=0:(dec.factor-1)
-        sss = expand( 2*((dv+0.5)/dec.factor - 0.5) , 2 );
-        dec.table2(dv+1) = round(sss * FIXP);
-    end
-
-    dec.table3 = zeros(1,dec.factor);
-    for dv=0:(dec.factor-1)
-        sss = expand( 2*((dv+0.5)/dec.factor - 0.5) , 3 );
-        dec.table3(dv+1) = round(sss * FIXP);
+    dec.table = zeros(SMOOTH_N,FACTOR);
+    for s=1:SMOOTH_N
+        for dv=0:(FACTOR-1)
+            sss = expand( 2*((dv+0.5)/FACTOR - 0.5) , s );
+            dec.table(s,dv+1) = round(sss * FIXP);
+        end
     end
 
 return

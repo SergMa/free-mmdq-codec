@@ -1,6 +1,15 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Mycodec decoder function (table version)
 % [data,dec] = decode(voice,dec)
+% GLOBALS:
+%   MAXX
+%   FACTOR
+%   SAMPLES_PER_FRAME
+%   BITS_PER_SAMPLE
+%   SMOOTH_N
+%   SMOOTH_ERROR_VER
+%   COM_PWR
+%   EXP_PWR
 % INPUTS:
 %   data  = dim 1xM = data frame to decode
 %   dec   = decoder structure
@@ -12,7 +21,17 @@
 
 function [voice,dec] = decoder2( data, dec, FIXP )
 
-    N = dec.samples_per_frame;
+    global FIXP;
+    global MAXX;
+    global FACTOR;
+    global SAMPLES_PER_FRAME;
+    global BITS_PER_SAMPLE;
+    global SMOOTH_N;
+    global SMOOTH_ERROR_VER;
+    global COM_PWR;
+    global EXP_PWR;
+
+    N = SAMPLES_PER_FRAME;
 
     minv    = data(1);
     maxv    = data(2);
@@ -36,39 +55,12 @@ function [voice,dec] = decoder2( data, dec, FIXP )
     % Reconstrunct voice in relative coordinats
     voice = zeros(1,N);
 
-    code = fix( 2*smooth1 + smooth0 );
-    switch code
-    case 0
-        voice(1) = 0;
-        for i=1:N-1
-            %dvoice(i)  = [0..dec.factor-1]
-            %dec.table0 = [-FIXP..+FIXP]
-            voice(i+1) = voice(i) + dec.table0( dvoice(i)+1 );
-        end
-    case 1
-        %expand/compand smoothing
-        voice(1) = 0;
-        for i=1:N-1
-            %dvoice(i)  = [0..dec.factor-1]
-            %dec.table1 = [-FIXP..+FIXP]
-            voice(i+1) = voice(i) + dec.table1( dvoice(i)+1 );
-        end
-    case 2
-        %expand/compand smoothing
-        voice(1) = 0;
-        for i=1:N-1
-            %dvoice(i)  = [0..dec.factor-1]
-            %dec.table2 = [-FIXP..+FIXP]
-            voice(i+1) = voice(i) + dec.table2( dvoice(i)+1 );
-        end
-    case 3
-        %expand/compand smoothing
-        voice(1) = 0;
-        for i=1:N-1
-            %dvoice(i)  = [0..dec.factor-1]
-            %dec.table3 = [-FIXP..+FIXP]
-            voice(i+1) = voice(i) + dec.table3( dvoice(i)+1 );
-        end
+    smooth_code = 2*smooth1 + smooth0 + 1;
+    voice(1) = 0;
+    for i=1:N-1
+        %dvoice(i)  = [0..dec.factor-1]
+        %dec.table0 = [-FIXP..+FIXP]
+        voice(i+1) = voice(i) + dec.table( smooth_code, dvoice(i)+1 );
     end
 
     % Scale/shift absolute voice by minv,maxv reference points
@@ -76,7 +68,7 @@ function [voice,dec] = decoder2( data, dec, FIXP )
     voicemin  = min(voice);
     voicediff = voicemax - voicemin;
 
-    h = fix( FIXP / dec.samples_per_frame );
+    h = fix( FIXP / SAMPLES_PER_FRAME );
     voicediff_n = fix( voicediff * h / FIXP );
     voicemax_n  = fix( voicemax  * h / FIXP );
     voicemin_n  = fix( voicemin  * h / FIXP );
@@ -86,7 +78,7 @@ function [voice,dec] = decoder2( data, dec, FIXP )
     % voicediff_n = [0..2*maxx]
 
     div = dec.divtable( voicediff_n + 1 ); %div=[0..FIXP*FIXP]
-    if voicediff_n <= (2*dec.maxx)/256
+    if voicediff_n <= (2*MAXX)/256
         K = 1;
     else
         K = 256;
