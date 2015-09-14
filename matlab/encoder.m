@@ -135,11 +135,16 @@ function [data,enc] = encoder(voice,enc,dec)
             minnv = min(n_voice);
             maxrnv = max(r_voice);
             minrnv = min(r_voice);
-            K = (maxnv - minnv) / (maxrnv - minrnv);
-            Shift = minnv - K*minrnv;
+            %K = (maxnv - minnv) / (maxrnv - minrnv);
+            %Shift = minnv - K*minrnv;
+            %srnv = K*r_voice + Shift;
 
-            srnv = K*r_voice + Shift;
-            errors(s) = max( abs(srnv - n_voice) );
+            %multiply by (maxrnv - minrnv)
+            dn = maxnv - minnv;
+            dr = maxrnv - minrnv;
+            srnv = dn*(r_voice - minrnv) + dr*minnv;
+
+            errors(s) = max( abs(srnv - dr*n_voice) );
 
 %             %find reconstruction errors
 %             [voice2] = decoder(edata(s,:),dec);
