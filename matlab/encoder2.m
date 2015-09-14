@@ -119,8 +119,10 @@ function [data,enc] = encoder2( voice, enc, dec )
             end
 
             %get codes for dvoice values
-            n_voice = 0; %true normalized voice
-            r_voice = 0; %companded/expanded normalized voice
+            n_voice = zeros(1,N); %true normalized voice
+            r_voice = zeros(1,N); %companded/expanded normalized voice
+            n_voice(1) = 0;
+            r_voice(1) = 0;
             for i=1:N-1
                 %true normalized dvoice
                 % dvoice(i)=[-2*MAXX..+2*MAXX]
@@ -129,10 +131,11 @@ function [data,enc] = encoder2( voice, enc, dec )
                 n_dvoice = fix( dvoice(i)*div/K );
 
                 %true restored normalized voice
-                n_voice = n_voice + n_dvoice;
+                n_voice(i+1) = n_voice(i) + n_dvoice;
 
                 %get diff between true and companded/expanded normalized voices
-                r_dvoice = n_voice - r_voice;
+                % r_dvoice=[-FIXP..+FIXP]
+                r_dvoice = n_voice(i+1) - r_voice(i);
 
                 %compand/expand voice
 
@@ -148,20 +151,32 @@ function [data,enc] = encoder2( voice, enc, dec )
                 ce_dvoice = dec.table( s, edata(s,3+i)+1 );
 
                 %restore voice
-                r_voice = r_voice + ce_dvoice;
+                r_voice(i+1) = r_voice(i) + ce_dvoice;
             end
 
-            %find reconstruction errors
-            [voice2] = decoder(edata(s,:),dec);
+            %find reconstruction errors by n_voice[], r_voice[]
+            maxnv  = max(n_voice);
+            minnv  = min(n_voice);
+            maxrnv = max(r_voice);
+            minrnv = min(r_voice);
 
-            switch SMOOTH_ERROR_VER
-            case 0
-                errors(s) = max( abs(voice2-voice) );
-            case 1
-                errors(s) = sum( abs(voice2-voice) );
-            case 2
-                errors(s) = mean((voice2-voice).^2);
-            end
+            dn = maxnv - minnv;
+            dr = maxrnv - minrnv;
+            srnv = dn*(r_voice - minrnv) + dr*minnv;
+
+            errors(s) = max( abs(srnv - dr*n_voice) );
+
+%             %find reconstruction errors
+%             [voice2] = decoder(edata(s,:),dec);
+% 
+%             switch SMOOTH_ERROR_VER
+%             case 0
+%                 errors(s) = max( abs(voice2-voice) );
+%             case 1
+%                 errors(s) = sum( abs(voice2-voice) );
+%             case 2
+%                 errors(s) = mean((voice2-voice).^2);
+%             end
 
         end
         %get data for smooth with min error
