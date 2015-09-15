@@ -17,13 +17,14 @@
 /* DEFINITIONS                                                               */
 /*****************************************************************************/
 
+#if 0
 int32_t  mmdq_decode_nounpack ( struct mmdq_codec_s * dec,
                                 int16_t * voice,
                                 int32_t * r_voice,
                                 int16_t * data, int bytes,
                                 int32_t errmin,
                                 int imin, int imax);
-
+#endif
 
 /******************************************************************************/
 /* CONSTANTS                                                                  */
@@ -337,7 +338,7 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     int       s;
     int16_t   edata [SMOOTH_MAX] [DATA_SIZE_MAX];
     int32_t   sss;
-    int32_t   error;
+    //int32_t   error;
     int       pos;
     uint32_t  bitshift;
     int       bitcntr;
@@ -348,6 +349,13 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     int32_t   r_voice [SAMPLES_PER_FRAME_MAX];
     int32_t   r_dvoice;
     int32_t   ce_dvoice;
+
+    int32_t    maxerror;
+    int32_t    dn;
+    int32_t    dr;
+    int32_t    srnv;
+    int32_t    snv;
+    int32_t    err;
 
     /*
     int32_t   minnv;
@@ -450,7 +458,7 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
         n_voice[0] = 0;
         r_voice[0] = 0;
 
-        error = 0;
+        //error = 0;
 
         if(ampdv < 2*MAXX/256) {
             //K = 1
@@ -466,8 +474,8 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
 
                 //get diff between true and companded/expanded normalized voices
                 r_dvoice = n_voice[i+1] - r_voice[i];
-                if( abs(r_dvoice) > error )
-                    error = abs(r_dvoice);
+                //if( abs(r_dvoice) > error )
+                //    error = abs(r_dvoice);
                 
                 //compand/expand voice
                 // dv[i]=[-2*MAXX..+2*MAXX]
@@ -501,8 +509,8 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
 
                 //get diff between true and companded/expanded normalized voices
                 r_dvoice = n_voice[i+1] - r_voice[i];
-                if( abs(r_dvoice) > error )
-                    error = abs(r_dvoice);
+                //if( abs(r_dvoice) > error )
+                //    error = abs(r_dvoice);
                 
                 //compand/expand voice
                 // dv[i]=[-2*MAXX..+2*MAXX]
@@ -529,6 +537,23 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
         }
         else {
             //decode for selected smooth, returns error
+
+            dn = maxv - minv;
+            dr = r_voice[imax] - r_voice[imin];
+        
+            maxerror = 0;
+            for(i=0; i < codec->samples_per_frame; i++) {
+                srnv = dn*(r_voice[i] - r_voice[imin]) + dr*minv;
+                snv  = dr*voice[i];
+                err = abs(srnv - snv);
+                if(err > maxerror)
+                    maxerror = err;
+#if defined(SKIP_BAD_SMOOTH)
+                if(maxerror > errmin)
+                    break; //stop error estimation!
+#endif
+            }
+            //error = maxerror;
 
             /*
             minnv  = maxnv  = n_voice[0];
@@ -558,9 +583,9 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
                     error = err;
             }
             */
-            error = mmdq_decode_nounpack( codec, voice, r_voice, edata[s], codec->databytesnopack, errmin, imin, imax );
-            if (s==0 || (error < errmin) ) {
-                errmin = error;
+            //maxerror = mmdq_decode_nounpack( codec, voice, r_voice, edata[s], codec->databytesnopack, errmin, imin, imax );
+            if (s==0 || (maxerror < errmin) ) {
+                errmin = maxerror;
                 smin = s;
             }
         }
@@ -605,6 +630,7 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     return 0;
 }
 
+#if 0
 //------------------------------------------------------------------------------
 //mmdq_decode version without bit-unpacking (for use in mmdq_encoder)
 //inputs:  voice[] - true voice samples
@@ -746,6 +772,7 @@ int32_t  mmdq_decode_nounpack ( struct mmdq_codec_s * codec,
 #endif //#if0
 
 }
+#endif
 
 //------------------------------------------------------------------------------
 int  mmdq_decode ( struct mmdq_codec_s * codec,
