@@ -16,7 +16,13 @@ LOGFILENAME = [DIR,filesep,'generation.log'];
 
 disp('started!');
 
-fid = fopen(LOGFILENAME,'w');
+fid = 1;
+fid = fopen(LOGFILENAME,'w'); %uncomment this to use file instead of stdout
+if fid==-1
+    fid = 1;
+    fprintf(fid,'Error: could not create results file: %s\n', LOGFILENAME);
+end
+
 fprintf(fid,'modems signals generation started!');
 
 FS = 8000; %Sample rate, Hz
@@ -163,6 +169,9 @@ fprintf(fid,'databits: %d, error rate: %d\n', DATABITS, s);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 fprintf(fid,'finished!\n');
-fclose(fid);
+
+if fid~=1
+    fclose(fid);
+end
 
 disp('finished!');

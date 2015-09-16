@@ -11,12 +11,12 @@ close all;
 
 disp('started!');
 
-RESULTS_FILENAME = 'out/results.txt';
-%fid = fopen(RESULTS_FILENAME,'w');
+LOGFILENAME = 'out/results.txt';
 fid = 1;
+%fid = fopen(LOGFILENAME,'w'); %uncomment this to use file instead of stdout
 if fid==-1
     fid = 1;
-    fprintf(fid,'Error: could not create results file: %s\n', RESULTS_FILENAME);
+    fprintf(fid,'Error: could not create results file: %s\n', LOGFILENAME);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -35,7 +35,12 @@ NAME = 'male.wav';
 DIR  = 'male';
 
 LOGFILENAME = [DIR,filesep,'male.log'];
-fid = fopen(LOGFILENAME,'w');
+fid=1;
+%fid = fopen(LOGFILENAME,'w'); %uncomment this to use file instead of stdout
+if fid==-1
+    fid = 1;
+    fprintf(fid,'Error: could not create results file: %s\n', LOGFILENAME);
+end
 
 FILENAME = [DIR,filesep,NAME];
 y = wavread(FILENAME);
@@ -64,6 +69,8 @@ for i=1:FILES
 
 end
 
-fclose(fid);
+if fid~=1
+    fclose(fid);
+end
 
 disp('finished!');

@@ -11,12 +11,12 @@ close all;
 
 disp('started!');
 
-RESULTS_FILENAME = 'out/results.txt';
-%fid = fopen(RESULTS_FILENAME,'w');
-fid = 1; %uncomment this to use stdout instead of file
+LOGFILENAME = 'out/results.txt';
+fid = 1; 
+%fid = fopen(LOGFILENAME,'w'); %uncomment this to use file instead of stdout
 if fid==-1
     fid = 1;
-    fprintf(fid,'Error: could not create results file: %s\n', RESULTS_FILENAME);
+    fprintf(fid,'Error: could not create results file: %s\n', LOGFILENAME);
 end
 
 fprintf(fid,'MMDQ-codec test started...\n');
@@ -39,19 +39,10 @@ global EXP_PWR;
 % Test settings
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-SAMPLES = 0;         % Numbers of samples to process (if 0 - process all available samples)
-%SAMPLES = 1000:5000;
-
-FS = 8000;            % Sample (discretization) frequency, Hz
-TS = 1/FS;            % Sample (discretization) period, sec
-BITS = 16;            % Bits per sample in original input signal
-MAXX = 2^(BITS-1);    % Maximum amplitude of original input signal (for BITS=16: AMP=32768)
+SAMPLES = 0;          % Numbers of samples to process (if 0 - process all available samples)
+%SAMPLES = 1000:5000; % set desired samples range here
 
 USE_AUTOSCALE = 1;    % 0 - disable autoscale of input signals, 1 - enable
-
-CODEC_VERSION = 1;    % 0-no encode/decode operations
-                      % 1-matlab float point
-                      % 2-c-adapted, code tables, div tables
 
 SHOW_GRAPHICS = 1;    % 0 - disable plotting of graphics, 1 - enable it
 
@@ -118,11 +109,25 @@ BITS_PER_SAMPLE   = 3;
 %SAMPLES_PER_FRAME = 30; %20000 bit/s
 %BITS_PER_SAMPLE   = 2;
 
+%compand/expand functions powers
 COM_PWR = [1.0  1.10  1.20  1.20];
 EXP_PWR = [1.0  1.10  1.20  1.20];
 
-SMOOTH_N = 4;
-SMOOTH_ERROR_VER = 0;
+CODEC_VERSION = 2;    % 0-no encode/decode operations
+                      % 1-matlab float point
+                      % 2-c-adapted, code tables, div tables
+
+SMOOTH_N = 4;         % number of smoothes functions: 1..4
+
+SMOOTH_ERROR_VER = 0; % version of function to select best smooth function
+                      % 0:   max( abs(srnv - snv) )
+                      % 1:   sum( abs(srnv - snv) )
+                      % 2:   mean((abs(srnv - snv)).^2);
+
+FS = 8000;            % Sample (discretization) frequency, Hz
+TS = 1/FS;            % Sample (discretization) period, sec
+BITS = 16;            % Bits per sample in original input signal
+MAXX = 2^(BITS-1);    % Maximum amplitude of original input signal (for BITS=16: AMP=32768)
 
 FACTOR = 2^BITS_PER_SAMPLE;
 FIXP = 32768*2;
@@ -143,13 +148,14 @@ fprintf(fid,'bits             : %d\n', BITS);
 fprintf(fid,'maxx             : %d\n', MAXX);
 fprintf(fid,'-----------------------\n');
 fprintf(fid,'codec version    : %d\n', CODEC_VERSION);
+fprintf(fid,'smooth_n         : %d\n', SMOOTH_N);
+fprintf(fid,'smooth_error_ver : %d\n', SMOOTH_ERROR_VER);
 fprintf(fid,'samles per frame : %d\n', SAMPLES_PER_FRAME);
 fprintf(fid,'bits per sample  : %d\n', BITS_PER_SAMPLE);
 fprintf(fid,'factor           : %d\n', FACTOR);
 fprintf(fid,'compression      : %f\n', COMPRESSION);
 fprintf(fid,'bitrate, bit/s   : %d\n', BITRATE);
 fprintf(fid,'-----------------------\n');
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load input (voice,noise) signals from wave-files, generate signal to process

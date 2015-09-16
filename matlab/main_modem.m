@@ -33,7 +33,13 @@ DIR = 'modem';
 disp('started!');
 
 LOGFILENAME = [DIR,filesep,'demodulation.log'];
-fid = fopen(LOGFILENAME,'w');
+fid = 1;
+fid = fopen(LOGFILENAME,'w'); %uncomment this to use file instead of stdout
+if fid==-1
+    fid = 1;
+    fprintf(fid,'Error: could not create results file: %s\n', LOGFILENAME);
+end
+
 fprintf(fid,'modems signals demodulation started!');
 
 for f=1:length(FILENAME_PREFIX)
@@ -263,6 +269,9 @@ fprintf(fid,'MSE: %8.6f\n\n', mean( (y-y2).^2 ) );
 end
 
 fprintf(fid,'finished!\n');
-fclose(fid);
+
+if fid~=1
+    fclose(fid);
+end
 
 disp('finished!');
