@@ -17,14 +17,6 @@
 /* DEFINITIONS                                                               */
 /*****************************************************************************/
 
-#if 0
-int32_t  mmdq_decode_nounpack ( struct mmdq_codec_s * dec,
-                                int16_t * voice,
-                                int32_t * r_voice,
-                                int16_t * data, int bytes,
-                                int32_t errmin,
-                                int imin, int imax);
-#endif
 
 /******************************************************************************/
 /* CONSTANTS                                                                  */
@@ -320,14 +312,13 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
 {
     int16_t   minv;
     int16_t   maxv;
-    //int32_t  diffv;
+    int32_t   diffv;
     int       i;
     int       imin;
     int       imax;
     int32_t   dv [SAMPLES_PER_FRAME_MAX-1];
     int32_t   mindv;
     int32_t   maxdv;
-    //int32_t   diffdv;
 
     int32_t   a;
     int32_t   b;
@@ -338,37 +329,22 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     int       s;
     int16_t   edata [SMOOTH_MAX] [DATA_SIZE_MAX];
     int32_t   sss;
-    //int32_t   error;
     int       pos;
     uint32_t  bitshift;
     int       bitcntr;
 
-    //int32_t   voice2[SAMPLES_PER_FRAME_MAX];
     int32_t   n_dvoice;
-    int32_t   n_voice [SAMPLES_PER_FRAME_MAX];
+    int32_t   n_voice;
     int32_t   r_voice [SAMPLES_PER_FRAME_MAX];
     int32_t   r_dvoice;
     int32_t   ce_dvoice;
 
-    int32_t    maxerror;
-    int32_t    dn;
-    int32_t    dr;
-    int32_t    srnv;
-    int32_t    snv;
-    int32_t    err;
-
-    /*
-    int32_t   minnv;
-    int32_t   maxnv;
-    int32_t   minrnv;
-    int32_t   maxrnv;
-    int32_t   dn;
+    int32_t   maxerror;
     int32_t   dr;
     int32_t   srnv;
     int32_t   snv;
     int32_t   err;
-    */
-    
+
     /* commented for speed
     //Check input arguments
     if(codec==NULL) {
@@ -418,7 +394,7 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
             imax = i;
         }
     }
-    //diffv = maxv - minv;
+    diffv = maxv - minv;
     
     //get differencies of voice samples, mindv,maxdv,diffdv
     dv[0] = voice[1] - voice[0];
@@ -455,10 +431,8 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
         edata[s][2] = s;     //store smooth here for mmdq_decode_nounpack()
 
         //encode with selected smooth
-        n_voice[0] = 0;
+        n_voice = 0;
         r_voice[0] = 0;
-
-        //error = 0;
 
         if(ampdv < 2*MAXX/256) {
             //K = 1
@@ -470,10 +444,10 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
                 n_dvoice = dv[i] * (int)div;
 
                 //true restored normalized voice
-                n_voice[i+1]  = n_voice[i] + n_dvoice;
+                n_voice = n_voice + n_dvoice;
 
                 //get diff between true and companded/expanded normalized voices
-                r_dvoice = n_voice[i+1] - r_voice[i];
+                r_dvoice = n_voice - r_voice[i];
                 //if( abs(r_dvoice) > error )
                 //    error = abs(r_dvoice);
                 
@@ -505,10 +479,10 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
                 n_dvoice = (dv[i] * (int)div) >> 8;
 
                 //true restored normalized voice
-                n_voice[i+1]  = n_voice[i] + n_dvoice;
+                n_voice = n_voice + n_dvoice;
 
                 //get diff between true and companded/expanded normalized voices
-                r_dvoice = n_voice[i+1] - r_voice[i];
+                r_dvoice = n_voice - r_voice[i];
                 //if( abs(r_dvoice) > error )
                 //    error = abs(r_dvoice);
                 
@@ -537,53 +511,26 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
         }
         else {
             //decode for selected smooth, returns error
-
-            dn = maxv - minv;
             dr = r_voice[imax] - r_voice[imin];
-        
+
             maxerror = 0;
             for(i=0; i < codec->samples_per_frame; i++) {
-                srnv = dn*(r_voice[i] - r_voice[imin]) + dr*minv;
+                srnv = diffv*(r_voice[i] - r_voice[imin]) + dr*minv;
                 snv  = dr*voice[i];
                 err = abs(srnv - snv);
+
+#if BEST_SMOOTH_VER==0
                 if(err > maxerror)
                     maxerror = err;
+#elif BEST_SMOOTH_VER==1
+                maxerror += err;
+#endif
+
 #if defined(SKIP_BAD_SMOOTH)
-                if(maxerror > errmin)
+                if( (s>0) && (maxerror>errmin) )
                     break; //stop error estimation!
 #endif
             }
-            //error = maxerror;
-
-            /*
-            minnv  = maxnv  = n_voice[0];
-            minrnv = maxrnv = r_voice[0];
-            for(i=1; i<codec->samples_per_frame; i++) {
-            
-                if     (n_voice[i] < minnv)
-                    minnv = n_voice[i];
-                else if(n_voice[i] > maxnv)
-                    maxnv = n_voice[i];
-
-                if     (r_voice[i] < minrnv)
-                    minrnv = r_voice[i];
-                else if(r_voice[i] > maxrnv)
-                    maxrnv = r_voice[i];
-            }
-            
-            dn = maxnv  - minnv;
-            dr = maxrnv - minrnv;
-
-            error = 0;
-            for(i=0; i<codec->samples_per_frame; i++) {
-                srnv = dn*( r_voice[i] - minrnv ) + dr*minnv;
-                snv  = dr * n_voice[i];
-                err  = abs(srnv - snv);
-                if(err > error)
-                    error = err;
-            }
-            */
-            //maxerror = mmdq_decode_nounpack( codec, voice, r_voice, edata[s], codec->databytesnopack, errmin, imin, imax );
             if (s==0 || (maxerror < errmin) ) {
                 errmin = maxerror;
                 smin = s;
@@ -630,150 +577,6 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     return 0;
 }
 
-#if 0
-//------------------------------------------------------------------------------
-//mmdq_decode version without bit-unpacking (for use in mmdq_encoder)
-//inputs:  voice[] - true voice samples
-//         edata[], bytes - encoded voice
-//         errmin - current min error
-//returns: error estimation
-int32_t  mmdq_decode_nounpack ( struct mmdq_codec_s * codec,
-                                int16_t * voice,
-                                int32_t * r_voice,
-                                int16_t * edata, int bytes,
-                                int32_t errmin,
-                                int imin,
-                                int imax)
-{
-    int        i;
-    int32_t    maxerror;
-    int32_t  * voice2; //[SAMPLES_PER_FRAME_MAX];
-
-    int32_t    dn;
-    int32_t    dr;
-    int32_t    srnv;
-    int32_t    snv;
-    int32_t    err;
-
-    voice2 = r_voice;
-
-    //==========================================================================
-    //Reconstruct voice in relative coordinates
-    /*
-    voice2[0] = 0;
-    for(i=0; i < codec->samples_per_frame-1; i++) {
-        // dvoice(i)  = [0..dec.factor-1]
-        // codec->table0 = [-FIXP..+FIXP]
-        voice2[i+1] = voice2[i] + codec->dectable[edata[2]][ edata[3+i] ]; //edata[2]=s
-    }
-    */
-
-    //==========================================================================
-
-    dn = edata[1] - edata[0]; //edata[0]=minv, edata[1]=maxv
-    dr = voice2[imax] - voice2[imin];
-
-    maxerror = 0;
-    for(i=0; i < codec->samples_per_frame; i++) {
-        srnv = dn*(voice2[i] - voice2[imin]) + dr*edata[0]; //edata[0]=minv
-        snv  = dr*voice[i];
-        err = abs(srnv - snv);
-        if(err > maxerror)
-            maxerror = err;
-#if defined(SKIP_BAD_SMOOTH)
-                if(maxerror > errmin)
-                    break; //stop error estimation!
-#endif
-    }
-    return maxerror;
-
-#if 0
-    //==========================================================================
-    // Scale/shift absolute voice by minv,maxv reference points
-    //voicemin = voicemax = voice2[0];
-    //for (i=1; i<codec->samples_per_frame; i++) {
-    //    if (voice2[i]<voicemin)
-    //        voicemin = voice2[i];
-    //    else if (voice2[i]>voicemax)
-    //        voicemax = voice2[i];
-    //}
-    voicediff_n = ((int64_t)voicediff * codec->h) / FIXP;
-    diffv_xh    = ((int64_t)diffv * codec->h) / FIXP;
-
-    div = codec->divtable[ voicediff_n ];  //div=[0..2*FIXP]
-
-#if BEST_SMOOTH_VER==0
-    //ver.0: calculate error[s]=max(abs(voice[i]-voice[s][i]))
-    if (voicediff_n < 2*MAXX/256 ) {
-        //K=1
-        maxerror = 0;
-        for (i=0; i<codec->samples_per_frame; i++) {
-            //voice_n = ((int64_t)voice2[i] * codec->h) / FIXP;
-            //voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / FIXP;
-            error = abs( voice[i] - (minv + (int32_t)(diffv_xh * (voice2[i] - voicemin) * div / FIXP)) );
-            if(error>maxerror) {
-                maxerror = error;
-#if defined(SKIP_BAD_SMOOTH)
-                if(maxerror > errmin)
-                    break; //stop error estimation!
-#endif
-            }
-        }
-    }
-    else {
-        //K=256
-        maxerror = 0;
-        for (i=0; i<codec->samples_per_frame; i++) {
-            //voice_n = ((int64_t)voice2[i] * codec->h) / FIXP;
-            //voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / (FIXP * 256);
-            error = abs( voice[i] - (minv + (int32_t)(diffv_xh * (voice2[i] - voicemin) * div / (FIXP * 256))) );
-            if(error>maxerror) {
-                maxerror = error;
-#if defined(SKIP_BAD_SMOOTH)
-                if(maxerror > errmin)
-                    break; //stop error estimation!
-#endif
-            }
-        }
-    }
-    return maxerror;
-#else
-    //ver.1: calculate error[s]=sum(abs(voice[i]-voice[s][i]))
-    if (voicediff_n < 2*MAXX/256 ) {
-        //K=1
-        maxerror = 0;
-        for (i=0; i<codec->samples_per_frame; i++) {
-            //voice_n = ((int64_t)voice2[i] * codec->h) / FIXP;
-            //voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / FIXP;
-            error = abs( voice[i] - (minv + (int32_t)(diffv_xh * (voice2[i] - voicemin) * div / FIXP)) );
-            maxerror += error;
-#if defined(SKIP_BAD_SMOOTH)
-            if(maxerror > errmin)
-                break; //stop error estimation!
-#endif
-        }
-    }
-    else {
-        //K=256
-        maxerror = 0;
-        for (i=0; i<codec->samples_per_frame; i++) {
-            //voice_n = ((int64_t)voice2[i] * codec->h) / FIXP;
-            //voice[i] = minv + (int64_t)diffv * (voice_n - voicemin_n) * div / (FIXP * 256);
-            error = abs( voice[i] - (minv + (int32_t)(diffv_xh * (voice2[i] - voicemin) * div / (FIXP * 256))) );
-            maxerror += error;
-#if defined(SKIP_BAD_SMOOTH)
-            if(maxerror > errmin)
-                break; //stop error estimation!
-#endif
-        }
-    }
-    return maxerror;
-#endif
-#endif //#if0
-
-}
-#endif
-
 //------------------------------------------------------------------------------
 int  mmdq_decode ( struct mmdq_codec_s * codec,
                    uint8_t * data, int bytes,
@@ -787,13 +590,11 @@ int  mmdq_decode ( struct mmdq_codec_s * codec,
     int32_t  voicemin;
     int32_t  voicemax;
     int32_t  voicediff;
-    //int32_t  voicemin_n;
     int32_t  voicediff_n;
     int      s;
     int      smooth0;
     int      smooth1;
     int32_t  div;
-    //int32_t  voice_n;
     uint8_t  dv[SAMPLES_PER_FRAME_MAX-1];
     int32_t  voice2[SAMPLES_PER_FRAME_MAX];
     int64_t  diffv_xh;
@@ -896,16 +697,12 @@ int  mmdq_decode ( struct mmdq_codec_s * codec,
     if (voicediff_n < 2*MAXX/256 ) {
         //K=1
         for (i=0; i<codec->samples_per_frame; i++) {
-            //voice_n = (voice2[i] * codec->h) / FIXP;
-            //voice[i] = minv + (int64_t)(voice_n - voicemin_n) * (int64_t)(diffv * div) / FIXP;
             voice[i] = minv + (int32_t)(diffv_xh * (voice2[i] - voicemin) * div / FIXP);
         }
     }
     else {
         //K=256
         for (i=0; i<codec->samples_per_frame; i++) {
-            //voice_n = (voice2[i] * codec->h) / FIXP;
-            //voice[i] = minv + (int64_t)(voice_n - voicemin_n) * (int64_t)(diffv * div) / (FIXP*256);
             voice[i] = minv + (int32_t)(diffv_xh * (voice2[i] - voicemin) * div / (FIXP * 256));
         }
     }
