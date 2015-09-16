@@ -61,7 +61,7 @@ OUTPUT_FILENAME_2 = 'out/out2.wav';  % Name of file for output signal for codec 
 %SAMPLES_PER_FRAME = 10; %42400 bit/s
 %BITS_PER_SAMPLE   = 4;
 
-%SAMPLES_PER_FRAME = 13; %40000 bit/s     (*)
+%SAMPLES_PER_FRAME = 13; %40000 bit/s     (MMDQ-40)
 %BITS_PER_SAMPLE   = 4;
 
 %SAMPLES_PER_FRAME = 26; %36000 bit/s
@@ -70,13 +70,13 @@ OUTPUT_FILENAME_2 = 'out/out2.wav';  % Name of file for output signal for codec 
 %SAMPLES_PER_FRAME = 6; %42666 bit/s
 %BITS_PER_SAMPLE   = 3;
 
-%SAMPLES_PER_FRAME = 7; %40000 bit/s      (*)
+%SAMPLES_PER_FRAME = 7; %40000 bit/s      (MMDQ-40x)
 %BITS_PER_SAMPLE   = 3;
 
 %SAMPLES_PER_FRAME = 8; %38000 bit/s
 %BITS_PER_SAMPLE   = 3;
 
-SAMPLES_PER_FRAME = 14; %32000 bit/s     (*)
+SAMPLES_PER_FRAME = 14; %32000 bit/s     (MMDQ-32)
 BITS_PER_SAMPLE   = 3;
 
 %SAMPLES_PER_FRAME = 32; %27500 bit/s
@@ -110,10 +110,13 @@ BITS_PER_SAMPLE   = 3;
 %BITS_PER_SAMPLE   = 2;
 
 %compand/expand functions powers
-COM_PWR = [1.0  1.10  1.20  1.20];
+COM_PWR = [1.0  1.10  1.20  1.20];  % best for MMDQ-32
 EXP_PWR = [1.0  1.10  1.20  1.20];
 
-CODEC_VERSION = 2;    % 0-no encode/decode operations
+%COM_PWR = [ 1.00459654758119  1.09093693508955   1.17309811506971   1.183272628612 ];  % best for MMDQ-40
+%EXP_PWR = [ 1.00459654758119  1.09093693508955   1.17309811506971   1.183272628612 ];
+
+CODEC_VERSION = 1;    % 0-no encode/decode operations
                       % 1-matlab float point
                       % 2-c-adapted, code tables, div tables
 

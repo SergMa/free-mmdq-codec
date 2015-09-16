@@ -70,7 +70,7 @@ OUTPUT_FILENAME_2 = 'out/out2.wav';  % Name of file for output signal for codec 
 %SAMPLES_PER_FRAME = 10; %42400 bit/s
 %BITS_PER_SAMPLE   = 4;
 
-%SAMPLES_PER_FRAME = 13; %40000 bit/s    (*)
+%SAMPLES_PER_FRAME = 13; %40000 bit/s    (MMDQ-40)
 %BITS_PER_SAMPLE   = 4;
 
 %SAMPLES_PER_FRAME = 26; %36000 bit/s
@@ -79,13 +79,13 @@ OUTPUT_FILENAME_2 = 'out/out2.wav';  % Name of file for output signal for codec 
 %SAMPLES_PER_FRAME = 6; %42666 bit/s
 %BITS_PER_SAMPLE   = 3;
 
-%SAMPLES_PER_FRAME = 7; %40000 bit/s     (*)
+%SAMPLES_PER_FRAME = 7; %40000 bit/s     (MMDQ-40x)
 %BITS_PER_SAMPLE   = 3;
 
 %SAMPLES_PER_FRAME = 8; %38000 bit/s
 %BITS_PER_SAMPLE   = 3;
 
-SAMPLES_PER_FRAME = 14; %32000 bit/s     (*)
+SAMPLES_PER_FRAME = 14; %32000 bit/s     (MMDQ-32)
 BITS_PER_SAMPLE   = 3;
 
 %SAMPLES_PER_FRAME = 32; %27500 bit/s

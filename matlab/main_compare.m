@@ -13,7 +13,7 @@ disp('started!');
 
 LOGFILENAME = 'out/results.txt';
 fid = 1;
-%fid = fopen(LOGFILENAME,'w'); %uncomment this to use file instead of stdout
+fid = fopen(LOGFILENAME,'w'); %uncomment this to use file instead of stdout
 if fid==-1
     fid = 1;
     fprintf(fid,'Error: could not create results file: %s\n', LOGFILENAME);
@@ -37,10 +37,10 @@ CODEC1_FILENAME     = 'female/g726-32_female.wav';
 %CODEC1_FILENAME    = 'female/g726-40_female.wav';   
 
 % Name of file for signal which has been encoded/decoded by codec 2
-%CODEC2_FILENAME    = 'female/mmdq-32-1_female.wav';   
+CODEC2_FILENAME     = 'female/mmdq-32-1_female.wav';   
 %CODEC2_FILENAME    = 'female/mmdq-32-2_female.wav';   
 %CODEC2_FILENAME    = 'female/mmdq-32-3_female.wav';   
-CODEC2_FILENAME     = 'female/mmdq-32-4_female.wav';   
+%CODEC2_FILENAME    = 'female/mmdq-32-4_female.wav';   
 
 %CODEC2_FILENAME    = 'female/mmdq-40-1_female.wav';   
 %CODEC2_FILENAME    = 'female/mmdq-40-2_female.wav';   
