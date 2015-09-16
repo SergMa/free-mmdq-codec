@@ -84,6 +84,6 @@ $(OUT)/$(PROJ): $(OBJS) Makefile
 	$(LD) $(OBJS) -o $@
 
 clean:
-	rm -f $(OUT)/*.o $(OUT)/*.d $(OUT)/test $(OUT)/*.bin $(OUT)/*.wav
+	rm -f $(OUT)/*.o $(OUT)/*.d $(OUT)/test $(OUT)/*.bin $(OUT)/*.wav $(OUT)/*.log
 
 .PHONY: all compile clean
