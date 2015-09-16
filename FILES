@@ -9,17 +9,16 @@ Free-MMDQ-codec files
 ./c/wave/gsmlib/                  - source code of GSM-0610 codec implementation
 ./c/wave/g711super.[c|h]          - source code of G.711 codec implementation
 ./c/mmdq_codec.[c|h]              - source code of MMDQ codec implementation
-./c/test                          - source code of test utility
+./c/test.c                        - source code of test utility
 
-./matlab                          - MATLAB/FreeMat/Octave-language source code of MMDQ codec and test utilites
-./matlab/female                   - directory for output files of quality tests for female voice
-./matlab/male                     - directory for output files of quality tests for male voice
-./matlab/modem                    - directory for output files of quality tests for modems sound
-./matlab/out                      - directory for output files of some other tests
+./matlab/                         - MATLAB/FreeMat/Octave-language source code of MMDQ codec and test utilites
+./matlab/female/                  - directory for output files of quality tests for female voice
+./matlab/male/                    - directory for output files of quality tests for male voice
+./matlab/modem/                   - directory for output files of quality tests for modems sound
+./matlab/out/                     - directory for output files of some other tests
+
 ./matlab/encoder.m                - MMDQ-encoder (floating point version)
 ./matlab/decoder.m                - MMDQ-decoder (floating point version)
-./matlab/encoder_init.m           - MMDQ-encoder (floating point version) initialization
-./matlab/decoder_init.m           - MMDQ-decoder (floating point version) initialization
 ./matlab/encoder2.m               - MMDQ-encoder (fixed point version)
 ./matlab/decoder2.m               - MMDQ-decoder (fixed point version)
 ./matlab/encoder2_init.m          - MMDQ-encoder (fixed point version) initialization
@@ -37,4 +36,9 @@ Free-MMDQ-codec files
 ./samples/cmu/                    - set of male/female voice speech samples
 ./samples/noise/                  - set of noise samples
 
-
+./distclean.sh                    - clean directories (clear all compiled, generated files)
+./c/demo.sh                       - demonstrate possibilities of test (write outputs into ./c/out)
+./c/demo_female.sh                - compare G.711, G.726, MMDQ codecs for female speech signal (write into ./matlab/female)
+./c/demo_male.sh                  - compare G.711, G.726, MMDQ codecs for male speech signal (write into ./matlab/male)
+./c/demo_modems.sh                - compare G.711, G.726, MMDQ codecs for different modems signals (write into ./matlab/modem)
+./c/demo_speed.sh                 - compare G.711, G.726, MMDQ codecs for speed (write into ./c/out)
