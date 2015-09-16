@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Mycodec encoder function initialization (table version)
+% MMDQ encoder function initialization (table version)
 % [enc] = encoder_init( FIXP )
 % GLOBALS:
 %   FIXP

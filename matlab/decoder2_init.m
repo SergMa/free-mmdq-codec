@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Mycodec decoder function initialization (table version)
+% MMDQ decoder function initialization (table version)
 % [dec] = decoder_init( FIXP )
 % GLOBALS:
 %   MAXX

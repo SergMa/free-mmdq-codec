@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Mycodec encoder function
+% MMDQ encoder function
 % [data,enc] = encode(voice,enc)
 % GLOBALS:
 %   MAXX

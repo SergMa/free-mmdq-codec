@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Mycodec encoder function (table version)
+% MMDQ encoder function (table version)
 % [data,enc] = encode(voice,enc)
 % GLOBALS:
 %   FIXP
