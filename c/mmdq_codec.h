@@ -15,11 +15,13 @@
 /******************************************************************************/
 
 //#define BEST_SMOOTH_VER        0  //0 - ver.0: calculate error[s]=max(abs(voice[i]-voice[s][i]))
-#define BEST_SMOOTH_VER          1  //1 - ver.1: calculate error[s]=sum(abs(voice[i]-voice[s][i]))
+#define BEST_SMOOTH_VER          0  //1 - ver.1: calculate error[s]=sum(abs(voice[i]-voice[s][i]))
                                     //BEST_SMOOTH_VER=1 is little faster than BEST_SMOOTH_VER=0, but
                                     //error is little worse.
 
-//#define SKIP_BAD_SMOOTH        1  //uncomment this to enable errmin speed optimization in mmdq_decode_nounpack()
+#define SKIP_BAD_SMOOTH          1  //uncomment this to enable errmin speed optimization
+
+//#define MINMAX_OPTIMIZATION    1  //uncomment this to make speed optimization: use imin, imax to estimate min(r_voice),max(r_voice)
 
 #define FIXP                   (2*32768)
 

@@ -314,8 +314,12 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     int16_t   maxv;
     int32_t   diffv;
     int       i;
+    int32_t   minrv;
+    int32_t   maxrv;
+#ifdef MINMAX_OPTIMIZATION
     int       imin;
     int       imax;
+#endif
     int32_t   dv [SAMPLES_PER_FRAME_MAX-1];
     int32_t   mindv;
     int32_t   maxdv;
@@ -382,16 +386,21 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
 
     //Calculate minv,maxv,diffv
     minv = maxv = voice[0];
-    imin = 0;
-    imax = 0;
+    #ifdef MINMAX_OPTIMIZATION
+    imin = imax = 0;
+    #endif
     for(i=1; i<codec->samples_per_frame; i++) {
         if (voice[i]<minv) {
             minv = voice[i];
+            #ifdef MINMAX_OPTIMIZATION
             imin = i;
+            #endif
         }
         else if (voice[i]>maxv) {
             maxv = voice[i];
+            #ifdef MINMAX_OPTIMIZATION
             imax = i;
+            #endif
         }
     }
     diffv = maxv - minv;
@@ -510,12 +519,26 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
             break;
         }
         else {
+            #ifdef MINMAX_OPTIMIZATION
+            //use imin,imax to estimate min(r_voice),max(r_voice)
+            minrv = r_voice[imin];
+            maxrv = r_voice[imax];
+            #else
+            //find min(r_voice), max(r_voice)
+            minrv = maxrv = r_voice[0];
+            for(i=1; i < codec->samples_per_frame; i++) {
+                if(r_voice[i] < minrv)
+                    minrv = r_voice[i];
+                else if(r_voice[i] > maxrv)
+                    maxrv = r_voice[i];
+            }
+            #endif
+        
             //decode for selected smooth, returns error
-            dr = r_voice[imax] - r_voice[imin];
-
+            dr = maxrv - minrv;
             maxerror = 0;
             for(i=0; i < codec->samples_per_frame; i++) {
-                srnv = diffv*(r_voice[i] - r_voice[imin]) + dr*minv;
+                srnv = diffv*(r_voice[i] - minrv) + dr*minv;
                 snv  = dr*voice[i];
                 err = abs(srnv - snv);
 
