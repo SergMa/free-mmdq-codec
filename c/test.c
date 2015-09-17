@@ -283,7 +283,7 @@ int main( int argc, char **argv )
     case ACTION_MMDQ_ENCODE:
 
         // initialize variables
-        err = mmdq_codec_init( &codec, spf, bps, smooth, 0 ); //decoder_only=0
+        err = mmdq_codec_init( &codec, 0, spf, bps, smooth, 0 ); //decoder_only=0
         if(err<0) {
             printf("error: mmdq_codec_init() failed\n");
             goto exit_fail;
@@ -350,7 +350,7 @@ int main( int argc, char **argv )
     case ACTION_MMDQ_DECODE:
 
         // initialize variables
-        err = mmdq_codec_init( &codec, spf, bps, smooth, 0 ); //decoder_only=0
+        err = mmdq_codec_init( &codec, 0, spf, bps, smooth, 0 ); //decoder_only=0
         if(err<0) {
             printf("error: mmdq_codec_init() failed\n");
             goto exit_fail;
@@ -811,7 +811,7 @@ int main( int argc, char **argv )
             printf("MMDQ-32-%d  encode (spf=14,bps=3,smooth=%d)  ", smooth, smooth);
             spf    = 14;
             bps    = 3;
-            (void) mmdq_codec_init( &codec, spf, bps, smooth, 0 ); //decoder_only=0
+            (void) mmdq_codec_init( &codec, 0, spf, bps, smooth, 0 ); //decoder_only=0
     
             i         = 0;
             voicebufi = 0;
@@ -837,7 +837,7 @@ int main( int argc, char **argv )
         smooth   = 4;
         spf      = 14;
         bps      = 3;
-        (void) mmdq_codec_init( &codec, spf, bps, smooth, 0 ); //decoder_only=0
+        (void) mmdq_codec_init( &codec, 0, spf, bps, smooth, 0 ); //decoder_only=0
         bytes = mmdq_framebytes( &codec );
         
         i         = 0;
@@ -863,7 +863,7 @@ int main( int argc, char **argv )
             printf("MMDQ-40-%d  encode (spf=13,bps=4,smooth=%d)  ", smooth, smooth);
             spf    = 13;
             bps    = 4;
-            (void) mmdq_codec_init( &codec, spf, bps, smooth, 0 ); //decoder_only=0
+            (void) mmdq_codec_init( &codec, 0, spf, bps, smooth, 0 ); //decoder_only=0
     
             i         = 0;
             voicebufi = 0;
@@ -889,7 +889,7 @@ int main( int argc, char **argv )
         smooth   = 4;
         spf      = 13;
         bps      = 4;
-        (void) mmdq_codec_init( &codec, spf, bps, smooth, 0 ); //decoder_only=0
+        (void) mmdq_codec_init( &codec, 0, spf, bps, smooth, 0 ); //decoder_only=0
         bytes = mmdq_framebytes( &codec );
         
         i         = 0;
@@ -915,7 +915,7 @@ int main( int argc, char **argv )
             printf("MMDQ-40x-%d encode (spf=7,bps=3,smooth=%d)   ", smooth, smooth);
             spf    = 7;
             bps    = 3;
-            (void) mmdq_codec_init( &codec, spf, bps, smooth, 0 ); //decoder_only=0
+            (void) mmdq_codec_init( &codec, 0, spf, bps, smooth, 0 ); //decoder_only=0
     
             i         = 0;
             voicebufi = 0;
@@ -941,7 +941,7 @@ int main( int argc, char **argv )
         smooth   = 4;
         spf      = 7;
         bps      = 3;
-        (void) mmdq_codec_init( &codec, spf, bps, smooth, 0 ); //decoder_only=0
+        (void) mmdq_codec_init( &codec, 0, spf, bps, smooth, 0 ); //decoder_only=0
         bytes = mmdq_framebytes( &codec );
         
         i         = 0;

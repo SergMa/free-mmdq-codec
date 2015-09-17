@@ -156,6 +156,7 @@ double expand( double x, int law )
 
 //------------------------------------------------------------------------------
 int mmdq_codec_init ( struct mmdq_codec_s * codec,
+                      int samples_per_packet,
                       int samples_per_frame,
                       int bits_per_sample,
                       int smooth,
@@ -174,6 +175,15 @@ int mmdq_codec_init ( struct mmdq_codec_s * codec,
         MYLOG_ERROR("Invalid codec=NULL");
         return -1;
     }
+    
+    if (samples_per_packet==0)
+        samples_per_packet = SAMPLES_PER_PACKET_MIN; //set to default value
+    
+    if (samples_per_packet<SAMPLES_PER_PACKET_MIN ||
+        samples_per_packet>SAMPLES_PER_PACKET_MAX) {
+        MYLOG_ERROR("Invalid samples_per_packet=%d",samples_per_packet);
+        return -1;
+    }
     if (samples_per_frame<SAMPLES_PER_FRAME_MIN ||
         samples_per_frame>SAMPLES_PER_FRAME_MAX) {
         MYLOG_ERROR("Invalid samples_per_frame=%d",samples_per_frame);
@@ -190,6 +200,7 @@ int mmdq_codec_init ( struct mmdq_codec_s * codec,
     }
 
     // Set enc fields
+    codec->samples_per_packet= samples_per_packet;
     codec->samples_per_frame = samples_per_frame;
     codec->bits_per_sample   = bits_per_sample;
     codec->smooth            = smooth;
@@ -206,6 +217,12 @@ int mmdq_codec_init ( struct mmdq_codec_s * codec,
     codec->databytesnopack = 1 + 1 + 1 + (codec->samples_per_frame-1);
 
     // Clear tables
+    codec->txbuff = NULL;
+    codec->txbuff_samples = 0;
+
+    codec->rxbuff = NULL;
+    codec->rxbuff_samples = 0;
+
     codec->divtable = NULL;
 
     for(s=0; s<SMOOTH_MAX; s++)
@@ -213,6 +230,27 @@ int mmdq_codec_init ( struct mmdq_codec_s * codec,
 
     for(s=0; s<SMOOTH_MAX; s++)
         codec->dectable[s] = NULL;
+
+    // Allocate rxbuff, txbuff
+    if(!decoder_only) {
+        codec->txbuff = calloc( codec->samples_per_frame, sizeof(int16_t) );
+        if(codec->txbuff==NULL) {
+            MYLOG_ERROR("Could not allocate memory for codec->txbuff");
+            goto exit_fail;
+        }
+        for(i=0; i<codec->samples_per_frame; i++) {
+            codec->txbuff[i] = 0;
+        }
+    }
+    codec->rxbuff = calloc( codec->samples_per_frame, sizeof(int16_t) );
+    if(codec->rxbuff==NULL) {
+        MYLOG_ERROR("Could not allocate memory for codec->rxbuff");
+        goto exit_fail;
+    }
+    for(i=0; i<codec->samples_per_frame; i++) {
+        codec->rxbuff[i] = 0;
+    }
+    codec->rxbuff_samples = codec->samples_per_frame;
 
     // fill table for 1/ampdv, where
     // ampdv=[0...2*MAXX]
@@ -274,6 +312,14 @@ int mmdq_codec_init ( struct mmdq_codec_s * codec,
     return 0;
 
 exit_fail:
+    if (codec->txbuff) {
+        free(codec->txbuff);
+        codec->txbuff = NULL;
+    }
+    if (codec->rxbuff) {
+        free(codec->rxbuff);
+        codec->rxbuff = NULL;
+    }
     if (codec->divtable) {
         free(codec->divtable);
         codec->divtable = NULL;
@@ -717,4 +763,195 @@ int  mmdq_decode ( struct mmdq_codec_s * codec,
     return 0;
 }
 
+//------------------------------------------------------------------------------
+int  mmdq_encode_pack( struct mmdq_codec_s * codec,
+                       int16_t * voice, int samples,
+                       uint8_t * data, int datasize, int * bytes )
+{
+    int err;
+    int i;
+    int N;
+    int frbytes;
+    int txbytes;
+    int txsamples; //number of samples to be transmitted
 
+    int16_t * voice_ptr;
+    uint8_t * data_ptr;
+    
+    
+    /* Commented for speed
+    //Check input arguments
+    if(codec==NULL) {
+        MYLOG_ERROR("Invalid argument: codec=NULL");
+        return -1;
+    }
+    if(voice==NULL) {
+        MYLOG_ERROR("Invalid argument: voice=NULL");
+        return -1;
+    }
+    if(data==NULL) {
+        MYLOG_ERROR("Invalid argument: data=NULL");
+        return -1;
+    }
+    if(bytes==NULL) {
+        MYLOG_ERROR("Invalid argument: bytes=NULL");
+        return -1;
+    }
+    if(samples != codec->samples_per_packet) {
+        MYLOG_ERROR("Invalid argument: samples=%d, samples_per_packet=%d",
+                    samples, codec->samples_per_packet);
+        return -1;
+    }
+    */
+
+    txsamples = samples + codec->txbuff_samples;
+    txbytes   = 0;
+    voice_ptr = voice;
+    data_ptr  = data;
+    
+    //1.read first N samples from voice[] into end of txbuff[] (make full txbuff)
+    //  encode txbuff[]
+    if(codec->txbuff_samples > 0) {
+        N = codec->samples_per_frame - codec->txbuff_samples;
+        for(i=0; i<N; i++)
+            codec->txbuff[codec->txbuff_samples + i] = voice_ptr[i];
+        
+        err = mmdq_encode( codec, codec->txbuff, codec->samples_per_frame,
+                           data_ptr, datasize - txbytes, &frbytes );
+        if(err) {
+            MYLOG_ERROR("mmdq_encode() failed for frame");
+            return -1;
+        }
+        
+        voice_ptr += N;
+        data_ptr  += frbytes;
+        txsamples -= codec->samples_per_frame;
+        txbytes   += frbytes;
+        codec->txbuff_samples = 0;
+    }
+    
+    //2.encode voice[] (frame-by-frame) from voice[N] point
+    while( txsamples >= codec->samples_per_frame )
+    {
+        err = mmdq_encode( codec, voice_ptr, codec->samples_per_frame,
+                           data_ptr, datasize - txbytes, &frbytes );
+        if(err) {
+            MYLOG_ERROR("mmdq_encode() failed for frame");
+            return -1;
+        }
+        
+        voice_ptr += codec->samples_per_frame;
+        data_ptr  += frbytes;
+        txsamples -= codec->samples_per_frame;
+        txbytes   += frbytes;
+    }
+    
+    //3.if not encoded samples left in voice[], move them into begining of txbuff[]
+    if( txsamples > 0 ) {
+        for(i=0; i<txsamples; i++)
+            codec->txbuff[i] = voice_ptr[i];
+        codec->txbuff_samples += txsamples;
+    }
+
+    *bytes = txbytes;
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int  mmdq_decode_pack( struct mmdq_codec_s * codec,
+                       uint8_t * data, int bytes,
+                       int16_t * voice, int voicesize, int * samples )
+{
+    int err;
+    int i;
+    int rxsamples;
+    int frsamples;
+    int rxbytes;
+
+    int16_t * voice_ptr;
+    uint8_t * data_ptr;
+
+    /* Commented for speed
+    //Check input arguments
+    if(codec==NULL) {
+        MYLOG_ERROR("Invalid argument: codec=NULL");
+        return -1;
+    }
+    if(voice==NULL) {
+        MYLOG_ERROR("Invalid argument: voice=NULL");
+        return -1;
+    }
+    if(data==NULL) {
+        MYLOG_ERROR("Invalid argument: data=NULL");
+        return -1;
+    }
+    if(bytes==NULL) {
+        MYLOG_ERROR("Invalid argument: bytes=NULL");
+        return -1;
+    }
+    */
+    
+    /*
+    if( bytes % codec->databytes != 0 ) {
+        MYLOG_ERROR("Invalid argument: bytes=%d, codec->databytes=%d", bytes, codec->databytes);
+        return -1;
+    }
+    */
+    
+    voice_ptr = voice;
+    data_ptr  = data;
+    rxsamples = codec->samples_per_packet;
+    
+    //1.write first N samples from rxbuff[] into voice[]
+    if(codec->rxbuff_samples > 0) {
+        for(i=0; i<codec->rxbuff_samples; i++)
+            voice_ptr[i] = codec->rxbuff[i];
+
+        voice_ptr += codec->rxbuff_samples;
+        rxsamples -= codec->rxbuff_samples;
+        
+        codec->rxbuff_samples = 0;
+    }
+
+    //2.decode frames from data[] into voice[] from N-th element
+    rxbytes = bytes;
+    while( rxsamples >= codec->samples_per_frame )
+    {
+        err = mmdq_decode( codec, data_ptr, codec->databytes,
+                           voice_ptr, voicesize - rxsamples, &frsamples );
+        if(err) {
+            MYLOG_ERROR("mmdq_decode() failed for frame");
+            return -1;
+        }
+
+        voice_ptr += frsamples;
+        data_ptr  += codec->databytes;
+        rxsamples -= frsamples;
+        rxbytes   -= codec->databytes;
+    }
+    
+    //3.if some frames had not been pushed into voice[], push them into rxbuff[]
+    if( rxsamples > 0 ) {
+        //decode frame from data[] into rxbuff[]
+        err = mmdq_decode( codec, data_ptr, codec->databytes,
+                           codec->rxbuff, codec->samples_per_frame, &frsamples );
+        if(err) {
+            MYLOG_ERROR("mmdq_decode() failed for frame");
+            return -1;
+        }
+        
+        data_ptr += codec->databytes;
+        
+        //copy out rxsamples from rxbuff[] into voice[]
+        for(i=0; i<rxsamples; i++) {
+            voice_ptr[i] = codec->rxbuff[i];
+        }
+
+        //shift rxbuff[]
+        for( i=0; i < frsamples-codec->samples_per_frame; i++ )
+            codec->rxbuff[i] = codec->rxbuff[i + rxsamples];
+    }
+
+    *samples = codec->samples_per_packet;
+    return 0;
+}
