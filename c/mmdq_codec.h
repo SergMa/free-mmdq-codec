@@ -19,7 +19,7 @@
                                     //BEST_SMOOTH_VER=1 is little faster than BEST_SMOOTH_VER=0, but
                                     //error is little worse.
 
-#define SKIP_BAD_SMOOTH          1  //uncomment this to enable errmin speed optimization
+//#define SKIP_BAD_SMOOTH        1  //uncomment this to enable errmin speed optimization
 
 //#define MINMAX_OPTIMIZATION    1  //uncomment this to make speed optimization: use imin, imax to estimate min(r_voice),max(r_voice)
 

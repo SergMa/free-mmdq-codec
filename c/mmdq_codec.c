@@ -338,7 +338,7 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     int       bitcntr;
 
     int32_t   n_dvoice;
-    int32_t   n_voice;
+    int32_t   n_voice [SAMPLES_PER_FRAME_MAX];
     int32_t   r_voice [SAMPLES_PER_FRAME_MAX];
     int32_t   r_dvoice;
     int32_t   ce_dvoice;
@@ -433,6 +433,35 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     smin   = 0;   //we will find minimal error too
     errmin = 0;   //
     div = codec->divtable[ ampdv ];
+
+    //fill n_voice[]
+    n_voice[0] = 0;
+    if(ampdv < 2*MAXX/256) {
+        //K = 1
+        for(i=0; i<codec->samples_per_frame-1; i++) {
+            //true normalized dvoice
+            // dv[i]=[-2*MAXX..+2*MAXX]
+            // div=[0..FIXP]
+            // n_dvoice=[-FIXP..+FIXP]
+            n_dvoice = dv[i] * (int)div;
+    
+            //true restored normalized voice
+            n_voice[i+1] = n_voice[i] + n_dvoice;
+        }
+    }
+    else {
+        //K = 256
+        for(i=0; i<codec->samples_per_frame-1; i++) {
+            //true normalized dvoice
+            // dv[i]=[-2*MAXX..+2*MAXX]
+            // div=[0..FIXP]
+            // n_dvoice=[-FIXP..+FIXP]
+            n_dvoice = (dv[i] * (int)div) >> 8;
+    
+            //true restored normalized voice
+            n_voice[i+1] = n_voice[i] + n_dvoice;
+        }
+    }
     
     for(s=0; s<codec->smooth; s++) {
         edata[s][0] = minv;  //do not swap minx,maxx here for mmdq_decode_nounpack()
@@ -440,78 +469,31 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
         edata[s][2] = s;     //store smooth here for mmdq_decode_nounpack()
 
         //encode with selected smooth
-        n_voice = 0;
         r_voice[0] = 0;
 
-        if(ampdv < 2*MAXX/256) {
-            //K = 1
-            for(i=0; i<codec->samples_per_frame-1; i++) {
-                //true normalized dvoice
-                // dv[i]=[-2*MAXX..+2*MAXX]
-                // div=[0..FIXP]
-                // n_dvoice=[-FIXP..+FIXP]
-                n_dvoice = dv[i] * (int)div;
-
-                //true restored normalized voice
-                n_voice = n_voice + n_dvoice;
-
-                //get diff between true and companded/expanded normalized voices
-                r_dvoice = n_voice - r_voice[i];
-                //if( abs(r_dvoice) > error )
-                //    error = abs(r_dvoice);
-                
-                //compand/expand voice
-                // dv[i]=[-2*MAXX..+2*MAXX]
-                // div=[0..FIXP]
-                sss = r_dvoice;
-                if(sss>FIXP)
-                    sss = FIXP;
-                else if(sss<-FIXP)
-                    sss = -FIXP;
-                edata[s][3+i] = codec->enctable[s][sss + FIXP];
-                
-                //dv[i]  = [0..FACTOR-1]
-                //dec.table = [-FIXP..+FIXP]
-                ce_dvoice = codec->dectable[s][ edata[s][3+i] ];
-                
-                //restore voice
-                r_voice[i+1] = r_voice[i] + ce_dvoice;
-            }
-        }
-        else {
-            //K = 256
-            for(i=0; i<codec->samples_per_frame-1; i++) {
-                //true normalized dvoice
-                // dv[i]=[-2*MAXX..+2*MAXX]
-                // div=[0..FIXP]
-                // n_dvoice=[-FIXP..+FIXP]
-                n_dvoice = (dv[i] * (int)div) >> 8;
-
-                //true restored normalized voice
-                n_voice = n_voice + n_dvoice;
-
-                //get diff between true and companded/expanded normalized voices
-                r_dvoice = n_voice - r_voice[i];
-                //if( abs(r_dvoice) > error )
-                //    error = abs(r_dvoice);
-                
-                //compand/expand voice
-                // dv[i]=[-2*MAXX..+2*MAXX]
-                // div=[0..FIXP]
-                sss = r_dvoice;
-                if(sss>FIXP)
-                    sss = FIXP;
-                else if(sss<-FIXP)
-                    sss = -FIXP;
-                edata[s][3+i] = codec->enctable[s][sss + FIXP];
-                
-                //dv[i]  = [0..FACTOR-1]
-                //dec.table = [-FIXP..+FIXP]
-                ce_dvoice = codec->dectable[s][ edata[s][3+i] ];
-                
-                //restore voice
-                r_voice[i+1] = r_voice[i] + ce_dvoice;
-            }
+        for(i=0; i<codec->samples_per_frame-1; i++)
+        {
+            //get diff between true and companded/expanded normalized voices
+            r_dvoice = n_voice[i+1] - r_voice[i];
+            //if( abs(r_dvoice) > error )
+            //    error = abs(r_dvoice);
+            
+            //compand/expand voice
+            // dv[i]=[-2*MAXX..+2*MAXX]
+            // div=[0..FIXP]
+            sss = r_dvoice;
+            if(sss>FIXP)
+                sss = FIXP;
+            else if(sss<-FIXP)
+                sss = -FIXP;
+            edata[s][3+i] = codec->enctable[s][sss + FIXP];
+            
+            //dv[i]  = [0..FACTOR-1]
+            //dec.table = [-FIXP..+FIXP]
+            ce_dvoice = codec->dectable[s][ edata[s][3+i] ];
+            
+            //restore voice
+            r_voice[i+1] = r_voice[i] + ce_dvoice;
         }
 
         if(codec->smooth==1) {
