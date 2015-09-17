@@ -340,6 +340,23 @@ exit_fail:
 }
 
 //------------------------------------------------------------------------------
+int  mmdq_codec_init_2 ( struct mmdq_codec_s * codec, int bitrate )
+{
+    switch(bitrate)
+    {
+    case 24:
+        return mmdq_codec_init ( codec, 0, 15, 2, 1, 0 );
+    case 32:
+        return mmdq_codec_init ( codec, 0, 14, 3, 1, 0 );
+    case 40:
+        return mmdq_codec_init ( codec, 0,  7, 3, 1, 0 );
+      //return mmdq_codec_init ( codec, 0, 13, 4, 1, 0 );
+    default:
+        return -1;
+    }
+}
+
+//------------------------------------------------------------------------------
 int  mmdq_framebytes ( struct mmdq_codec_s * codec )
 {
     //Check input arguments

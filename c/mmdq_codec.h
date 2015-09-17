@@ -69,6 +69,8 @@ int  mmdq_codec_init ( struct mmdq_codec_s * codec,
                        int smooth,
                        int decoder_only );
 
+int  mmdq_codec_init_2 ( struct mmdq_codec_s * codec, int bitrate );
+
 int  mmdq_framebytes ( struct mmdq_codec_s * codec );
 
 int  mmdq_encode     ( struct mmdq_codec_s * codec,
