@@ -22,12 +22,14 @@ HEADERS = mmdq_codec.h \
     toast.h \
     unproto.h \
     g72x.h \
-    private.h
+    private.h \
+    ima_adpcm.h
 
 CFLAGS  = -O3 -Wall -Werror
 DEFS    =
 
 CFLAGS += -I.\
+          -Iima_adpcm \
           -Ig726lib \
           -Iwave \
           -Iwave/gsmlib \
@@ -39,6 +41,8 @@ CC = $(CROSS_COMPILE)gcc $(CFLAGS) $(DEFS)
 LD = $(CROSS_COMPILE)gcc $(LFLAGS)
 
 all: $(OUT)/$(PROJ)
+
+IMAADPCM_OBJS = $(OUT)/ima_adpcm.o
 
 G726LIB_OBJS = $(OUT)/g72x.o \
 	$(OUT)/g726_16.o \
@@ -71,11 +75,12 @@ WAVE_OBJS = $(GSMLIB_OBJS) \
 	$(OUT)/wave.o
 
 OBJS = $(WAVE_OBJS) \
+	$(IMAADPCM_OBJS) \
 	$(G726LIB_OBJS) \
 	$(OUT)/mmdq_codec.o \
 	$(OUT)/test.o
 
-VPATH := wave wave/gsmlib g726lib
+VPATH := wave wave/gsmlib g726lib ima_adpcm
 
 $(OUT)/%.o: %.c $(HEADERS)
 	$(CC) -g -c $< -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o $@
