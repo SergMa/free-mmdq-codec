@@ -24,6 +24,7 @@ FILENAME_PREFIX = {
 'mmdq-32-2_';
 'mmdq-32-3_';
 'mmdq-32-4_';
+'dvi4_';
 'g726-40_';
 'g726-32_';
 'g711-alaw_';

@@ -33,8 +33,9 @@ SPECTROGRAM_OVR   = 8;
 ORIGINAL_FILENAME = 'female/female.wav';  
 
 % Name of file for signal which has been encoded/decoded by codec 1
-CODEC1_FILENAME     = 'female/g726-32_female.wav';   
+%CODEC1_FILENAME    = 'female/g726-32_female.wav';   
 %CODEC1_FILENAME    = 'female/g726-40_female.wav';   
+CODEC1_FILENAME     = 'female/dvi4_female.wav';   
 
 % Name of file for signal which has been encoded/decoded by codec 2
 CODEC2_FILENAME     = 'female/mmdq-32-1_female.wav';   

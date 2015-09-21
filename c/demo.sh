@@ -40,6 +40,10 @@ out/test --mmdq-encode  7 3 3 out/input.wav out/mmdq-40x-3.bin
 echo "mmdq-40x-4"
 out/test --mmdq-encode  7 3 4 out/input.wav out/mmdq-40x-4.bin
 
+echo "Encode sample sound with IMA-ADPCM-DVI4-codec:"
+echo "dvi4"
+out/test --dvi4-encode out/input.wav out/dvi4.bin
+
 echo "Encode sample sound with G726-codec:"
 echo "g726-32"
 out/test --g726-encode 32 out/input.wav out/g726-32.bin
@@ -79,6 +83,10 @@ out/test --mmdq-decode  7 3 4 out/mmdq-40x-3.bin     out/mmdq-40x-3.wav
 echo "mmdq-40x-4"
 out/test --mmdq-decode  7 3 4 out/mmdq-40x-4.bin     out/mmdq-40x-4.wav
 
+echo "Decode sample sound with IMA-ADPCM-DVI4-codec:"
+echo "dvi4"
+out/test --dvi4-decode out/dvi4.bin out/dvi4.wav
+
 echo "Decode sample sound with G726-codec:"
 echo "g726-32"
 out/test --g726-decode 32 out/g726-32.bin out/g726-32.wav
@@ -105,6 +113,9 @@ out/test --mse 0 out/input.wav out/mmdq-40x-1.wav
 out/test --mse 0 out/input.wav out/mmdq-40x-2.wav
 out/test --mse 0 out/input.wav out/mmdq-40x-3.wav
 out/test --mse 0 out/input.wav out/mmdq-40x-4.wav
+
+echo "Measure quality of IMA-ADPCM-DVI4-codec:"
+out/test --mse 0 out/input.wav out/dvi4.wav
 
 echo "Measure quality of G726-codec:"
 out/test --mse 0 out/input.wav out/g726-32.wav

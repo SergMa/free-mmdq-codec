@@ -208,6 +208,21 @@ out/test --mmdq-decode 14 3 4 ../matlab/modem/mmdq-32-4_qask32.bin ../matlab/mod
 out/test --mmdq-encode 14 3 4 ../matlab/modem/qask64.wav           ../matlab/modem/mmdq-32-4_qask64.bin
 out/test --mmdq-decode 14 3 4 ../matlab/modem/mmdq-32-4_qask64.bin ../matlab/modem/mmdq-32-4_qask64.wav
 
+echo "Encode/decode modem sound with IMA-ADPCM-DVI4-codec 32 kbit/s:"
+out/test --dvi4-encode        ../matlab/modem/ask2.wav             ../matlab/modem/dvi4_ask2.bin
+out/test --dvi4-decode        ../matlab/modem/dvi4_ask2.bin        ../matlab/modem/dvi4_ask2.wav
+out/test --dvi4-encode        ../matlab/modem/fsk2.wav             ../matlab/modem/dvi4_fsk2.bin
+out/test --dvi4-decode        ../matlab/modem/dvi4_fsk2.bin        ../matlab/modem/dvi4_fsk2.wav
+out/test --dvi4-encode        ../matlab/modem/psk4.wav             ../matlab/modem/dvi4_psk4.bin
+out/test --dvi4-decode        ../matlab/modem/dvi4_psk4.bin        ../matlab/modem/dvi4_psk4.wav
+out/test --dvi4-encode        ../matlab/modem/psk8.wav             ../matlab/modem/dvi4_psk8.bin
+out/test --dvi4-decode        ../matlab/modem/dvi4_psk8.bin        ../matlab/modem/dvi4_psk8.wav
+out/test --dvi4-encode        ../matlab/modem/qask16.wav           ../matlab/modem/dvi4_qask16.bin
+out/test --dvi4-decode        ../matlab/modem/dvi4_qask16.bin      ../matlab/modem/dvi4_qask16.wav
+out/test --dvi4-encode        ../matlab/modem/qask32.wav           ../matlab/modem/dvi4_qask32.bin
+out/test --dvi4-decode        ../matlab/modem/dvi4_qask32.bin      ../matlab/modem/dvi4_qask32.wav
+out/test --dvi4-encode        ../matlab/modem/qask64.wav           ../matlab/modem/dvi4_qask64.bin
+out/test --dvi4-decode        ../matlab/modem/dvi4_qask64.bin      ../matlab/modem/dvi4_qask64.wav
 
 echo "Encode/decode modem sound with G726-codec 40 kbit/s:"
 out/test --g726-encode 40  ../matlab/modem/ask2.wav           ../matlab/modem/g726-40_ask2.bin

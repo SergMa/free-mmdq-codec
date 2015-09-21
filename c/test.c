@@ -9,6 +9,7 @@
 #include <string.h>
 #include <wave.h>
 #include <mmdq_codec.h>
+#include <ima_adpcm.h>
 #include <g72x.h>
 #include <g711super.h>
 #include <math.h>
@@ -50,6 +51,14 @@ void usage(void)
     "    Decode <data.bin> with G711-decoder, output result into <sound.wav>.\n"
     "    <law> = alaw|ulaw - A-law or mu-law\n"
     "\n"
+    "  test --dvi4-encode <sound.wav> <data.bin>\n"
+    "    Encode <sound.wav> with IMA-ADPCM-DVI4-encoder, output result into <data.bin>.\n"
+    "    <law> = alaw|ulaw - A-law or mu-law\n"
+    "\n"
+    "  test --dvi4-decode <data.bin> <sound.wav>\n"
+    "    Decode <data.bin> with IMA-ADPCM-DVI4-decoder, output result into <sound.wav>.\n"
+    "    <law> = alaw|ulaw - A-law or mu-law\n"
+    "\n"
     "  test --mse <samples> <sound1.wav> <sound2.wav>\n"
     "    Compare <sound1.wav> and <sound2.wav> and calculate MSE (Mean Squared\n"
     "    Error). MSE will be calculated for N samples, where N is minimal length\n"
@@ -68,17 +77,19 @@ void usage(void)
     return;
 }
 
-#define ACTION_MMDQ_ENCODE   0
-#define ACTION_MMDQ_DECODE   1
-#define ACTION_G726_ENCODE   2
-#define ACTION_G726_DECODE   3
-#define ACTION_G711_ENCODE   4
-#define ACTION_G711_DECODE   5
-#define ACTION_MSE           6
-#define ACTION_SPEED_TEST    7
+#define ACTION_MMDQ_ENCODE  0
+#define ACTION_MMDQ_DECODE  1
+#define ACTION_G726_ENCODE  2
+#define ACTION_G726_DECODE  3
+#define ACTION_G711_ENCODE  4
+#define ACTION_G711_DECODE  5
+#define ACTION_DVI4_ENCODE  6
+#define ACTION_DVI4_DECODE  7
+#define ACTION_MSE          8
+#define ACTION_SPEED_TEST   9
 
-#define G711_ALAW            0
-#define G711_ULAW            1
+#define G711_ALAW           0
+#define G711_ULAW           1
 
 //------------------------------------------------------------------------------
 //Measure time utils
@@ -141,6 +152,7 @@ int main( int argc, char **argv )
 {
     struct mmdq_codec_s codec;
     g726_state          g726;
+    ima_adpcm_state_t   imaadpcm;
     
     int          spf;
     int          bps;
@@ -254,6 +266,18 @@ int main( int argc, char **argv )
         }
         data_filename     = argv[3];
         out_wave_filename = argv[4];
+        //go-go-go
+    }
+    else if(argc==4 && 0==strcmp(argv[1],"--dvi4-encode")) {
+        action = ACTION_DVI4_ENCODE;
+        inp_wave_filename = argv[2];
+        data_filename     = argv[3];
+        //go-go-go
+    }
+    else if(argc==4 && 0==strcmp(argv[1],"--dvi4-decode")) {
+        action = ACTION_DVI4_DECODE;
+        data_filename     = argv[2];
+        out_wave_filename = argv[3];
         //go-go-go
     }
     else if(argc==5 && 0==strcmp(argv[1],"--mse")) {
@@ -714,6 +738,129 @@ int main( int argc, char **argv )
         printf("%u samples has been processed in %llu ms\n", processed, t_ms);
         break;
 
+    case ACTION_DVI4_ENCODE:
+
+        ima_adpcm_init( &imaadpcm, IMA_ADPCM_DVI4, 2 ); //chunksize=2 samples
+
+        iwf = wavefile_create();
+        if(!iwf) {
+            printf("error: wavefile_create() failed for input\n");
+            goto exit_fail;
+        }
+
+        // open input wavefile, show file-info
+        err = wavefile_read_open( iwf, inp_wave_filename );
+        if(err<0) {
+            printf("error: could not open wavefile \"%s\"\n", inp_wave_filename);
+            goto exit_fail;
+        }
+        //print_waveinfo( iwf );
+
+        // create/open output datafile
+        df = fopen(data_filename,"w");
+        if(!df) {
+            printf("error: could not create/open output datafile \"%s\"", data_filename);
+            goto exit_fail;
+        }
+
+        // main loop
+        processed = 0;
+        start_time();
+        while(1) {
+            /* wavefile_read_voice() returns:
+            *  0 = ok
+            *  1 = end of file
+            * -1 = error
+            */
+            err = wavefile_read_voice ( iwf, x, 2 );  // samples=2
+            if(err<0) {
+                printf("error: could not read sample from input file\n");
+                break;
+            }
+            else if(err==1) {
+                break;
+            }
+
+            /* encode sample. Returns: The number of bytes of IMA ADPCM data produced. */
+            err = ima_adpcm_encode( &imaadpcm, data, x, 2 );
+
+            /* write encode data into file */
+            err = fwrite( data, err, 1, df ); //bytes = err
+            if(err!=1) {
+                printf("error: fwrite(data) failed!\n");
+                goto exit_fail;
+            }
+
+            processed += 2;
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", processed, t_ms);
+        break;
+
+    case ACTION_DVI4_DECODE:
+
+        ima_adpcm_init( &imaadpcm, IMA_ADPCM_DVI4, 2 ); //chunksize=2 samples
+        
+        owf = wavefile_create();
+        if(!owf) {
+            printf("error: wavefile_create() failed for output\n");
+            goto exit_fail;
+        }
+
+        // open input datafile
+        df = fopen(data_filename,"r");
+        if(!df) {
+            printf("error: could not open input datafile \"%s\"\n", data_filename);
+            goto exit_fail;
+        }
+
+        // open output wavefile
+        err = wavefile_write_open( owf, out_wave_filename, WAVETYPE_MONO_8000HZ_PCM16 );
+        if(err<0) {
+            printf("error: could not create wavefile \"%s\"\n", out_wave_filename);
+            goto exit_fail;
+        }
+
+        // main loop
+        processed = 0;
+        start_time();
+        while(1) {
+
+            // read encode data from file
+            err = fread( data, 1, 1, df ); //bytes=1
+            if(err!=1) {
+                if(feof(df)) {
+                    //end of file has been reached
+                    break;
+                }
+                printf("error: fread(data) failed!\n");
+                goto exit_fail;
+            }
+
+            /* Decode a buffer of IMA ADPCM data to linear PCM.
+               Returns the number of samples returned. */
+            err = ima_adpcm_decode( &imaadpcm, x, data, 1 );  // 1 byte = 2 samples
+            
+           /* wavefile_write_voice() returns:
+            *  0 = ok
+            *  1 = end of file
+            * -1 = error
+            */
+            err = wavefile_write_voice ( owf, x, err ); //wrsamples=err
+            if(err<0) {
+                printf("error: could not write sample to output wave-file\n");
+                break;
+            }
+            else if(err==1) {
+                break;
+            }
+
+            processed += 2;
+        }
+        t_ms = stop_time();
+        printf("%u samples has been processed in %llu ms\n", processed, t_ms);
+        break;
+
     case ACTION_MSE:
 
         iwf = wavefile_create();
@@ -799,7 +946,7 @@ int main( int argc, char **argv )
 
     case ACTION_SPEED_TEST:
     
-        printf("Measure speed of G.711, G.726, MMDQ encoders/decoders\n");
+        printf("Measure speed of G.711, G.726, DVI4, MMDQ encoders/decoders\n");
 
         //Fill voicebuf with random numbers
         for(i=0; i<VOICE_BUFF_SAMPLES; i++) {
@@ -955,6 +1102,52 @@ int main( int argc, char **argv )
                 voicebufi = 0;
             if(xi >= bytes) {
                 (void) mmdq_decode( &codec, data, bytes, x, sizeof(x), &wrsamples );
+                xi = 0;
+                i += spf;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples in %8llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("DVI4       encode                          ");
+        spf = 160;
+        ima_adpcm_init( &imaadpcm, IMA_ADPCM_DVI4, spf ); //chunksize=spf
+
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input sample
+            x[xi++] = voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= spf) {
+                bytes = ima_adpcm_encode( &imaadpcm, data, x, spf );
+                (void) mmdq_encode( &codec, x, spf, data, sizeof(data), &bytes );
+                xi = 0;
+                i += spf;
+            }
+        }
+        t_ms = stop_time();
+        printf("%u samples in %8llu ms\n", SPEED_TEST_SAMPLES, t_ms);
+
+        //=======================================
+        printf("DVI4       decode                          ");
+        spf = 160;  //160 samples = 80 bytes
+        ima_adpcm_init( &imaadpcm, IMA_ADPCM_DVI4, spf ); //chunksize=spf
+        i         = 0;
+        voicebufi = 0;
+        xi        = 0;
+        start_time();
+        while(i<SPEED_TEST_SAMPLES) {
+            //get input bytes
+            data[xi++] = (uint8_t)voicebuf[voicebufi++];
+            if(voicebufi>=VOICE_BUFF_SAMPLES)
+                voicebufi = 0;
+            if(xi >= 80) {
+                err = ima_adpcm_decode( &imaadpcm, x, data, 80 );  //160 samples = 80 bytes
                 xi = 0;
                 i += spf;
             }

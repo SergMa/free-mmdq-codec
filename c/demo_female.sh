@@ -67,6 +67,10 @@ echo "Encode/decode female voice with MMDQ-32-4:"
 out/test --mmdq-encode 14 3 4  $DIR/$NAME.wav               $DIR/mmdq-32-4_$NAME.bin
 out/test --mmdq-decode 14 3 4  $DIR/mmdq-32-4_$NAME.bin     $DIR/mmdq-32-4_$NAME.wav
 
+echo "Encode/decode female sound with IMA-ADPCM-DVI4-codec 32 kbit/s:"
+
+out/test --dvi4-encode         $DIR/$NAME.wav               $DIR/dvi4_$NAME.bin
+out/test --dvi4-decode         $DIR/dvi4_$NAME.bin          $DIR/dvi4_$NAME.wav
 
 echo "Encode/decode female sound with G726-codec 40 kbit/s:"
 
