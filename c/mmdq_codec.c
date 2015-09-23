@@ -615,33 +615,69 @@ int  mmdq_encode ( struct mmdq_codec_s * codec,
     
     //==========================================================================
     //bit-pack data[smin] into data[]
-    pos = 0;
+    if( (codec->samples_per_frame==14) && (codec->bits_per_sample==3) )
+    {
+        //MMDQ-32
+        data[0] = linear2alaw( edata[smin][0] );
+        data[1] = linear2alaw( edata[smin][1] );
+        
+        if(edata[smin][2])
+            data[2] = 0x80;
+        else
+            data[2] = 0x00;
+        
+        data[2] |= edata[smin][3]<<4;
+        data[2] |= edata[smin][4]<<1;
+        data[2] |= edata[smin][5]>>2;
 
-    data[pos++] = linear2alaw( edata[smin][0] );
-    data[pos++] = linear2alaw( edata[smin][1] );
+        data[3]  = edata[smin][5]<<6;
+        data[3] |= edata[smin][6]<<3;
+        data[3] |= edata[smin][7];
 
-    bitshift = 0;
-    bitcntr  = 0;
-    bitshift = (bitshift << 1) | edata[smin][2]; //smooth(bit1)
-    bitcntr++;
+        data[4]  = edata[smin][8]<<5;
+        data[4] |= edata[smin][9]<<2;
+        data[4] |= edata[smin][10]>>1;
 
-    for (i=0; i<codec->samples_per_frame-1; i++) {
-        bitshift = (bitshift << codec->bits_per_sample) | edata[smin][3+i];
-        bitcntr += codec->bits_per_sample;
-        if(bitcntr >= 8) {
-            bitcntr -= 8;
-            data[pos++] = bitshift >> bitcntr;
+        data[5]  = edata[smin][10]<<7;
+        data[5] |= edata[smin][11]<<4;
+        data[5] |= edata[smin][12]<<1;
+        data[5] |= edata[smin][13]>>2;
+
+        data[6]  = edata[smin][13]<<6;
+        data[6] |= edata[smin][14]<<3;
+        data[6] |= edata[smin][15];
+
+        *bytes = 7;
+    }
+    else
+    {
+        pos = 0;
+    
+        data[pos++] = linear2alaw( edata[smin][0] );
+        data[pos++] = linear2alaw( edata[smin][1] );
+    
+        bitshift = 0;
+        bitcntr  = 0;
+        bitshift = (bitshift << 1) | edata[smin][2]; //smooth(bit1)
+        bitcntr++;
+    
+        for (i=0; i<codec->samples_per_frame-1; i++) {
+            bitshift = (bitshift << codec->bits_per_sample) | edata[smin][3+i];
+            bitcntr += codec->bits_per_sample;
+            if(bitcntr >= 8) {
+                bitcntr -= 8;
+                data[pos++] = bitshift >> bitcntr;
+            }
         }
+        if(bitcntr>0) {
+            //fill add bits with zeros
+            data[pos++] = bitshift << (8-bitcntr);
+            //bitcntr -= 8;
+        }
+        *bytes = pos;
     }
-    if(bitcntr>0) {
-        //fill add bits with zeros
-        data[pos++] = bitshift << (8-bitcntr);
-        //bitcntr -= 8;
-    }
+    //MYLOG_DEBUG("encoded data has been packed into %d bytes", *bytes);
 
-    //MYLOG_DEBUG("encoded data has been packed into %d bytes", pos);
-
-    *bytes = pos;
     return 0;
 }
 
@@ -702,40 +738,75 @@ int  mmdq_decode ( struct mmdq_codec_s * codec,
 
     //==========================================================================
     //bit-unpack from data[] into minx, maxx, smooth1, dv[]
-    pos = 0;
-    minv = alaw2linear( data[pos++] );
-    maxv = alaw2linear( data[pos++] );
-    if (minv > maxv) {
-        smooth0 = 1;
-        tmpv = minv;
-        minv = maxv;
-        maxv = tmpv;
-    }
-    else {
-        smooth0 = 0;
-    }
-    smooth1 = (data[pos]>>7) & 1;
-    s = (smooth1<<1) | smooth0;
-    diffv = maxv - minv;
+    if( (codec->samples_per_frame==14) && (codec->bits_per_sample==3) )
+    {
+        //MMDQ-32
+        minv = alaw2linear( data[0] );
+        maxv = alaw2linear( data[1] );
+        if (minv > maxv) {
+            smooth0 = 1;
+            tmpv = minv;
+            minv = maxv;
+            maxv = tmpv;
+        }
+        else {
+            smooth0 = 0;
+        }
+        smooth1 = (data[2]>>7) & 1;
+        s = (smooth1<<1) | smooth0;
+        diffv = maxv - minv;
     
-    bitshift = data[pos++] & 0x7F;
-    bitcntr = 7;
-    dvpos = 0;
-    for(;;) {
-        bitshift = (bitshift << 8) | data[pos++];
-        bitcntr += 8;
+        dv[0] = (data[2] >> 4) & 0x7;
+        dv[1] = (data[2] >> 1) & 0x7;
+        dv[2] = ((data[2] << 2) | (data[3] >> 6)) & 0x7;
+        dv[3] = (data[3] >> 3) & 0x7;
+        dv[4] = data[3] & 0x7;
+        dv[5] = data[4] >> 5;
+        dv[6] = (data[4] >> 2) & 0x7;
+        dv[7] = ((data[4] << 1) | (data[5] >> 7)) & 0x7;
+        dv[8] = (data[5] >> 4) & 0x7;
+        dv[9] = (data[5] >> 1) & 0x7;
+        dv[10] = ((data[5] << 2) | (data[6] >> 6)) & 0x7;
+        dv[11] = (data[6] >> 3) & 0x7;
+        dv[12] = data[6] & 0x7;
+    }
+    else
+    {
+        pos = 0;
+        minv = alaw2linear( data[pos++] );
+        maxv = alaw2linear( data[pos++] );
+        if (minv > maxv) {
+            smooth0 = 1;
+            tmpv = minv;
+            minv = maxv;
+            maxv = tmpv;
+        }
+        else {
+            smooth0 = 0;
+        }
+        smooth1 = (data[pos]>>7) & 1;
+        s = (smooth1<<1) | smooth0;
+        diffv = maxv - minv;
         
-        while(bitcntr >= codec->bits_per_sample)
-        {
-            bitcntr -= codec->bits_per_sample;
-            dv[dvpos++] = (bitshift >> bitcntr) & codec->unpackmask;
-
+        bitshift = data[pos++] & 0x7F;
+        bitcntr = 7;
+        dvpos = 0;
+        for(;;) {
+            bitshift = (bitshift << 8) | data[pos++];
+            bitcntr += 8;
+            
+            while(bitcntr >= codec->bits_per_sample)
+            {
+                bitcntr -= codec->bits_per_sample;
+                dv[dvpos++] = (bitshift >> bitcntr) & codec->unpackmask;
+    
+                if( dvpos >= (codec->samples_per_frame-1) )
+                    break;
+            }
+            
             if( dvpos >= (codec->samples_per_frame-1) )
                 break;
         }
-        
-        if( dvpos >= (codec->samples_per_frame-1) )
-            break;
     }
     
     //==========================================================================
