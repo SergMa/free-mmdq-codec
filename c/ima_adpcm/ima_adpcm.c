@@ -191,6 +191,11 @@ static const struct
     {0xFF00,    0xFF00,     8}
 };
 
+#ifdef SPEED_OPTIMIZATION
+static uint8_t dectab_ready = 0;
+static int     dectab[STEP_MAX + 1][256];
+#endif /* #ifdef SPEED_OPTIMIZATION */
+
 /* -------------------------------------------------------------------------- */
 /* This is the same as saturate16(), but is here for historic reasons */
 static __inline__ int16_t saturate(int32_t amp)
@@ -206,13 +211,58 @@ static __inline__ int16_t saturate(int32_t amp)
     return INT16_MIN;
 }
 
+#ifdef SPEED_OPTIMIZATION
+/* -------------------------------------------------------------------------- */
+static __inline__ void dec_table_init( void )
+{
+    int     si;
+    int     ai;
+    uint8_t ad;
+    int     ss;
+    int     e;
+    
+    if(dectab_ready)
+        return;
+    
+    for(si = 0; si <= STEP_MAX; si++) {
+        for(ai=0; ai <= 255; ai++) {
+            /* e = (adpcm+0.5)*step/4 */
+            ad = (uint8_t)ai;
+            ss = step_size[si];
+            e = ss >> 3;
+            if (ad & 0x01)
+                e += (ss >> 2);
+            /*endif*/
+            if (ad & 0x02)
+                e += (ss >> 1);
+            /*endif*/
+            if (ad & 0x04)
+                e += ss;
+            /*endif*/
+            if (ad & 0x08)
+                e = -e;
+            /*endif*/
+            dectab[si][ad] = e;
+        }
+    }
+    dectab_ready = 1;
+    return;
+}
+#endif /* #ifdef SPEED_OPTIMIZATION */
+
 /* -------------------------------------------------------------------------- */
 static int16_t decode(ima_adpcm_state_t *s, uint8_t adpcm)
 {
     int e;
+#ifndef SPEED_OPTIMIZATION
     int ss;
+#endif
     int16_t linear;
 
+#ifdef SPEED_OPTIMIZATION
+    /* get precalculated value */
+    e = dectab[s->step_index][adpcm];
+#else
     /* e = (adpcm+0.5)*step/4 */
     ss = step_size[s->step_index];
     e = ss >> 3;
@@ -227,6 +277,8 @@ static int16_t decode(ima_adpcm_state_t *s, uint8_t adpcm)
     /*endif*/
     if (adpcm & 0x08)
         e = -e;
+#endif
+
     /*endif*/
     linear = saturate(s->last + e);
     s->last = linear;
@@ -309,6 +361,11 @@ SPAN_DECLARE(ima_adpcm_state_t *) ima_adpcm_init(ima_adpcm_state_t *s,
     memset(s, 0, sizeof(*s));
     s->variant = variant;
     s->chunk_size = chunk_size;
+
+#ifdef SPEED_OPTIMIZATION
+    dec_table_init();
+#endif
+
     return  s;
 }
 /*- End of function --------------------------------------------------------*/

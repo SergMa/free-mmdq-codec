@@ -42,6 +42,9 @@ IMA ADPCM offers a good balance of simplicity and quality at a rate of
 \section ima_adpcm_page_sec_3 How do I use it?
 */
 
+#define SPEED_OPTIMIZATION  1  /* Uncomment this to use speed optimization,
+                                  based on precalculated tables */
+
 /*!
     IMA (DVI/Intel) ADPCM conversion state descriptor. This defines the state of
     a single working instance of the IMA ADPCM converter. This is used for
