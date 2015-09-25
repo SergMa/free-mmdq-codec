@@ -29,9 +29,9 @@ CFLAGS  = -O3 -Wall -Werror
 DEFS    =
 
 CFLAGS += -I.\
-          -Iima_adpcm \
           -Ig726lib \
           -Iwave \
+          -Iwave/ima_adpcm \
           -Iwave/gsmlib \
           -include "wave/gsmlib/_config.h"
 
@@ -80,7 +80,7 @@ OBJS = $(WAVE_OBJS) \
 	$(OUT)/mmdq_codec.o \
 	$(OUT)/test.o
 
-VPATH := wave wave/gsmlib g726lib ima_adpcm
+VPATH := wave wave/gsmlib wave/ima_adpcm g726lib
 
 $(OUT)/%.o: %.c $(HEADERS)
 	$(CC) -g -c $< -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o $@
