@@ -66,6 +66,15 @@ void usage(void)
     "    <samples> = number of samples to compare (0-compare N samples - see above).\n"
     "    If <samples> is bigger than N, N samples will be compared.\n"
     "\n"
+    "  test --convert <sound1.wav> <format> <sound2.wav>\n"
+    "    Convert <sound1.wav> into <sound2.wav> with defined <format> of wave-file.\n"
+    "    Supported values of <format>:\n"
+    "    pcm16    = 8000 Hz 16 bit PCM\n"
+    "    pcma     = 8000 Hz 8 bit A-law PCM\n"
+    "    pcmu     = 8000 Hz 8 bit mu-law PCM\n"
+    "    imaadpcm = 8000 Hz IMA/DVI APCM\n"
+    "    gsm      = 8000 Hz GSM 0610\n"
+    "\n"
     "  test --speed\n"
     "    Speed test of MMDQ, G.726, G.711 codecs.\n"
     "\n"
@@ -86,7 +95,8 @@ void usage(void)
 #define ACTION_DVI4_ENCODE  6
 #define ACTION_DVI4_DECODE  7
 #define ACTION_MSE          8
-#define ACTION_SPEED_TEST   9
+#define ACTION_CONVERT      9
+#define ACTION_SPEED_TEST   10
 
 #define G711_ALAW           0
 #define G711_ULAW           1
@@ -127,13 +137,14 @@ void print_waveinfo( wavefile_t * wf )
     printf("  filename : %s\n", wf->filename);
     printf("  format   : ");
     switch( wavefile_get_wavetype( wf ) ) {
-    case WAVETYPE_MONO_8000HZ_PCM16:   printf("pcm16 8000 Hz\n"); break;
-    case WAVETYPE_MONO_8000HZ_PCMA:    printf("pcma 8000 Hz\n"); break;
-    case WAVETYPE_MONO_8000HZ_PCMU:    printf("pcmu 8000 Hz\n"); break;
-    case WAVETYPE_MONO_8000HZ_GSM610:  printf("gsm0610 8000 Hz\n"); break;
+    case WAVETYPE_MONO_8000HZ_PCM16:      printf("pcm16 8000 Hz\n"); break;
+    case WAVETYPE_MONO_8000HZ_PCMA:       printf("pcma 8000 Hz\n"); break;
+    case WAVETYPE_MONO_8000HZ_PCMU:       printf("pcmu 8000 Hz\n"); break;
+    case WAVETYPE_MONO_8000HZ_IMA_ADPCM:  printf("ima-adpcm 8000 Hz\n"); break;
+    case WAVETYPE_MONO_8000HZ_GSM610:     printf("gsm0610 8000 Hz\n"); break;
     default:
         printf("unsupported\n");
-        printf("error: only 8000 hz pcm16/pcma/pcmu/gsm formats are supported\n");
+        printf("error: only 8000 hz pcm16/pcma/pcmu/ima-adpcm/gsm formats are supported\n");
         return;
     }
     printf("  filesize : %u bytes\n", wavefile_get_bytes  ( wf ) );
@@ -160,6 +171,7 @@ int main( int argc, char **argv )
     int          action;
     int          bitrate;
     int          g711law;
+    int          convertformat;
     char       * inp_wave_filename = NULL;
     char       * out_wave_filename = NULL;
     char       * data_filename = NULL;
@@ -284,6 +296,26 @@ int main( int argc, char **argv )
         action = ACTION_MSE;
         compare_samples = atoi(argv[2]);
         inp_wave_filename    = argv[3]; //<sound1.wav>
+        out_wave_filename    = argv[4]; //<sound2.wav>
+        //go-go-go
+    }
+    else if(argc==5 && 0==strcmp(argv[1],"--convert")) {
+        action = ACTION_CONVERT;
+        inp_wave_filename = argv[2]; //<sound1.wav>
+        if     ( 0==strcmp(argv[3],"pcm") )
+            convertformat = WAVETYPE_MONO_8000HZ_PCM16;
+        else if( 0==strcmp(argv[3],"pcma") )
+            convertformat = WAVETYPE_MONO_8000HZ_PCMA;
+        else if( 0==strcmp(argv[3],"pcmu") )
+            convertformat = WAVETYPE_MONO_8000HZ_PCMU;
+        else if( 0==strcmp(argv[3],"ima-adpcm") )
+            convertformat = WAVETYPE_MONO_8000HZ_IMA_ADPCM;
+        else if( 0==strcmp(argv[3],"gsm") )
+            convertformat = WAVETYPE_MONO_8000HZ_GSM610;
+        else {
+            printf("error: invalid <format>=%s argument", argv[3]);
+            goto exit_fail;
+        }
         out_wave_filename    = argv[4]; //<sound2.wav>
         //go-go-go
     }
@@ -942,6 +974,65 @@ int main( int argc, char **argv )
 
         printf("samples: %10u, maxerr: %6d, maxrelerr: %10.8f, relMSE: %10.8f for \"%s\" vs \"%s\"\n",
                 processed, diffxmax, diffxnmax, mse, inp_wave_filename, out_wave_filename );
+        break;
+
+    case ACTION_CONVERT:
+
+        iwf = wavefile_create();
+        if(!iwf) {
+            printf("error: wavefile_create() failed for file1\n");
+            goto exit_fail;
+        }
+        owf = wavefile_create();
+        if(!owf) {
+            printf("error: wavefile_create() failed for file2\n");
+            goto exit_fail;
+        }
+
+        // open input wavefile 1, show file-info
+        err = wavefile_read_open( iwf, inp_wave_filename );
+        if(err<0) {
+            printf("error: could not open wavefile \"%s\" in read mode\n", inp_wave_filename);
+            goto exit_fail;
+        }
+        print_waveinfo( iwf );
+
+        // open input wavefile 2
+        err = wavefile_write_open( owf, out_wave_filename, convertformat );
+        if(err<0) {
+            printf("error: could not open wavefile \"%s\" in write mode\n", out_wave_filename);
+            goto exit_fail;
+        }
+
+        // main loop
+        processed = 0;
+        while(1) {
+            /* wavefile_read_voice() returns:
+            *  0 = ok
+            *  1 = end of file
+            * -1 = error
+            */
+            err = wavefile_read_voice ( iwf, &x1, 1 );  //samples=1
+            if(err<0) {
+                printf("error: could not read sample from input file\n");
+                break;
+            }
+            else if(err==1) {
+                break; //eof
+            }
+
+            err = wavefile_write_voice ( owf, &x1, 1 );  //samples=1
+            if(err<0) {
+                printf("error: could not write sample into output file\n");
+                break;
+            }
+            else if(err==1) {
+                break; //eof
+            }
+
+            processed ++;
+        }
+        printf("%10u samples converted\n", processed );
         break;
 
     case ACTION_SPEED_TEST:
