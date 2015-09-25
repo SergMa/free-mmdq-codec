@@ -11,14 +11,22 @@
 
 #include <string.h>
 #include <g711super.h>
-#include <gsm.h>      //GSM0610    (13 kbit/s)
+
+#ifdef SUPP_IMA_ADPCM
+  #include <ima_adpcm.h> //IMA/DVI ADPCM  (32 kbit/s)
+#endif
+
+#ifdef SUPP_GSM
+  #include <gsm.h>      //GSM0610    (13 kbit/s)
+#endif
 
 //types of audio coding type (look for standards)
-#define  WAV_PCM      0x0001  //PCM uncompressed
-#define  WAV_PCMU     0x0007  //ITU G.711 u-law
-#define  WAV_PCMA     0x0006  //ITU G.711 a-law
-#define  WAV_GSM610   0x0031  //GSM 6.10
-#define  WAV_ADPCM    0x0002  //Microsoft ADPCM
+#define  WAV_PCM         0x0001  //PCM uncompressed
+#define  WAV_PCMU        0x0007  //ITU G.711 u-law
+#define  WAV_PCMA        0x0006  //ITU G.711 a-law
+#define  WAV_GSM610      0x0031  //GSM 6.10
+#define  WAV_DVI_ADPCM   0x0011  //Intel ADPCM (DVI)
+#define  WAV_IMA_ADPCM   WAV_DVI_ADPCM  //Intel ADPCM (IMA)
 
 /*************************************************************/
 /* WAVE-HEADER FUNCTIONS                                     */
@@ -146,6 +154,29 @@ int waveheader_set_default( waveheader_t * header, uint8_t wavetype )
                 header->data_length        = 0;        //! (length of data) - must be calculated when close file
                 return(0);
 
+#ifdef SUPP_IMA_ADPCM
+        case WAVETYPE_MONO_8000HZ_IMA_ADPCM:
+        case WAVETYPE_MONO_8000HZ_DVI_ADPCM:
+                header->file_length        = 0;        //! (file_length-8) - must be calculated when close file
+                header->fmt_length         = 20;
+                header->type               = WAV_IMA_ADPCM; //==WAV_DVI_ADPCM
+                header->channels           = 1;
+                header->samples_per_second = 8000;
+                header->bytes_per_second   = 4055;
+                header->block_align        = 256;
+                header->bits_per_sample    = 4;
+                header->extra_format_bytes   = 2;
+                header->extra_format_data[0] = 505        & 0xFF; //505 samples per block
+                header->extra_format_data[1] = (505 >> 8) & 0xFF;
+                header->fact_length        = 4;
+                header->fact_data[0]       = 0;        //! samples - must be calculated when close file
+                header->fact_data[1]       = 0;        //!
+                header->fact_data[2]       = 0;        //!
+                header->fact_data[3]       = 0;        //!
+                header->data_length        = 0;        //! (length of data) - must be calculated when close file
+                return(0);
+#endif
+
 #ifdef SUPP_GSM
         case WAVETYPE_MONO_8000HZ_GSM610:
                 header->file_length        = 0;        //! (file_length-8) - must be calculated when close file
@@ -247,14 +278,22 @@ int waveheader_write( FILE * fp, waveheader_t * header )
                 MYLOG_ERROR("Could not write data to file");
                 return(-1);
         }
-        if( header->extra_format_bytes > 0 ) {
+        if( header->fmt_length == 18 ) {
                 if( 1 != fwrite( &(header->extra_format_bytes), sizeof(header->extra_format_bytes), 1, fp ) ) {
                         MYLOG_ERROR("Could not write data to file");
                         return(-1);
                 }
-                if( 1 != fwrite( &(header->extra_format_data[0]), header->extra_format_bytes, 1, fp ) ) {
-                        MYLOG_ERROR("Could not write data to file");
-                        return(-1);
+        }
+        else {
+                if( header->extra_format_bytes > 0 ) {
+                        if( 1 != fwrite( &(header->extra_format_bytes), sizeof(header->extra_format_bytes), 1, fp ) ) {
+                                MYLOG_ERROR("Could not write data to file");
+                                return(-1);
+                        }
+                        if( 1 != fwrite( &(header->extra_format_data[0]), header->extra_format_bytes, 1, fp ) ) {
+                                MYLOG_ERROR("Could not write data to file");
+                                return(-1);
+                        }
                 }
         }
         if( header->fact_length > 0 ) {
@@ -401,7 +440,7 @@ int waveheader_read( FILE * fp, waveheader_t * header )
                         }
                 }
         }
-        //fact
+        //'fact'/'data'
         if( 1 != fread( &(header->fact[0]), sizeof(header->fact), 1, fp ) ) {
                 MYLOG_ERROR("Could not read data from file");
                 return(-1);
@@ -427,7 +466,7 @@ int waveheader_read( FILE * fp, waveheader_t * header )
                         MYLOG_ERROR("Could not read data from file");
                         return(-1);
                 }
-                //data
+                //'data'
                 if( 1 != fread( &(header->data[0]), sizeof(header->data), 1, fp ) ) {
                         MYLOG_ERROR("Could not read data from file");
                         return(-1);
@@ -451,7 +490,18 @@ int waveheader_read( FILE * fp, waveheader_t * header )
                 header->fact_length = 0;
                 for(i=0; i<sizeof(header->fact_data); i++) { header->fact_data[i] = 0; }
         }
-        //data
+        //check 'data'
+        if( (header->data[0]!='d') ||
+            (header->data[1]!='a') ||
+            (header->data[2]!='t') ||
+            (header->data[3]!='a')   )
+        {
+                MYLOG_ERROR("Could not read \"data\" chunk ID from file");
+                return(-1);
+        }
+        
+        
+        //data_length
         if( 1 != fread( &(header->data_length), sizeof(header->data_length), 1, fp ) ) {
                 MYLOG_ERROR("Could not read data from file");
                 return(-1);
@@ -476,6 +526,14 @@ int waveheader_read( FILE * fp, waveheader_t * header )
                         return(-1);
                 }
         }
+#ifdef SUPP_IMA_ADPCM
+        else if( header->type==WAV_IMA_ADPCM ) { //==WAV_DVI_ADPCM
+                if(header->fmt_length!=20) {
+                        MYLOG_ERROR("Invalid format: invalid fmt_length=%d for IMA/DVI ADPCM format", header->fmt_length);
+                        return(-1);
+                }
+        }
+#endif // SUPP_IMA_ADPCM
 #ifdef SUPP_GSM
         else if( header->type==WAV_GSM610 ) {
                 if(header->fmt_length!=20) {
@@ -504,13 +562,17 @@ int waveheader_get_default_size(uint8_t wavetype)
 {
         switch(wavetype)
         {
-        case WAVETYPE_MONO_8000HZ_PCM16:   return(44);
-        case WAVETYPE_MONO_8000HZ_PCMA:    return(58);
-        case WAVETYPE_MONO_8000HZ_PCMU:    return(58);
+        case WAVETYPE_MONO_8000HZ_PCM16:      return(44);
+        case WAVETYPE_MONO_8000HZ_PCMA:       return(58);
+        case WAVETYPE_MONO_8000HZ_PCMU:       return(58);
+#ifdef SUPP_IMA_ADPCM
+        case WAVETYPE_MONO_8000HZ_DVI_ADPCM:  return(60);
+        case WAVETYPE_MONO_8000HZ_IMA_ADPCM:  return(60);
+#endif
 #ifdef SUPP_GSM
-        case WAVETYPE_MONO_8000HZ_GSM610:  return(60);
-#endif //SUPP_GSM
-        default:                           return(-1);
+        case WAVETYPE_MONO_8000HZ_GSM610:     return(60);
+#endif
+        default:                              return(-1);
         }
 }
 
@@ -598,6 +660,11 @@ int wavefile_close ( wavefile_t * wavefile )
 
         //1.Destroy vocoder
         if(wavefile->vocoder) {
+#ifdef SUPP_IMA_ADPCM
+                if( wavefile->wavetype==WAVETYPE_MONO_8000HZ_IMA_ADPCM )
+                        ima_adpcm_free(wavefile->vocoder);
+                else
+#endif //SUPP_GSM
 #ifdef SUPP_GSM
                 if( wavefile->wavetype==WAVETYPE_MONO_8000HZ_GSM610 )
                         gsm_destroy(wavefile->vocoder);
@@ -709,6 +776,23 @@ int wavefile_write_open ( wavefile_t * wavefile, char * filename, uint8_t wavety
         case WAVETYPE_MONO_8000HZ_PCMU:
                 //do nothing
                 break;
+#ifdef SUPP_IMA_ADPCM
+        case WAVETYPE_MONO_8000HZ_DVI_ADPCM:
+        case WAVETYPE_MONO_8000HZ_IMA_ADPCM:  
+                //create and init vocoder
+                if(wavefile->vocoder==NULL) {
+                        wavefile->vocoder = ima_adpcm_init( NULL,
+                                                            IMA_ADPCM_IMA4,
+                                                            0 ); //chunksize=0 (blockalign=256, samples-per-block=505)
+                        if(wavefile->vocoder==NULL) {
+                                MYLOG_ERROR("Could not create IMA/DVI ADPCM vocoder!");
+                                fclose(wavefile->fp);
+                                wavefile->fp = NULL;
+                                return(-1);
+                        }
+                }
+                break;
+#endif //SUPP_IMA_ADPCM
 #ifdef SUPP_GSM
         case WAVETYPE_MONO_8000HZ_GSM610:
                 //create vocoder
@@ -838,6 +922,16 @@ int wavefile_write_data ( wavefile_t * wavefile, uint8_t * data, int bytes, int 
                 }
                 break;
 
+#ifdef SUPP_IMA_ADPCM
+        case WAVETYPE_MONO_8000HZ_IMA_ADPCM:
+        case WAVETYPE_MONO_8000HZ_DVI_ADPCM:
+                if( samples != 505 || bytes != 256 ) {
+                        MYLOG_ERROR("Unsupported value: IMA/DVI samples=%d (must be 505), bytes=%d (must be 256)",samples,bytes);
+                        return(-1);
+                }
+                break;
+#endif //SUPP_IMA_ADPCM
+
 #ifdef SUPP_GSM
         case WAVETYPE_MONO_8000HZ_GSM610:
                 if( samples*65 != bytes*320 ) {
@@ -944,6 +1038,40 @@ int wavefile_write_voice ( wavefile_t * wavefile, int16_t * voice, int samples )
                 wavefile->total_bytes   += samples;
                 return(0);
 
+#ifdef SUPP_IMA_ADPCM
+        case WAVETYPE_MONO_8000HZ_IMA_ADPCM:
+                if(wavefile->vocoder == NULL) {
+                        MYLOG_ERROR("wavefile->vocoder=NULL!");
+                        return(-1);
+                }
+                for(i=0; i<samples; i++) {
+                        if(wavefile->voice16_samples >= 505) {
+                                //convert block of 505 samples in voice[] to
+                                //256 compressed data bytes (MS IMA ADPCM frame format) in data8[]
+
+                                n = ima_adpcm_encode( wavefile->vocoder,
+                                                      (uint8_t*)(wavefile->data8),
+                                                      (int16_t*)(wavefile->voice16), 505 );
+                                if(n != 256) {
+                                        MYLOG_ERROR( "Could not encode IMA/DVI ADPCM frame: ima_adpcm_encode() returns %d bytes",
+                                                     n );
+                                }
+
+                                //write 256 IMA/DVI ADPCM bytes from data8[] to file
+                                n = fwrite( wavefile->data8, sizeof(uint8_t), 256, wavefile->fp );
+                                if(n!=256) {
+                                        MYLOG_ERROR( "Could not write IMA/DVI ADPCM frame: %d bytes of %d have been written: %d:%s",
+                                                    n,256,errno,strerror(errno) );
+                                }
+                                wavefile->voice16_samples -= 505;
+                                wavefile->total_bytes    += 256;
+                                wavefile->total_samples  += 505;
+                        }
+                        wavefile->voice16[wavefile->voice16_samples++] = voice[i];
+                }
+                return(0);
+#endif //SUPP_IMA_ADPCM
+
 #ifdef SUPP_GSM
         case WAVETYPE_MONO_8000HZ_GSM610:
                 if(wavefile->vocoder == NULL) {
@@ -966,8 +1094,8 @@ int wavefile_write_voice ( wavefile_t * wavefile, int16_t * voice, int samples )
                                                     n,65,errno,strerror(errno) );
                                 }
                                 wavefile->voice16_samples -= 320;
-                                wavefile->total_bytes    += 65;
-                                wavefile->total_samples  += 320;
+                                wavefile->total_bytes     += 65;
+                                wavefile->total_samples   += 320;
                         }
                         wavefile->voice16[wavefile->voice16_samples++] = voice[i];
                 }
@@ -1099,6 +1227,30 @@ int wavefile_read_open ( wavefile_t * wavefile, char * filename )
                 }
                 wavefile->wavetype = WAVETYPE_MONO_8000HZ_PCMA;
                 break;
+#ifdef SUPP_IMA_ADPCM
+        case WAV_IMA_ADPCM: //==WAV_DVI_ADPCM
+                if( (wavefile->header->channels             != 1                   ) ||
+                    (wavefile->header->samples_per_second   != 8000                ) ||
+                    (wavefile->header->bytes_per_second     != 4055                ) ||
+                    (wavefile->header->block_align          != 256                 ) ||
+                    (wavefile->header->bits_per_sample      != 4                   ) ||
+                    (wavefile->header->extra_format_bytes   != 2                   ) ||
+                    (wavefile->header->extra_format_data[0] != (505        & 0xFF) ) ||  //samples per block
+                    (wavefile->header->extra_format_data[1] != ((505 >> 8) & 0xFF) )   ) //samples per block
+                {
+                        MYLOG_ERROR( "Unsupported type of IMA/DVI-ADPCM wavefile: chans=%d sps=%d bps=%d blalign=%d bits=%d exfmtbytes=%d exfmtdata[0]=%d exfmtdata[1]=%d\n",
+                                     wavefile->header->channels,
+                                     wavefile->header->samples_per_second,
+                                     wavefile->header->bytes_per_second,
+                                     wavefile->header->block_align,
+                                     wavefile->header->bits_per_sample,
+                                     wavefile->header->extra_format_bytes,
+                                     wavefile->header->extra_format_data[0],
+                                     wavefile->header->extra_format_data[1]  );
+                }
+                wavefile->wavetype = WAVETYPE_MONO_8000HZ_IMA_ADPCM;
+                break;
+#endif //SUPP_GSM
 #ifdef SUPP_GSM
         case WAV_GSM610:
                 if( (wavefile->header->channels             != 1                   ) ||
@@ -1161,6 +1313,24 @@ int wavefile_read_open ( wavefile_t * wavefile, char * filename )
         case WAVETYPE_MONO_8000HZ_PCMU:
                 //do nothing
                 break;
+#ifdef SUPP_IMA_ADPCM
+        case WAVETYPE_MONO_8000HZ_IMA_ADPCM:
+        case WAVETYPE_MONO_8000HZ_DVI_ADPCM:
+                //create and init vocoder
+                if(wavefile->vocoder==NULL) {
+                        wavefile->vocoder = ima_adpcm_init( NULL,
+                                                            IMA_ADPCM_IMA4,
+                                                            0 ); //chunksize=0 (blockalign=256, samples-per-block=505)
+                        if(wavefile->vocoder==NULL) {
+                                MYLOG_ERROR("Could not create IMA/DVI ADPCM vocoder!");
+                                fclose(wavefile->fp);
+                                wavefile->fp = NULL;
+                                return(-1);
+                        }
+                }
+                break;
+#endif //SUPP_IMA_ADPCM
+
 #ifdef SUPP_GSM
         case WAVETYPE_MONO_8000HZ_GSM610:
                 //create vocoder
@@ -1346,6 +1516,46 @@ int wavefile_read_voice ( wavefile_t * wavefile, int16_t * voice, int samples )
                 }
                 return(0);
 
+#ifdef SUPP_IMA_ADPCM
+        case WAVETYPE_MONO_8000HZ_IMA_ADPCM:
+        case WAVETYPE_MONO_8000HZ_DVI_ADPCM:
+                if(wavefile->vocoder == NULL) {
+                        MYLOG_ERROR("wavefile->vocoder=NULL!");
+                        return(-1);
+                }
+                for(i=0; i<samples; i++) {
+                        if(wavefile->voice16_samples<=0) {
+                                //read 256 MS IMA-ADPCM bytes from file to data8[]
+                                n = fread( wavefile->data8, sizeof(uint8_t), 256, wavefile->fp );
+                                if(n!=256) {
+                                        if( feof(wavefile->fp) ) {
+                                                //end of file
+                                                return(1);
+                                        }
+                                        else {
+                                                MYLOG_ERROR( "Could not read IMA/DVI-ADPCM samples: %d bytes of %d have been written: %d:%s",
+                                                            n,256,errno,strerror(errno) );
+                                                return(-1);
+                                        }
+                                }
+                                //convert block of 256 compressed data bytes (MS IMA-ADPCM frame format) in data8[]
+                                //to 505 samples in voice16[]
+                                n = ima_adpcm_decode( wavefile->vocoder,
+                                                      (int16_t*)(wavefile->voice16),
+                                                      (uint8_t*)(wavefile->data8),
+                                                      256 );
+                                if(n != 505) {
+                                        MYLOG_ERROR( "Could not decode IMA/DVI-ADPCM samples: ima_adpcm_decode() returns %d samples (must be %d)",
+                                                     n, 505 );
+                                }
+                                wavefile->voice16_samples += 505;
+                        }
+                        voice[i] = wavefile->voice16[ 505 - wavefile->voice16_samples ];
+                        wavefile->voice16_samples--;
+                }
+                return(0);
+#endif //SUPP_IMA_ADPCM
+
 #ifdef SUPP_GSM
         case WAVETYPE_MONO_8000HZ_GSM610:
                 if(wavefile->vocoder == NULL) {
@@ -1356,6 +1566,17 @@ int wavefile_read_voice ( wavefile_t * wavefile, int16_t * voice, int samples )
                         if(wavefile->voice16_samples<=0) {
                                 //read 65 GSM bytes from file to data8[]
                                 n = fread( wavefile->data8, sizeof(uint8_t), 65, wavefile->fp );
+                                
+                                //printf("RD: data8[] = %02X %02X %02X %02X %02X %02X %02X %02X\n",
+                                //        0xFF&wavefile->data8[0],
+                                //        0xFF&wavefile->data8[1],
+                                //        0xFF&wavefile->data8[2],
+                                //        0xFF&wavefile->data8[3],
+                                //        0xFF&wavefile->data8[4],
+                                //        0xFF&wavefile->data8[5],
+                                //        0xFF&wavefile->data8[6],
+                                //        0xFF&wavefile->data8[7] );
+                                
                                 if(n!=65) {
                                         if( feof(wavefile->fp) ) {
                                                 //end of file
@@ -1370,12 +1591,14 @@ int wavefile_read_voice ( wavefile_t * wavefile, int16_t * voice, int samples )
                                 //convert block of 65 compressed data bytes (MS GSM frame format) in data8[]
                                 //to 320 samples in voice16[]
                                 // decode 1st frame
-                                gsm_decode( wavefile->vocoder, (uint8_t*)(data8), (gsm_signal*)(wavefile->voice16) );
+                                gsm_decode( wavefile->vocoder, (uint8_t*)(wavefile->data8), (gsm_signal*)(wavefile->voice16) );
+                                wavefile->voice16_samples += 160;
                                 // decode 2nd frame
-                                gsm_decode( wavefile->vocoder, (uint8_t*)(data8)+32, (gsm_signal*)(wavefile->voice16+160) );
-                                wavefile->voice16_samples += 320;
+                                gsm_decode( wavefile->vocoder, (uint8_t*)(wavefile->data8+33), (gsm_signal*)(wavefile->voice16+160) );
+                                wavefile->voice16_samples += 160;
                         }
-                        voice[i] = wavefile->voice16[ wavefile->voice16_samples-- ];
+                        voice[i] = wavefile->voice16[ 320 - wavefile->voice16_samples ];
+                        wavefile->voice16_samples--;
                 }
                 return(0);
 #endif //SUPP_GSM

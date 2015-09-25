@@ -19,21 +19,28 @@
 /* DEFINITIONS                                                                */
 /******************************************************************************/
 
-#define  ABS_PATH_MAX                 1024
+#define  SUPP_GSM        1 //uncomment this to enable GSM0610 support
+#define  SUPP_IMA_ADPCM  1 //uncomment this to enable MS-ADPCM, DVI-ADPCM, IMA-ADPCM support
+
+
+
+#define  ABS_PATH_MAX                    1024
 
 //Types of wave-files
-#define  WAVETYPE_NOTSET              0 //set wavetype automatically on first write operation
-#define  WAVETYPE_MONO_8000HZ_PCM16   1
-#define  WAVETYPE_MONO_8000HZ_PCMA    2
-#define  WAVETYPE_MONO_8000HZ_PCMU    3
-#define  WAVETYPE_MONO_8000HZ_GSM610  4
-#define  WAVETYPE_DEFAULT             WAVETYPE_MONO_8000HZ_PCM16
+#define  WAVETYPE_NOTSET                 0 //set wavetype automatically on first write operation
+#define  WAVETYPE_MONO_8000HZ_PCM16      1
+#define  WAVETYPE_MONO_8000HZ_PCMA       2
+#define  WAVETYPE_MONO_8000HZ_PCMU       3
+#define  WAVETYPE_MONO_8000HZ_GSM610     4
+#define  WAVETYPE_MONO_8000HZ_DVI_ADPCM  5
+#define  WAVETYPE_MONO_8000HZ_IMA_ADPCM  6
+#define  WAVETYPE_DEFAULT                WAVETYPE_MONO_8000HZ_PCM16
 
-#define  WAVEFILE_RWMODE_NOTSET       0
-#define  WAVEFILE_RWMODE_READ         1
-#define  WAVEFILE_RWMODE_WRITE        2
-
-#define  WAVEFILE_BUFF_SIZE           320  //>=320
+#define  WAVEFILE_RWMODE_NOTSET          0
+#define  WAVEFILE_RWMODE_READ            1
+#define  WAVEFILE_RWMODE_WRITE           2
+                                         
+#define  WAVEFILE_BUFF_SIZE              512  //>=505
 
 //------------------------------------------------------------------------------
 //Canonical WAVE format sructure
@@ -48,7 +55,7 @@ struct waveheader_t
     //==== fmt chunk
     char          fmt[4];               //'fmt '
     uint32_t      fmt_length;           //length of fmt data = (18+extra format bytes), bytes
-    uint16_t      type;                 //0x0001=PCM, 0x0006=alaw, 0x0007=ulaw, 0x0031=GSM610
+    uint16_t      type;                 //0x0001=PCM, 0x0006=alaw, 0x0007=ulaw, 0x0031=GSM610, 0x0011=IMA/DVI-ADPCM
     uint16_t      channels;             //1=mono,2=stereo
     uint32_t      samples_per_second;   //samples per second (44100,8000,16000,..)
     uint32_t      bytes_per_second;     //samples_per_second * block_align

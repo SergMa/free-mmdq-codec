@@ -157,7 +157,7 @@
  * define this, and read about the GSM_OPT_WAV49 option in the
  * manual page on gsm_option(3).
  */
-//#define WAV49 1
+#define WAV49 1
 
 /* GSM:
  * Define to enable the GSM library's long-term correlation
