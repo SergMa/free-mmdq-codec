@@ -62,7 +62,7 @@ void usage(void)
     "  test --mse <samples> <sound1.wav> <sound2.wav>\n"
     "    Compare <sound1.wav> and <sound2.wav> and calculate MSE (Mean Squared\n"
     "    Error). MSE will be calculated for N samples, where N is minimal length\n"
-    "    of files.\n"
+    "    of files. File <sound1.wav> must contain original (true) signal.\n"
     "    <samples> = number of samples to compare (0-compare N samples - see above).\n"
     "    If <samples> is bigger than N, N samples will be compared.\n"
     "\n"
@@ -189,11 +189,11 @@ int main( int argc, char **argv )
 
     int16_t      x1;
     int16_t      x2;
+    int16_t      maxx1;
     int16_t      diffx;
     int16_t      diffxmax;
-    double       diffxn;
-    double       diffxnmax;
     double       mse;
+    double       nmse;
 
     int          compare_samples;
 
@@ -923,9 +923,10 @@ int main( int argc, char **argv )
         //print_waveinfo( owf );
 
         // main loop
+        maxx1     = 0;
         diffxmax  = 0;
-        diffxnmax = 0.0;
         mse       = 0.0;
+        nmse      = 0.0;
         processed = 0;
         while(1) {
             /* wavefile_read_voice() returns:
@@ -951,16 +952,16 @@ int main( int argc, char **argv )
                 break; //eof
             }
 
+            //calc max(abs(x1))
+            if(abs(x1) > maxx1)
+                maxx1 = abs(x1);
+
             //calc diffx, diffxn, mse
             diffx = abs(x1 - x2);
             if(diffx > diffxmax)
                 diffxmax = diffx;
 
-            diffxn = diffx/32768.0;
-            if(diffxn > diffxnmax)
-                diffxnmax = diffxn;
-
-            mse += (double)(diffxn * diffxn);
+            mse += (double)(diffx * diffx);
 
             processed ++;
 
@@ -971,9 +972,10 @@ int main( int argc, char **argv )
             }
         }
         mse = mse / (double)processed;
+        nmse = mse / ((double)maxx1 * (double)maxx1);
 
-        printf("samples: %10u, maxerr: %6d, maxrelerr: %10.8f, relMSE: %10.8f for \"%s\" vs \"%s\"\n",
-                processed, diffxmax, diffxnmax, mse, inp_wave_filename, out_wave_filename );
+        printf("samples: %10u, maxerr: %6d, MSE: %10.8f, nMSE: %10.8f for \"%s\" vs \"%s\"\n",
+                processed, diffxmax, mse, nmse, inp_wave_filename, out_wave_filename );
         break;
 
     case ACTION_CONVERT:
