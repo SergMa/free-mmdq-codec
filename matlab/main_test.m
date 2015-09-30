@@ -328,17 +328,18 @@ fprintf(fid,'smooth_N:  0=%6d  1=%6d  2=%6d  3=%6d\n', smooth0_N, smooth1_N, smo
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Calculate and print errors values
-erry = x - y;
+erry = y - x;
 avg_erry = mean( abs(erry) );
 max_erry = max( abs(erry) );
 std_erry = std( abs(erry) );
-mse_erry = mean(erry.^2);
+mse_erry = mean( erry.*erry );
 
-nerry = (x - y)/MAXX;
+max_x = max( abs(x) );
+nerry = (y - x)/max_x;
 avg_nerry = mean( abs(nerry) );
 max_nerry = max( abs(nerry) );
 std_nerry = std( abs(nerry) );
-mse_nerry = mean(nerry.^2);
+mse_nerry = mean( nerry.*nerry );
 
 fprintf(fid,'\n');
 fprintf(fid,'x,y errors:\n');

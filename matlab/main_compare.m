@@ -67,11 +67,16 @@ if ffs1~=FS
     error('invalid sample frequency of codec-1 signal wavefile');
 end
 
-if length(CODEC2_FILENAME)>0
-[x2, ffs2, bits2] = wavread(CODEC2_FILENAME);
-if ffs2~=FS
-    error('invalid sample frequency of codec-2 signal wavefile');
-end
+if exist('CODEC2_FILENAME')
+    [x2, ffs2, bits2] = wavread(CODEC2_FILENAME);
+    if ffs2~=FS
+        error('invalid sample frequency of codec-2 signal wavefile');
+    end
+else
+    CODEC2_FILENAME = 'no file';
+    x2 = zeros(size(x1));
+    ffs2 = ffs1;
+    bits2 = bits1;
 end
 
 % Make horizontal vectors. If wavefiles are stereo, use only the first channels
@@ -83,28 +88,22 @@ x1 = x1(:,1).';       % now x1 has range [-1..+1]
 x1 = fix(x1 * 32768); % now x1 has range [-32768..+32768]
 N1 = size(x1,2);
 
-if length(CODEC2_FILENAME)>0
 x2 = x2(:,1).';       % now x2 has range [-1..+1]
 x2 = fix(x2 * 32768); % now x2 has range [-32768..+32768]
 N2 = size(x2,2);
-end
 
 % Limit lenght of signal to minimal Ni
 N = N0;
 if N1<=N
     N = N1;
 end
-if length(CODEC2_FILENAME)>0
 if N2<=N
     N = N2;
-end
 end
 
 x0 = x0(1:N);
 x1 = x1(1:N);
-if length(CODEC2_FILENAME)>0
 x2 = x2(1:N);
-end
 
 % Convert sample numbers into time ticks (we will use this for plotting)
 t = (1:N)/FS;
@@ -113,21 +112,21 @@ t = (1:N)/FS;
 % Compare signals
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-diff1 = x0-x1;
-maxerr1 = max(diff1);
-mse1 = mean(diff1.^2);
-ndiff1 = diff1/32768;
-nmaxerr1 = max(ndiff1);
-nmse1 = mean(ndiff1.^2);
+max_x0 = max( abs(x0) );
 
-if length(CODEC2_FILENAME)>0
-diff2 = x0-x2;
-maxerr2 = max(diff2);
-mse2 = mean(diff2.^2);
-ndiff2 = diff2/32768;
-nmaxerr2 = max(ndiff2);
-nmse2 = mean(ndiff2.^2);
-end
+err1     = x1-x0;
+maxerr1  = max(err1);
+mse1     = mean(err1.*err1);
+nerr1    = err1/max_x0;
+nmaxerr1 = max(nerr1);
+nmse1    = mean(nerr1.*nerr1);
+
+err2     = x2-x0;
+maxerr2  = max(err2);
+mse2     = mean(err2.*err2);
+nerr2    = err2/max_x0;
+nmaxerr2 = max(nerr2);
+nmse2    = mean(nerr2.*nerr2);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Show results
@@ -224,12 +223,12 @@ figure(3);
 
 figure(4);
     subplot(2,1,1);
-    plot( t, diff1,'r.-');  xlabel('t,sec');  ylabel('diff');
+    plot( t, err1,'r.-');  xlabel('t,sec');  ylabel('err1');
     ylim([-32768 32768]);
     legend('x1-x0');
 
     subplot(2,1,2);
-    plot( t, diff2,'r.-');  xlabel('t,sec');  ylabel('diff');
+    plot( t, err2,'r.-');  xlabel('t,sec');  ylabel('err2');
     ylim([-32768 32768]);
     legend('x2-x0');
 

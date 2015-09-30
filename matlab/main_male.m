@@ -52,6 +52,8 @@ fprintf(fid,'original file: %s\n', FILENAME);
 fprintf(fid,'samples: %d\n', N);
 fprintf(fid,'-----------------\n\n', N);
 
+max_y = max( abs(y) );
+
 for i=1:FILES
    
     FILENAME2  = [DIR,filesep,FILENAME_PREFIX{i},NAME];
@@ -65,8 +67,10 @@ for i=1:FILES
         y2 = y2(1:N,1);
     end
 
+    nerr = (y2 - y)/max_y;
+
     fprintf(fid,'file2: %s\n', FILENAME2);
-    fprintf(fid,'MSE: %10.8f\n\n', mean( (y-y2).^2 ) );
+    fprintf(fid,'normalized MSE: %10.8f\n\n', mean( nerr.*nerr ) );
 
 end
 

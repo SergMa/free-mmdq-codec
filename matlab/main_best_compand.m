@@ -255,6 +255,8 @@ wavwrite( (x/MAXX).', FS, bits_voice, INPUT_FILENAME );
     step_cntr = 0;
     iter = 1;
 
+    max_x = max( abs(x) );
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % SMALL ITERATION LOOP (BEGIN)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -324,9 +326,9 @@ wavwrite( (x/MAXX).', FS, bits_voice, INPUT_FILENAME );
             % Make error estimates
 
             % Calculate and print errors values
-            nerry = (x - y)/MAXX;
+            nerry = (x - y)/max_x;
             max_nerry = max( abs(nerry) );
-            mse_nerry = mean(nerry.^2);
+            mse_nerry = mean(nerry.*nerry);
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

@@ -73,11 +73,16 @@ data  = ddemod(y, FC,FD,FS,MODULATION,M);
 data2 = ddemod(y2,FC,FD,FS,MODULATION,M);
 DATABITS = length(data);
 
+err_y = y2 - y;
+max_y = max( abs(y) );
+nerr_y = err_y / max_y;
+nmse_y = mean( nerr_y .* nerr_y );
 s = symerr(data,data2); % Check symbol error rate.
+
 fprintf(fid,'file %s has been demodulated\n',FILENAME);
 fprintf(fid,'file %s has been demodulated\n',FILENAME2);
 fprintf(fid,'databits: %d, error rate: %d\n', DATABITS, s);
-fprintf(fid,'MSE: %8.6f\n\n', mean( (y-y2).^2 ) );
+fprintf(fid,'normalized MSE: %8.6f\n\n', nmse_y );
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %FSK modem (appr. V.23)
@@ -102,11 +107,16 @@ data  = ddemod(y, FC,FD,FS,MODULATION,M);
 data2 = ddemod(y2,FC,FD,FS,MODULATION,M);
 DATABITS = length(data);
 
+err_y = y2 - y;
+max_y = max( abs(y) );
+nerr_y = err_y / max_y;
+nmse_y = mean( nerr_y .* nerr_y );
 s = symerr(data,data2); % Check symbol error rate.
+
 fprintf(fid,'file %s has been demodulated\n',FILENAME);
 fprintf(fid,'file %s has been demodulated\n',FILENAME2);
 fprintf(fid,'databits: %d, error rate: %d\n', DATABITS, s);
-fprintf(fid,'MSE: %8.6f\n\n', mean( (y-y2).^2 ) );
+fprintf(fid,'normalized MSE: %8.6f\n\n', nmse_y );
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %PSK-4 modem (appr. V.26)
@@ -131,11 +141,16 @@ data  = ddemod(y, FC,FD,FS,MODULATION,M);
 data2 = ddemod(y2,FC,FD,FS,MODULATION,M);
 DATABITS = length(data);
 
+err_y = y2 - y;
+max_y = max( abs(y) );
+nerr_y = err_y / max_y;
+nmse_y = mean( nerr_y .* nerr_y );
 s = symerr(data,data2); % Check symbol error rate.
+
 fprintf(fid,'file %s has been demodulated\n',FILENAME);
 fprintf(fid,'file %s has been demodulated\n',FILENAME2);
 fprintf(fid,'databits: %d, error rate: %d\n', DATABITS, s);
-fprintf(fid,'MSE: %8.6f\n\n', mean( (y-y2).^2 ) );
+fprintf(fid,'normalized MSE: %8.6f\n\n', nmse_y );
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %PSK-8 modem (appr. V.27ter)
@@ -160,11 +175,16 @@ data  = ddemod(y, FC,FD,FS,MODULATION,M);
 data2 = ddemod(y2,FC,FD,FS,MODULATION,M);
 DATABITS = length(data);
 
+err_y = y2 - y;
+max_y = max( abs(y) );
+nerr_y = err_y / max_y;
+nmse_y = mean( nerr_y .* nerr_y );
 s = symerr(data,data2); % Check symbol error rate.
+
 fprintf(fid,'file %s has been demodulated\n',FILENAME);
 fprintf(fid,'file %s has been demodulated\n',FILENAME2);
 fprintf(fid,'databits: %d, error rate: %d\n', DATABITS, s);
-fprintf(fid,'MSE: %8.6f\n\n', mean( (y-y2).^2 ) );
+fprintf(fid,'normalized MSE: %8.6f\n\n', nmse_y );
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %QASK-16 modem (appr. V.29 and V.32)
@@ -193,11 +213,16 @@ data  = ddemod(y, FC,FD,FS,MODULATION,M);
 data2 = ddemod(y2,FC,FD,FS,MODULATION,M);
 DATABITS = length(data);
 
+err_y = y2 - y;
+max_y = max( abs(y) );
+nerr_y = err_y / max_y;
+nmse_y = mean( nerr_y .* nerr_y );
 s = symerr(data,data2); % Check symbol error rate.
+
 fprintf(fid,'file %s has been demodulated\n',FILENAME);
 fprintf(fid,'file %s has been demodulated\n',FILENAME2);
 fprintf(fid,'databits: %d, error rate: %d\n', DATABITS, s);
-fprintf(fid,'MSE: %8.6f\n\n', mean( (y-y2).^2 ) );
+fprintf(fid,'normalized MSE: %8.6f\n\n', nmse_y );
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %QASK-32 modem (appr. V.33)
@@ -226,11 +251,16 @@ data  = ddemod(y, FC,FD,FS,MODULATION,M);
 data2 = ddemod(y2,FC,FD,FS,MODULATION,M);
 DATABITS = length(data);
 
+err_y = y2 - y;
+max_y = max( abs(y) );
+nerr_y = err_y / max_y;
+nmse_y = mean( nerr_y .* nerr_y );
 s = symerr(data,data2); % Check symbol error rate.
+
 fprintf(fid,'file %s has been demodulated\n',FILENAME);
 fprintf(fid,'file %s has been demodulated\n',FILENAME2);
 fprintf(fid,'databits: %d, error rate: %d\n', DATABITS, s);
-fprintf(fid,'MSE: %8.6f\n\n', mean( (y-y2).^2 ) );
+fprintf(fid,'normalized MSE: %8.6f\n\n', nmse_y );
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %QASK-64 modem (appr.V.34)
@@ -255,15 +285,23 @@ SCALE = (1/sqrt(2))*(1/7);
 y  = (1/SCALE)*y;
 y2 = (1/SCALE)*y2;
 
+max_y = max( abs(y) );
+err_y = y2-y; 
+
 data  = ddemod(y, FC,FD,FS,MODULATION,M);
 data2 = ddemod(y2,FC,FD,FS,MODULATION,M);
 DATABITS = length(data);
 
+err_y = y2 - y;
+max_y = max(y);
+nerr_y = err_y / max_y;
+nmse_y = mean( nerr_y .* nerr_y );
 s = symerr(data,data2); % Check symbol error rate.
+
 fprintf(fid,'file %s has been demodulated\n',FILENAME);
 fprintf(fid,'file %s has been demodulated\n',FILENAME2);
 fprintf(fid,'databits: %d, error rate: %d\n', DATABITS, s);
-fprintf(fid,'MSE: %8.6f\n\n', mean( (y-y2).^2 ) );
+fprintf(fid,'normalized MSE: %8.6f\n\n', nmse_y );
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
