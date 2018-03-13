@@ -29,29 +29,188 @@ TS = 1/FS;            % Sample (discretization) period, sec
 SPECTROGRAM_WIDTH = 256; % Parameters of spectrograms
 SPECTROGRAM_OVR   = 8;
 
+
+
 % Name of file for original signal
-ORIGINAL_FILENAME = 'female/female.wav';  
+ORIGINAL_FILENAME  = 'female/female.wav';
 
 % Name of file for signal which has been encoded/decoded by codec 1
-%CODEC1_FILENAME    = 'female/g726-32_female.wav';   
-%CODEC1_FILENAME    = 'female/g726-40_female.wav';   
-CODEC1_FILENAME     = 'female/dvi4_female.wav';   
+CODEC1_FILENAME    = 'female/g726-32_female.wav';
+%CODEC1_FILENAME    = 'female/g726-40_female.wav';
+%CODEC1_FILENAME    = 'female/dvi4_female.wav';
 
 % Name of file for signal which has been encoded/decoded by codec 2
-CODEC2_FILENAME     = 'female/mmdq-32-1_female.wav';   
-%CODEC2_FILENAME    = 'female/mmdq-32-2_female.wav';   
-%CODEC2_FILENAME    = 'female/mmdq-32-3_female.wav';   
-%CODEC2_FILENAME    = 'female/mmdq-32-4_female.wav';   
+CODEC2_FILENAME    = 'female/mmdq-32-1_female.wav';
+%CODEC2_FILENAME    = 'female/mmdq-32-2_female.wav';
+%CODEC2_FILENAME    = 'female/mmdq-32-3_female.wav';
+%CODEC2_FILENAME    = 'female/mmdq-32-4_female.wav';
 
-%CODEC2_FILENAME    = 'female/mmdq-40-1_female.wav';   
-%CODEC2_FILENAME    = 'female/mmdq-40-2_female.wav';   
-%CODEC2_FILENAME    = 'female/mmdq-40-3_female.wav';   
-%CODEC2_FILENAME    = 'female/mmdq-40-4_female.wav';   
+%CODEC2_FILENAME    = 'female/mmdq-40-1_female.wav';
+%CODEC2_FILENAME    = 'female/mmdq-40-2_female.wav';
+%CODEC2_FILENAME    = 'female/mmdq-40-3_female.wav';
+%CODEC2_FILENAME    = 'female/mmdq-40-4_female.wav';
 
-%CODEC2_FILENAME    = 'female/mmdq-40x-1_female.wav';   
-%CODEC2_FILENAME    = 'female/mmdq-40x-2_female.wav';   
-%CODEC2_FILENAME    = 'female/mmdq-40x-3_female.wav';   
-%CODEC2_FILENAME    = 'female/mmdq-40x-4_female.wav';   
+%CODEC2_FILENAME    = 'female/mmdq-40x-1_female.wav';
+%CODEC2_FILENAME    = 'female/mmdq-40x-2_female.wav';
+%CODEC2_FILENAME    = 'female/mmdq-40x-3_female.wav';
+%CODEC2_FILENAME    = 'female/mmdq-40x-4_female.wav';
+
+
+
+% Name of file for original signal
+%ORIGINAL_FILENAME  = 'male/male.wav';
+
+% Name of file for signal which has been encoded/decoded by codec 1
+%CODEC1_FILENAME    = 'male/g726-32_male.wav';
+%CODEC1_FILENAME    = 'male/g726-40_male.wav';
+%CODEC1_FILENAME    = 'male/dvi4_male.wav';
+
+% Name of file for signal which has been encoded/decoded by codec 2
+%CODEC2_FILENAME    = 'male/mmdq-32-1_male.wav';
+%CODEC2_FILENAME    = 'male/mmdq-32-2_male.wav';
+%CODEC2_FILENAME    = 'male/mmdq-32-3_male.wav';
+%CODEC2_FILENAME    = 'male/mmdq-32-4_male.wav';
+
+%CODEC2_FILENAME    = 'male/mmdq-40-1_male.wav';
+%CODEC2_FILENAME    = 'male/mmdq-40-2_male.wav';
+%CODEC2_FILENAME    = 'male/mmdq-40-3_male.wav';
+%CODEC2_FILENAME    = 'male/mmdq-40-4_male.wav';
+
+%CODEC2_FILENAME    = 'male/mmdq-40x-1_male.wav';
+%CODEC2_FILENAME    = 'male/mmdq-40x-2_male.wav';
+%CODEC2_FILENAME    = 'male/mmdq-40x-3_male.wav';
+%CODEC2_FILENAME    = 'male/mmdq-40x-4_male.wav';
+
+
+
+% Name of file for original signal
+%ORIGINAL_FILENAME  = 'modem/ask2.wav';
+
+% Name of file for signal which has been encoded/decoded by codec 1
+%CODEC1_FILENAME    = 'modem/g726-32_ask2.wav';
+%CODEC1_FILENAME    = 'modem/g726-40_ask2.wav';
+%CODEC1_FILENAME    = 'modem/dvi4_ask2.wav';
+
+% Name of file for signal which has been encoded/decoded by codec 2
+%CODEC2_FILENAME    = 'modem/mmdq-32-1_ask2.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-32-2_ask2.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-32-3_ask2.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-32-4_ask2.wav';
+
+%CODEC2_FILENAME    = 'modem/mmdq-40-1_ask2.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40-2_ask2.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40-3_ask2.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40-4_ask2.wav';
+
+%CODEC2_FILENAME    = 'modem/mmdq-40x-1_ask2.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40x-2_ask2.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40x-3_ask2.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40x-4_ask2.wav';
+
+
+
+% Name of file for original signal
+%ORIGINAL_FILENAME  = 'modem/fsk2.wav';
+
+% Name of file for signal which has been encoded/decoded by codec 1
+%CODEC1_FILENAME    = 'modem/g726-32_fsk2.wav';
+%CODEC1_FILENAME    = 'modem/g726-40_fsk2.wav';
+%CODEC1_FILENAME    = 'modem/dvi4_fsk2.wav';
+
+% Name of file for signal which has been encoded/decoded by codec 2
+%CODEC2_FILENAME    = 'modem/mmdq-32-1_fsk2.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-32-2_fsk2.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-32-3_fsk2.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-32-4_fsk2.wav';
+
+%CODEC2_FILENAME    = 'modem/mmdq-40-1_fsk2.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40-2_fsk2.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40-3_fsk2.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40-4_fsk2.wav';
+
+%CODEC2_FILENAME    = 'modem/mmdq-40x-1_fsk2.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40x-2_fsk2.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40x-3_fsk2.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40x-4_fsk2.wav';
+
+
+
+% Name of file for original signal
+%ORIGINAL_FILENAME  = 'modem/psk4.wav';
+
+% Name of file for signal which has been encoded/decoded by codec 1
+%CODEC1_FILENAME    = 'modem/g726-32_psk4.wav';
+%CODEC1_FILENAME    = 'modem/g726-40_psk4.wav';
+%CODEC1_FILENAME    = 'modem/dvi4_psk4.wav';
+
+% Name of file for signal which has been encoded/decoded by codec 2
+%CODEC2_FILENAME    = 'modem/mmdq-32-1_psk4.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-32-2_psk4.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-32-3_psk4.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-32-4_psk4.wav';
+
+%CODEC2_FILENAME    = 'modem/mmdq-40-1_psk4.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40-2_psk4.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40-3_psk4.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40-4_psk4.wav';
+
+%CODEC2_FILENAME    = 'modem/mmdq-40x-1_psk4.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40x-2_psk4.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40x-3_psk4.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40x-4_psk4.wav';
+
+
+
+% Name of file for original signal
+%ORIGINAL_FILENAME  = 'modem/psk8.wav';
+
+% Name of file for signal which has been encoded/decoded by codec 1
+%CODEC1_FILENAME    = 'modem/g726-32_psk8.wav';
+%CODEC1_FILENAME    = 'modem/g726-40_psk8.wav';
+%CODEC1_FILENAME    = 'modem/dvi4_psk8.wav';
+
+% Name of file for signal which has been encoded/decoded by codec 2
+%CODEC2_FILENAME    = 'modem/mmdq-32-1_psk8.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-32-2_psk8.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-32-3_psk8.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-32-4_psk8.wav';
+
+%CODEC2_FILENAME    = 'modem/mmdq-40-1_psk8.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40-2_psk8.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40-3_psk8.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40-4_psk8.wav';
+
+%CODEC2_FILENAME    = 'modem/mmdq-40x-1_psk8.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40x-2_psk8.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40x-3_psk8.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40x-4_psk8.wav';
+
+
+
+% Name of file for original signal
+%ORIGINAL_FILENAME  = 'modem/qask64.wav';
+
+% Name of file for signal which has been encoded/decoded by codec 1
+%CODEC1_FILENAME    = 'modem/g726-32_qask64.wav';
+%CODEC1_FILENAME    = 'modem/g726-40_qask64.wav';
+%CODEC1_FILENAME    = 'modem/dvi4_qask64.wav';
+
+% Name of file for signal which has been encoded/decoded by codec 2
+%CODEC2_FILENAME    = 'modem/mmdq-32-1_qask64.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-32-2_qask64.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-32-3_qask64.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-32-4_qask64.wav';
+
+%CODEC2_FILENAME    = 'modem/mmdq-40-1_qask64.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40-2_qask64.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40-3_qask64.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40-4_qask64.wav';
+
+%CODEC2_FILENAME    = 'modem/mmdq-40x-1_qask64.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40x-2_qask64.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40x-3_qask64.wav';
+%CODEC2_FILENAME    = 'modem/mmdq-40x-4_qask64.wav';
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load input (voice,noise) signals from wave-files, generate signal to process
