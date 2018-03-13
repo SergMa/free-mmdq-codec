@@ -11,6 +11,12 @@ clc;
 clear all;
 close all;
 
+%copy these from <main_modem_generate.m>
+TIMEONE = 10;  %single loop length, sec
+TIMENUM = 60;  %number of loops
+TIMELEN = TIMENUM * TIMEONE;
+
+
 FILENAME_PREFIX = {
 'mmdq-40-1_';
 'mmdq-40-2_';
@@ -61,6 +67,10 @@ FD = 1600;        %Data rate, bits per second
 y  = wavread(FILENAME);
 y2 = wavread(FILENAME2);
 
+SCALE = 0.9;
+y  = (1/SCALE)*y;
+y2 = (1/SCALE)*y2;
+
 N  = length(y);
 N2 = length(y2);
 if N2<N
@@ -69,8 +79,19 @@ elseif N2>N
     y2 = y2(1:N,1);
 end
 
-data  = ddemod(y, FC,FD,FS,MODULATION,M);
-data2 = ddemod(y2,FC,FD,FS,MODULATION,M);
+data  = [];
+data2 = [];
+for i=1:TIMENUM
+    ib = 1 + (i-1)*TIMEONE*FD;
+    ie = ib + TIMEONE*FD - 1;
+    iy  = y (ib:ie);
+    iy2 = y2(ib:ie);
+    idata  = ddemod(iy, FC,FD,FS,MODULATION,M);
+    idata2 = ddemod(iy2,FC,FD,FS,MODULATION,M);
+    data  = [data  ; idata ];
+    data2 = [data2 ; idata2];
+end
+
 DATABITS = length(data);
 
 err_y = y2 - y;
@@ -95,6 +116,10 @@ FD = 1600;        %Data rate, bits per second
 y  = wavread(FILENAME);
 y2 = wavread(FILENAME2);
 
+SCALE = 0.9;
+y  = (1/SCALE)*y;
+y2 = (1/SCALE)*y2;
+
 N  = length(y);
 N2 = length(y2);
 if N2<N
@@ -103,8 +128,19 @@ elseif N2>N
     y2 = y2(1:N,1);
 end
 
-data  = ddemod(y, FC,FD,FS,MODULATION,M);
-data2 = ddemod(y2,FC,FD,FS,MODULATION,M);
+data  = [];
+data2 = [];
+for i=1:TIMENUM
+    ib = 1 + (i-1)*TIMEONE*FD;
+    ie = ib + TIMEONE*FD - 1;
+    iy  = y (ib:ie);
+    iy2 = y2(ib:ie);
+    idata  = ddemod(iy, FC,FD,FS,MODULATION,M);
+    idata2 = ddemod(iy2,FC,FD,FS,MODULATION,M);
+    data  = [data  ; idata ];
+    data2 = [data2 ; idata2];
+end
+
 DATABITS = length(data);
 
 err_y = y2 - y;
@@ -129,6 +165,10 @@ FD = 1600;        %Data rate, bits per second
 y  = wavread(FILENAME);
 y2 = wavread(FILENAME2);
 
+SCALE = 0.9;
+y  = (1/SCALE)*y;
+y2 = (1/SCALE)*y2;
+
 N  = length(y);
 N2 = length(y2);
 if N2<N
@@ -137,8 +177,19 @@ elseif N2>N
     y2 = y2(1:N,1);
 end
 
-data  = ddemod(y, FC,FD,FS,MODULATION,M);
-data2 = ddemod(y2,FC,FD,FS,MODULATION,M);
+data  = [];
+data2 = [];
+for i=1:TIMENUM
+    ib = 1 + (i-1)*TIMEONE*FD;
+    ie = ib + TIMEONE*FD - 1;
+    iy  = y (ib:ie);
+    iy2 = y2(ib:ie);
+    idata  = ddemod(iy, FC,FD,FS,MODULATION,M);
+    idata2 = ddemod(iy2,FC,FD,FS,MODULATION,M);
+    data  = [data  ; idata ];
+    data2 = [data2 ; idata2];
+end
+
 DATABITS = length(data);
 
 err_y = y2 - y;
@@ -163,6 +214,10 @@ FD = 1600;        %Data rate, bits per second
 y  = wavread(FILENAME);
 y2 = wavread(FILENAME2);
 
+SCALE = 0.9;
+y  = (1/SCALE)*y;
+y2 = (1/SCALE)*y2;
+
 N  = length(y);
 N2 = length(y2);
 if N2<N
@@ -171,8 +226,19 @@ elseif N2>N
     y2 = y2(1:N,1);
 end
 
-data  = ddemod(y, FC,FD,FS,MODULATION,M);
-data2 = ddemod(y2,FC,FD,FS,MODULATION,M);
+data  = [];
+data2 = [];
+for i=1:TIMENUM
+    ib = 1 + (i-1)*TIMEONE*FD;
+    ie = ib + TIMEONE*FD - 1;
+    iy  = y (ib:ie);
+    iy2 = y2(ib:ie);
+    idata  = ddemod(iy, FC,FD,FS,MODULATION,M);
+    idata2 = ddemod(iy2,FC,FD,FS,MODULATION,M);
+    data  = [data  ; idata ];
+    data2 = [data2 ; idata2];
+end
+
 DATABITS = length(data);
 
 err_y = y2 - y;
@@ -197,6 +263,10 @@ FD = 1600;        %Data rate, bits per second
 y  = wavread(FILENAME);
 y2 = wavread(FILENAME2);
 
+SCALE = (1/sqrt(2))*(1/3);
+y  = (1/SCALE)*y;
+y2 = (1/SCALE)*y2;
+
 N  = length(y);
 N2 = length(y2);
 if N2<N
@@ -205,12 +275,19 @@ elseif N2>N
     y2 = y2(1:N,1);
 end
 
-SCALE = (1/sqrt(2))*(1/3);
-y  = (1/SCALE)*y;
-y2 = (1/SCALE)*y2;
+data  = [];
+data2 = [];
+for i=1:TIMENUM
+    ib = 1 + (i-1)*TIMEONE*FD;
+    ie = ib + TIMEONE*FD - 1;
+    iy  = y (ib:ie);
+    iy2 = y2(ib:ie);
+    idata  = ddemod(iy, FC,FD,FS,MODULATION,M);
+    idata2 = ddemod(iy2,FC,FD,FS,MODULATION,M);
+    data  = [data  ; idata ];
+    data2 = [data2 ; idata2];
+end
 
-data  = ddemod(y, FC,FD,FS,MODULATION,M);
-data2 = ddemod(y2,FC,FD,FS,MODULATION,M);
 DATABITS = length(data);
 
 err_y = y2 - y;
@@ -235,6 +312,10 @@ FD = 1600;        %Data rate, bits per second
 y  = wavread(FILENAME);
 y2 = wavread(FILENAME2);
 
+SCALE = (1/sqrt(2))*(1/5);
+y  = (1/SCALE)*y;
+y2 = (1/SCALE)*y2;
+
 N  = length(y);
 N2 = length(y2);
 if N2<N
@@ -243,12 +324,19 @@ elseif N2>N
     y2 = y2(1:N,1);
 end
 
-SCALE = (1/sqrt(2))*(1/5);
-y  = (1/SCALE)*y;
-y2 = (1/SCALE)*y2;
+data  = [];
+data2 = [];
+for i=1:TIMENUM
+    ib = 1 + (i-1)*TIMEONE*FD;
+    ie = ib + TIMEONE*FD - 1;
+    iy  = y (ib:ie);
+    iy2 = y2(ib:ie);
+    idata  = ddemod(iy, FC,FD,FS,MODULATION,M);
+    idata2 = ddemod(iy2,FC,FD,FS,MODULATION,M);
+    data  = [data  ; idata ];
+    data2 = [data2 ; idata2];
+end
 
-data  = ddemod(y, FC,FD,FS,MODULATION,M);
-data2 = ddemod(y2,FC,FD,FS,MODULATION,M);
 DATABITS = length(data);
 
 err_y = y2 - y;
@@ -273,6 +361,10 @@ FD = 1600;        %Data rate, bits per second
 y  = wavread(FILENAME);
 y2 = wavread(FILENAME2);
 
+SCALE = (1/sqrt(2))*(1/7);
+y  = (1/SCALE)*y;
+y2 = (1/SCALE)*y2;
+
 N  = length(y);
 N2 = length(y2);
 if N2<N
@@ -281,19 +373,23 @@ elseif N2>N
     y2 = y2(1:N,1);
 end
 
-SCALE = (1/sqrt(2))*(1/7);
-y  = (1/SCALE)*y;
-y2 = (1/SCALE)*y2;
+data  = [];
+data2 = [];
+for i=1:TIMENUM
+    ib = 1 + (i-1)*TIMEONE*FD;
+    ie = ib + TIMEONE*FD - 1;
+    iy  = y (ib:ie);
+    iy2 = y2(ib:ie);
+    idata  = ddemod(iy, FC,FD,FS,MODULATION,M);
+    idata2 = ddemod(iy2,FC,FD,FS,MODULATION,M);
+    data  = [data  ; idata ];
+    data2 = [data2 ; idata2];
+end
 
-max_y = max( abs(y) );
-err_y = y2-y; 
-
-data  = ddemod(y, FC,FD,FS,MODULATION,M);
-data2 = ddemod(y2,FC,FD,FS,MODULATION,M);
 DATABITS = length(data);
 
 err_y = y2 - y;
-max_y = max(y);
+max_y = max( abs(y) );
 nerr_y = err_y / max_y;
 nmse_y = mean( nerr_y .* nerr_y );
 s = symerr(data,data2); % Check symbol error rate.
@@ -314,3 +410,4 @@ if fid~=1
 end
 
 disp('finished!');
+
