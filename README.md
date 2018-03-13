@@ -6,3 +6,6 @@ of G.726 codec with 32 kbit/sec bitrate and 8000 Hz sample rate.
 MMDQ-codec can be easily extended to other bitrates and sample rates.
 Important property of implemented codec is transparancy for fax/DTMF
 signals. MATLAB/Octave/FreeMat and C source codes are available.
+
+Compare results for MMDQ, G.711, G.726, IMA-ADPCM-DVI4 codecs are
+presented.
